@@ -104,6 +104,42 @@ describe('request security', () => {
     ).toBe(false);
   });
 
+  it('does not trust same-origin fetch metadata when the Origin disagrees', () => {
+    expect(
+      isSafeMutationRequest(
+        jsonRequest('{}', {
+          origin: 'https://attacker.example',
+          'sec-fetch-site': 'same-origin',
+          host: 'site-mapper.example',
+          cookie: 'appm_session=opaque',
+        }),
+      ),
+    ).toBe(false);
+  });
+
+  it('rejects ambiguous same-site browser mutations with cookies', () => {
+    expect(
+      isSafeMutationRequest(
+        jsonRequest('{}', { 'sec-fetch-site': 'same-site', cookie: 'appm_session=opaque' }),
+      ),
+    ).toBe(false);
+    expect(isSafeMutationRequest(jsonRequest('{}', { cookie: 'appm_session=opaque' }))).toBe(false);
+  });
+
+  it('preserves origin-less machine-to-machine bearer ingestion', () => {
+    expect(
+      isSafeMutationRequest(jsonRequest('{}', { authorization: 'Bearer internal-token' })),
+    ).toBe(true);
+  });
+
+  it('rejects content types which only start with application/json', async () => {
+    const request = jsonRequest('{}', { 'content-type': 'application/json-malicious' });
+    await expect(readBoundedJson(request)).resolves.toEqual({
+      ok: false,
+      error: 'INVALID_CONTENT_TYPE',
+    });
+  });
+
   it('rejects oversized, deep and structurally complex JSON', async () => {
     await expect(
       readBoundedJson(jsonRequest(JSON.stringify({ payload: 'x'.repeat(200) })), {

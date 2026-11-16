@@ -66,6 +66,8 @@ docs/certification/rfp-acceptance/
 ├── 07-AS-BUILT.md
 ├── 08-KNOWN-LIMITATIONS.md
 ├── 09-RELEASE-IDENTIFICATION.md
+├── 10-UAT-MK1-V2-PLAN.md
+├── 11-UAT-MK1-V2-RESULTS.md
 └── evidence/
     └── README.md
 ```
@@ -90,6 +92,8 @@ then re-test"]
 07 As-Built"]
     H --> S["Customer / project sign-off"]
 ```
+
+**November 16, 2026 addendum:** the [MK1 v2.0 UAT plan](10-UAT-MK1-V2-PLAN.md) and [v2.0 execution register](11-UAT-MK1-V2-RESULTS.md) cover the merged #223–#226 baseline (`7a43be8`) with 33 additional, initially NOT_RUN cases. They do not replace the 18 contractual ACC cases, the RFP, FIELD SAT or historical evidence.
 
 The documents do not turn an implemented feature into a contractual PASS. A PASS only exists after
 the corresponding procedure has been executed against a frozen release and the required evidence
@@ -165,7 +169,7 @@ The principal rule is:
 3. Confirm environment and participants using [02-ACCEPTANCE-TEST-PLAN.md](02-ACCEPTANCE-TEST-PLAN.md).
 4. Execute [03-TEST-PROCEDURES.md](03-TEST-PROCEDURES.md) in order.
 5. Save sanitized evidence using [evidence/README.md](evidence/README.md).
-6. Record results in [04-TEST-RESULTS.md](04-TEST-RESULTS.md).
+6. Record results in [04-TEST-RESULTS.md](04-TEST-RESULTS.md); if accepting MK1 v2.0, also execute [10-UAT-MK1-V2-PLAN.md](10-UAT-MK1-V2-PLAN.md) and record separate results in [11-UAT-MK1-V2-RESULTS.md](11-UAT-MK1-V2-RESULTS.md).
 7. Resolve every FAIL; explicitly retain every BLOCKED item.
 8. Complete [07-AS-BUILT.md](07-AS-BUILT.md) with field-controlled data.
 9. Issue [05-OPERABILITY-CERTIFICATE.md](05-OPERABILITY-CERTIFICATE.md) only when its stated

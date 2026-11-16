@@ -22,6 +22,7 @@ function scopeName(alarm: AlarmOccurrenceView, kind: string): string {
 
 export function AlarmCenter() {
   const t = useTranslations('alarmUi.center');
+  const tr = useTranslations('alarmRules');
   const { snapshot, loading, error, refresh } = useAlarmSnapshot(true);
   const [view, setView] = useState<'ACTIVE' | 'RESOLVED' | 'HISTORY'>('ACTIVE');
   const [severity, setSeverity] = useState<'ALL' | AlarmSeverity>('ALL');
@@ -85,9 +86,12 @@ export function AlarmCenter() {
           <h1>{t('title')}</h1>
           <p>{t('description')}</p>
         </div>
-        <button type="button" onClick={() => void refresh()}>
-          {t('refresh')}
-        </button>
+        <div className="sm-rule-center-actions">
+          <Link href="/alarms/rules">{tr('alarmRules')}</Link>
+          <button type="button" onClick={() => void refresh()}>
+            {t('refresh')}
+          </button>
+        </div>
       </header>
 
       {error ? (
@@ -118,6 +122,26 @@ export function AlarmCenter() {
               <span>{t('unacknowledged')}</span>
             </article>
           </div>
+
+          {snapshot.correlationGroups?.length ? (
+            <section className="sm-alarm-correlation-panel" aria-label={tr('relatedConditions')}>
+              <h2>{tr('relatedConditions')}</h2>
+              <p>{tr('relatedDesc')}</p>
+              <div className="sm-alarm-correlation-list">
+                {snapshot.correlationGroups.map((group) => (
+                  <article key={group.id}>
+                    <strong>{group.primaryCode}</strong>
+                    <span>
+                      {group.occurrenceIds.length} {tr('activeConditions')} {group.highestSeverity}
+                    </span>
+                    <Link href={'/alarms/' + encodeURIComponent(group.occurrenceIds[0]!)}>
+                      {tr('inspectEvidence')}
+                    </Link>
+                  </article>
+                ))}
+              </div>
+            </section>
+          ) : null}
 
           <nav className="sm-alarm-view-tabs sm-alarm-main-tabs" aria-label={t('viewLabel')}>
             {(['ACTIVE', 'RESOLVED', 'HISTORY'] as const).map((tab) => (

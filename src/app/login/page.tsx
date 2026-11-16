@@ -36,12 +36,21 @@ export default function LoginPage() {
         body: JSON.stringify({
           email: String(form.get('email') ?? ''),
           password: String(form.get('password') ?? ''),
+          mfaCode: String(form.get('mfaCode') ?? ''),
         }),
       });
       const result = (await response.json()) as LoginResponse;
 
       if (!response.ok) {
-        setError(result.error === 'INVALID_CREDENTIALS' ? t('credentialsError') : t('loginError'));
+        setError(
+          result.error === 'INVALID_CREDENTIALS'
+            ? t('credentialsError')
+            : result.error === 'MFA_REQUIRED' || result.error === 'MFA_INVALID'
+              ? t('mfaNeeded')
+              : result.error === 'MFA_ENROLLMENT_REQUIRED'
+                ? t('mfaEnrollmentRequired')
+                : t('loginError'),
+        );
         setBusy(false);
         return;
       }
@@ -91,6 +100,17 @@ export default function LoginPage() {
             autoComplete="current-password"
             placeholder="••••••••••••"
             required
+          />
+        </label>
+        <label>
+          <span>{t('mfaCode')}</span>
+          <input
+            name="mfaCode"
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={35}
+            placeholder="000000"
           />
         </label>
         <button className="auth-submit" type="submit" disabled={!hydrated || busy}>

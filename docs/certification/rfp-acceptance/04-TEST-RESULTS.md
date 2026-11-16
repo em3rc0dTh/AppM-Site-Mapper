@@ -139,3 +139,7 @@ Typical legitimate blockers include:
 | Customer/Project Representative |      |          |      |                     |
 
 Final approval must use the same release SHA and scope stated in the Operability Certificate.
+
+## 9. Independent MK1 v2.0 supplemental UAT register
+
+The 18 ACC results above are historical, intentionally unchanged and initially `NOT_RUN`. The November 16, 2026 code consolidation #223–#226 is tracked separately in [11-UAT-MK1-V2-RESULTS.md](11-UAT-MK1-V2-RESULTS.md), with 33 additional `NOT_RUN` cases specified in [10-UAT-MK1-V2-PLAN.md](10-UAT-MK1-V2-PLAN.md). CI/merge evidence must not be entered as executed FIELD or contractual UAT PASS.

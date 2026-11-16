@@ -6,6 +6,8 @@
 # This is a private .home.arpa hostname, not a public ACME certificate.
 sitemapper.thradex.home.arpa {
     tls internal
+    # Set HSTS only at the TLS endpoint; do not force it on lab HTTP :3000.
+    header Strict-Transport-Security "max-age=31536000"
     encode zstd gzip
     reverse_proxy 127.0.0.1:3000
 }

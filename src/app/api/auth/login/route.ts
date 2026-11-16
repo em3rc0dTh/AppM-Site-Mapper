@@ -36,7 +36,8 @@ async function handlePOST(request: Request) {
     !('email' in body) ||
     !('password' in body) ||
     typeof body.email !== 'string' ||
-    typeof body.password !== 'string'
+    typeof body.password !== 'string' ||
+    ('mfaCode' in body && typeof body.mfaCode !== 'string')
   ) {
     return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
   }
@@ -51,10 +52,12 @@ async function handlePOST(request: Request) {
     body.email,
     body.password,
     throttleKey(request, body.email),
+    'mfaCode' in body && typeof body.mfaCode === 'string' ? body.mfaCode : undefined,
   );
 
   if (!result.ok) {
-    const status = result.error === 'RATE_LIMITED' ? 429 : 401;
+    const status =
+      result.error === 'RATE_LIMITED' ? 429 : result.error === 'MFA_KEY_NOT_CONFIGURED' ? 503 : 401;
     return NextResponse.json({ error: result.error }, { status });
   }
 

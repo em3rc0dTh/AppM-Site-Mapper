@@ -36,6 +36,37 @@ export class MemoryIdentityRepository implements IdentityRepository {
     return user ? structuredClone(user) : null;
   }
 
+  async consumeMfaStep(userId: string, sealedSecret: string, step: number): Promise<boolean> {
+    const user = this.users.get(userId);
+    if (
+      !user ||
+      user.lifecycle !== 'ACTIVE' ||
+      user.mfaSecretCiphertext !== sealedSecret ||
+      (user.mfaLastUsedStep ?? -1) >= step
+    ) {
+      return false;
+    }
+    this.users.set(userId, { ...user, mfaLastUsedStep: step });
+    return true;
+  }
+
+  async consumeMfaRecoveryCode(userId: string, codeHash: string): Promise<boolean> {
+    const user = this.users.get(userId);
+    if (
+      !user ||
+      user.lifecycle !== 'ACTIVE' ||
+      !user.mfaSecretCiphertext ||
+      !user.mfaRecoveryHashes?.includes(codeHash)
+    ) {
+      return false;
+    }
+    this.users.set(userId, {
+      ...user,
+      mfaRecoveryHashes: user.mfaRecoveryHashes.filter((hash) => hash !== codeHash),
+    });
+    return true;
+  }
+
   async bootstrapUser(user: User): Promise<boolean> {
     if (this.users.size) return false;
     this.users.set(user.id, structuredClone(user));
@@ -88,6 +119,19 @@ export class MemoryIdentityRepository implements IdentityRepository {
     );
 
     return session ? structuredClone(session) : null;
+  }
+
+  async touchSession(id: string, now: Date, cutoff: Date): Promise<boolean> {
+    const session = this.sessions.get(id);
+    if (
+      !session ||
+      session.revokedAt ||
+      session.expiresAt.getTime() <= now.getTime() ||
+      (session.lastActivityAt ?? session.createdAt).getTime() <= cutoff.getTime()
+    )
+      return false;
+    this.sessions.set(id, { ...session, lastActivityAt: now });
+    return true;
   }
 
   async revokeSession(sessionId: string, revokedAt: Date): Promise<void> {

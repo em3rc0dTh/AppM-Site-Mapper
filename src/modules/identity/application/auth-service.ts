@@ -5,6 +5,12 @@ import type {
 import type { SafeUser, SessionRecord, User } from '@/modules/identity/domain/entities';
 import { toSafeUser } from '@/modules/identity/domain/entities';
 import { hashPassword, verifyPassword } from '@/modules/identity/domain/password';
+import {
+  decryptMfaSecret,
+  hashMfaRecoveryCode,
+  matchTotpStep,
+} from '@/modules/identity/application/mfa-totp';
+import { assessNewPassword } from '@/modules/identity/application/password-policy';
 import { createSessionToken, hashSessionToken } from '@/modules/identity/domain/session-token';
 import type { Permission, Role } from '@/modules/identity/domain/roles';
 import { canManageRole, hasPermission } from '@/modules/identity/domain/roles';
@@ -15,10 +21,18 @@ import { failure, success, type Result } from '@/shared/domain/result';
 const LOGIN_LIMIT = 5;
 const LOGIN_WINDOW_MS = 15 * 60 * 1_000;
 const SESSION_TTL_MS = 8 * 60 * 60 * 1_000;
+const SESSION_IDLE_TTL_MS = 30 * 60 * 1_000;
+const ACTIVITY_WRITE_INTERVAL_MS = 5 * 60 * 1_000;
 
 export type AuthError =
   | 'INVALID_CREDENTIALS'
   | 'INVALID_INPUT'
+  | 'PASSWORD_COMPROMISED'
+  | 'PASSWORD_CHECK_UNAVAILABLE'
+  | 'MFA_REQUIRED'
+  | 'MFA_INVALID'
+  | 'MFA_KEY_NOT_CONFIGURED'
+  | 'MFA_ENROLLMENT_REQUIRED'
   | 'RATE_LIMITED'
   | 'SESSION_INVALID'
   | 'FORBIDDEN'
@@ -49,7 +63,17 @@ export class AuthService {
     email: string,
     password: string,
     throttleKey: string,
+    mfaCode?: string,
   ): Promise<Result<AuthenticatedSession, AuthError>> {
+    if (
+      !email.trim() ||
+      email.length > 254 ||
+      !password ||
+      password.length > 1024 ||
+      (mfaCode !== undefined && mfaCode.length > 35)
+    ) {
+      return failure('INVALID_INPUT');
+    }
     const now = this.clock();
 
     if (!(await this.throttle.consume(throttleKey, now, LOGIN_LIMIT, LOGIN_WINDOW_MS))) {
@@ -66,6 +90,32 @@ export class AuthService {
       return failure('INVALID_CREDENTIALS');
     }
 
+    if (user.mfaSecretCiphertext) {
+      if (!mfaCode) return failure('MFA_REQUIRED');
+      const secret = decryptMfaSecret(user.id, user.mfaSecretCiphertext);
+      if (!secret) return failure('MFA_KEY_NOT_CONFIGURED');
+      if (/^[0-9]{6}$/.test(mfaCode)) {
+        const step = matchTotpStep(secret, mfaCode, now.getTime());
+        if (
+          step === null ||
+          !(await this.repository.consumeMfaStep(user.id, user.mfaSecretCiphertext, step))
+        ) {
+          return failure('MFA_INVALID');
+        }
+      } else {
+        const recoveryHash = hashMfaRecoveryCode(user.id, mfaCode);
+        if (
+          !recoveryHash ||
+          !(await this.repository.consumeMfaRecoveryCode(user.id, recoveryHash))
+        ) {
+          return failure('MFA_INVALID');
+        }
+      }
+    } else if (process.env.SITE_MAPPER_MFA_REQUIRED === 'true') {
+      // Roll out only after account enrollment and recovery provisioning.
+      return failure('MFA_ENROLLMENT_REQUIRED');
+    }
+
     await this.throttle.reset(throttleKey);
 
     const token = createSessionToken();
@@ -74,6 +124,7 @@ export class AuthService {
       userId: user.id,
       tokenHash: hashSessionToken(token),
       createdAt: now,
+      lastActivityAt: now,
       expiresAt: new Date(now.getTime() + SESSION_TTL_MS),
       revokedAt: null,
     };
@@ -85,17 +136,27 @@ export class AuthService {
 
   async resolveSession(token: string): Promise<SafeUser | null> {
     const session = await this.repository.getSessionByTokenHash(hashSessionToken(token));
+    const now = this.clock();
+    if (!session || session.revokedAt || session.expiresAt.getTime() <= now.getTime()) {
+      return null;
+    }
 
-    if (!session || session.revokedAt || session.expiresAt.getTime() <= this.clock().getTime()) {
+    // Legacy records are compatible without a migration. An older session
+    // that has already been idle for 30 minutes must authenticate again.
+    const lastActivity = session.lastActivityAt ?? session.createdAt;
+    const idleCutoff = new Date(now.getTime() - SESSION_IDLE_TTL_MS);
+    if (!(lastActivity instanceof Date) || lastActivity.getTime() <= idleCutoff.getTime()) {
       return null;
     }
 
     const user = await this.repository.getUserById(session.userId);
+    if (!user || user.lifecycle !== 'ACTIVE') return null;
 
-    if (!user || user.lifecycle !== 'ACTIVE') {
-      return null;
+    // Avoid a write per HTTP request / SSE delivery. The periodic renewal
+    // checks session revocation and both deadlines atomically in storage.
+    if (now.getTime() - lastActivity.getTime() >= ACTIVITY_WRITE_INTERVAL_MS) {
+      if (!(await this.repository.touchSession(session.id, now, idleCutoff))) return null;
     }
-
     return toSafeUser(user);
   }
 
@@ -130,21 +191,23 @@ export class AuthService {
     currentPassword: string,
     newPassword: string,
   ): Promise<Result<SafeUser, AuthError>> {
-    const session = await this.repository.getSessionByTokenHash(hashSessionToken(token));
+    const sessionUser = await this.resolveSession(token);
+    if (!sessionUser) return failure('SESSION_INVALID');
+    const user = await this.repository.getUserById(sessionUser.id);
 
-    if (!session || session.revokedAt || session.expiresAt.getTime() <= this.clock().getTime()) {
-      return failure('SESSION_INVALID');
+    if (
+      !user ||
+      !(await this.throttle.consume('password-change:' + user.id, this.clock(), 5, 15 * 60_000))
+    ) {
+      return failure(user ? 'RATE_LIMITED' : 'INVALID_CREDENTIALS');
     }
 
-    const user = await this.repository.getUserById(session.userId);
-
-    if (!user || !(await verifyPassword(currentPassword, user.passwordHash))) {
+    if (!(await verifyPassword(currentPassword, user.passwordHash))) {
       return failure('INVALID_CREDENTIALS');
     }
 
-    if (newPassword.length < 12) {
-      return failure('INVALID_INPUT');
-    }
+    const policy = await assessNewPassword(newPassword);
+    if (policy !== 'ACCEPTED') return failure(policy);
 
     const updated: User = {
       ...user,
@@ -160,13 +223,9 @@ export class AuthService {
   }
 
   async updateOwnProfile(token: string, displayName: string): Promise<Result<SafeUser, AuthError>> {
-    const session = await this.repository.getSessionByTokenHash(hashSessionToken(token));
-
-    if (!session || session.revokedAt || session.expiresAt.getTime() <= this.clock().getTime()) {
-      return failure('SESSION_INVALID');
-    }
-
-    const user = await this.repository.getUserById(session.userId);
+    const sessionUser = await this.resolveSession(token);
+    if (!sessionUser) return failure('SESSION_INVALID');
+    const user = await this.repository.getUserById(sessionUser.id);
     const normalizedDisplayName = displayName.trim();
 
     if (!user) {
@@ -196,9 +255,10 @@ export class AuthService {
       return failure('BOOTSTRAP_CLOSED');
     }
 
-    if (password.length < 12 || !displayName.trim()) {
+    if (!email.trim() || email.length > 254 || !displayName.trim() || displayName.length > 120)
       return failure('INVALID_INPUT');
-    }
+    const policy = await assessNewPassword(password);
+    if (policy !== 'ACCEPTED') return failure(policy);
 
     const timestamp = nowIso();
     const user: User = {
@@ -234,9 +294,10 @@ export class AuthService {
     const email = normalizeEmail(input.email);
     const displayName = input.displayName.trim();
 
-    if (!email || !displayName || input.temporaryPassword.length < 12) {
+    if (!email || email.length > 254 || !displayName || displayName.length > 120)
       return failure('INVALID_INPUT');
-    }
+    const policy = await assessNewPassword(input.temporaryPassword);
+    if (policy !== 'ACCEPTED') return failure(policy);
 
     if (await this.repository.getUserByEmail(email)) {
       return failure('USER_EXISTS');

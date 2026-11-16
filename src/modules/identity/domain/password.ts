@@ -2,10 +2,15 @@ import { randomBytes, scrypt, timingSafeEqual } from 'node:crypto';
 
 const COST = 16_384;
 const BLOCK_SIZE = 8;
-const PARALLELIZATION = 1;
+const PARALLELIZATION = 5;
+const LEGACY_PARALLELIZATION = 1;
 const KEY_LENGTH = 64;
 
-function derive(password: string, salt: Buffer): Promise<Buffer> {
+function derive(
+  password: string,
+  salt: Buffer,
+  parallelization = PARALLELIZATION,
+): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     scrypt(
       password,
@@ -14,7 +19,7 @@ function derive(password: string, salt: Buffer): Promise<Buffer> {
       {
         cost: COST,
         blockSize: BLOCK_SIZE,
-        parallelization: PARALLELIZATION,
+        parallelization,
         maxmem: 64 * 1024 * 1024,
       },
       (error, derivedKey) => {
@@ -32,6 +37,9 @@ function derive(password: string, salt: Buffer): Promise<Buffer> {
 export async function hashPassword(password: string): Promise<string> {
   if (password.length < 12) {
     throw new Error('Password must contain at least 12 characters.');
+  }
+  if (password.length > 1024) {
+    throw new Error('Password exceeds the accepted maximum length.');
   }
 
   const salt = randomBytes(16);
@@ -54,7 +62,8 @@ export async function verifyPassword(password: string, encoded: string): Promise
     algorithm !== 'scrypt' ||
     cost !== String(COST) ||
     blockSize !== String(BLOCK_SIZE) ||
-    parallelization !== String(PARALLELIZATION) ||
+    (parallelization !== String(PARALLELIZATION) &&
+      parallelization !== String(LEGACY_PARALLELIZATION)) ||
     !saltEncoded ||
     !keyEncoded
   ) {
@@ -62,7 +71,11 @@ export async function verifyPassword(password: string, encoded: string): Promise
   }
 
   const expected = Buffer.from(keyEncoded, 'base64url');
-  const actual = await derive(password, Buffer.from(saltEncoded, 'base64url'));
+  const actual = await derive(
+    password,
+    Buffer.from(saltEncoded, 'base64url'),
+    Number(parallelization),
+  );
 
   return expected.length === actual.length && timingSafeEqual(expected, actual);
 }

@@ -59,3 +59,15 @@ These are not automatically satisfied by repository CI:
 G15 PASS means **the MK1 repository/software baseline is release-documented and CI-certified**.
 
 It does not turn unchecked environment items into completed facts.
+
+## Post-merge UAT MK1 v2.0 — 2026-11-16
+
+Application code target: `7a43be8161ef938dbd2da7b1586fefcd329fbd79` (PR #223 OWASP/MFA, #224 Alarm Rule Manager, #225 retire Operational Console, #226 Power Trace v2.1).
+
+- [x] Supplemental [UAT v2.0 plan](../certification/rfp-acceptance/10-UAT-MK1-V2-PLAN.md) and [execution register](../certification/rfp-acceptance/11-UAT-MK1-V2-RESULTS.md) documented.
+- [ ] UAT-001..UAT-603 applicable procedures executed on an identified runtime artifact (33 initial NOT_RUN).
+- [ ] Contractual ACC-001..ACC-018 executed on a frozen release (18 initial NOT_RUN).
+- [ ] Offline IAM/MFA/HTTPS, electrical thresholds, real A/B routes, OT/Metasys and recovery accepted with traceable evidence where applicable.
+- [ ] Field/customer acceptance sign-off obtained.
+
+**Never infer UAT PASS or production acceptance from GitHub CI PASS or merged PR status.** Historical CI and MVP evidence remains dated and unchanged.

@@ -57,6 +57,44 @@ export class MongoIdentityRepository implements IdentityRepository {
     return document ? withoutMongoId<User>(document) : null;
   }
 
+  async consumeMfaStep(userId: string, sealedSecret: string, step: number): Promise<boolean> {
+    const result = await this.users.updateOne(
+      {
+        id: userId,
+        lifecycle: 'ACTIVE',
+        mfaSecretCiphertext: sealedSecret,
+        $or: [{ mfaLastUsedStep: { $lt: step } }, { mfaLastUsedStep: { $exists: false } }],
+      },
+      { $max: { mfaLastUsedStep: step } },
+    );
+    return result.matchedCount === 1;
+  }
+
+  async consumeMfaRecoveryCode(userId: string, codeHash: string): Promise<boolean> {
+    const result = await this.users.updateOne(
+      {
+        id: userId,
+        lifecycle: 'ACTIVE',
+        mfaSecretCiphertext: { $exists: true },
+        mfaRecoveryHashes: codeHash,
+      },
+      [
+        {
+          $set: {
+            mfaRecoveryHashes: {
+              $filter: {
+                input: '$mfaRecoveryHashes',
+                as: 'hash',
+                cond: { $ne: ['$$hash', codeHash] },
+              },
+            },
+          },
+        },
+      ],
+    );
+    return result.matchedCount === 1;
+  }
+
   private async audit(actorId: string, action: string, targetId: string, session: ClientSession) {
     await this.database
       .collection('admin_audit')
@@ -162,7 +200,8 @@ export class MongoIdentityRepository implements IdentityRepository {
         user.lifecycle !== 'ACTIVE' ||
         user.role !== current.role ||
         user.passwordHash !== current.passwordHash ||
-        user.mustChangePassword !== current.mustChangePassword
+        user.mustChangePassword !== current.mustChangePassword ||
+        user.mfaSecretCiphertext !== current.mfaSecretCiphertext
       ) {
         await this.sessions.updateMany(
           { userId: user.id, revokedAt: null },
@@ -201,6 +240,22 @@ export class MongoIdentityRepository implements IdentityRepository {
   async getSessionByTokenHash(tokenHash: string): Promise<SessionRecord | null> {
     const document = await this.sessions.findOne({ tokenHash });
     return document ? withoutMongoId<SessionRecord>(document) : null;
+  }
+
+  async touchSession(id: string, now: Date, cutoff: Date): Promise<boolean> {
+    const result = await this.sessions.updateOne(
+      {
+        id,
+        revokedAt: null,
+        expiresAt: { $gt: now },
+        $or: [
+          { lastActivityAt: { $gt: cutoff } },
+          { lastActivityAt: { $exists: false }, createdAt: { $gt: cutoff } },
+        ],
+      },
+      { $max: { lastActivityAt: now } },
+    );
+    return result.matchedCount === 1;
   }
 
   async revokeSession(sessionId: string, revokedAt: Date): Promise<void> {

@@ -34,6 +34,80 @@ export interface AlarmPolicy {
     readonly recoverySamples: number;
     readonly severity?: AlarmSeverity;
   };
+  /** Optional managed rules: legacy voltage/overcurrent/powerLoss remain intact. */
+  readonly highVoltage?: {
+    readonly assertAboveV: number;
+    readonly clearBelowV: number;
+    readonly debounceSamples: number;
+    readonly recoverySamples: number;
+    readonly severity?: AlarmSeverity;
+  };
+  readonly voltageLoss?: {
+    readonly zeroToleranceV: number;
+    readonly clearAboveV: number;
+    readonly debounceSamples: number;
+    readonly recoverySamples: number;
+    readonly severity?: AlarmSeverity;
+  };
+  readonly lowCurrent?: {
+    readonly assertBelowA: number;
+    readonly clearAboveA: number;
+    readonly debounceSamples: number;
+    readonly recoverySamples: number;
+    readonly severity?: AlarmSeverity;
+  };
+  readonly loadLoss?: {
+    readonly zeroToleranceA: number;
+    readonly referenceMinA: number;
+    readonly expectedLoad: true;
+    readonly debounceSamples: number;
+    readonly recoverySamples: number;
+    readonly severity?: AlarmSeverity;
+  };
+  readonly suddenCurrentDrop?: {
+    readonly referenceCurrentA: number;
+    readonly dropPercent: number;
+    readonly clearDropPercent: number;
+    readonly debounceSamples: number;
+    readonly recoverySamples: number;
+    readonly severity?: AlarmSeverity;
+  };
+  readonly lowPower?: {
+    readonly assertBelowW: number;
+    readonly clearAboveW: number;
+    readonly debounceSamples: number;
+    readonly recoverySamples: number;
+    readonly severity?: AlarmSeverity;
+  };
+  readonly highPower?: {
+    readonly assertAboveW: number;
+    readonly clearBelowW: number;
+    readonly debounceSamples: number;
+    readonly recoverySamples: number;
+    readonly severity?: AlarmSeverity;
+  };
+  readonly noEnergyIncrement?: {
+    readonly maxDeltaKwh: number;
+    readonly windowMs: number;
+    readonly expectedLoad: true;
+    readonly debounceSamples: number;
+    readonly recoverySamples: number;
+    readonly severity?: AlarmSeverity;
+  };
+  readonly energyCounterReset?: {
+    readonly minDecrementKwh: number;
+    readonly debounceSamples: number;
+    readonly recoverySamples: number;
+    readonly severity?: AlarmSeverity;
+  };
+  readonly energyConsumptionAnomaly?: {
+    readonly minDeltaKwh: number;
+    readonly maxDeltaKwh: number;
+    readonly windowMs: number;
+    readonly debounceSamples: number;
+    readonly recoverySamples: number;
+    readonly severity?: AlarmSeverity;
+  };
   readonly createdAt: string;
   readonly updatedAt: string;
 }

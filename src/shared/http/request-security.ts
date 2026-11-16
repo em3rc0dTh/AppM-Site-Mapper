@@ -58,7 +58,7 @@ export async function readBoundedJson(
   limits: JsonBodyLimits = {},
 ): Promise<JsonBodyResult> {
   const contentType = request.headers.get('content-type')?.toLowerCase() ?? '';
-  if (!contentType.includes('application/json')) {
+  if (!/^application\/json(?:;|$)/.test(contentType.trim())) {
     return { ok: false, error: 'INVALID_CONTENT_TYPE' };
   }
 
@@ -128,33 +128,34 @@ export function isSafeMutationRequest(request: Request): boolean {
   const fetchSite = request.headers.get('sec-fetch-site')?.toLowerCase();
   if (fetchSite === 'cross-site') return false;
 
-  // Sec-Fetch-Site is a browser-controlled forbidden header. If the browser
-  // explicitly classified the request as same-origin, do not reject it merely
-  // because a framework/reverse proxy rewrote request.url internally.
-  if (fetchSite === 'same-origin') return true;
-
   const origin = request.headers.get('origin');
-  if (!origin) return true;
+  // A browser with a session cookie must supply same-origin fetch metadata
+  // or an explicit Origin. Non-browser Bearer collectors can omit both.
+  if (!origin) {
+    if (fetchSite === 'same-site') return false;
+    if (request.headers.has('cookie') && fetchSite !== 'same-origin') return false;
+    return true;
+  }
 
   try {
     const supplied = new URL(origin);
     const internal = new URL(request.url);
+    if (!['http:', 'https:'].includes(supplied.protocol)) return false;
     if (supplied.origin === internal.origin) return true;
 
     // Next.js/reverse proxies can expose an internal request.url origin while
     // preserving the browser-visible authority in Host/X-Forwarded-*.
     // Validate against that effective HTTP authority rather than special-casing
     // localhost/127.0.0.1 aliases.
+    const trusted = hasTrustedProxy(request);
     const host =
-      (hasTrustedProxy(request)
-        ? firstForwardedValue(request.headers.get('x-forwarded-host'))
-        : null) ?? firstForwardedValue(request.headers.get('host'));
+      (trusted ? firstForwardedValue(request.headers.get('x-forwarded-host')) : null) ??
+      firstForwardedValue(request.headers.get('host'));
     if (!host) return false;
 
     const proto =
-      (hasTrustedProxy(request)
-        ? firstForwardedValue(request.headers.get('x-forwarded-proto'))
-        : null) ?? internal.protocol.replace(':', '');
+      (trusted ? firstForwardedValue(request.headers.get('x-forwarded-proto')) : null) ??
+      internal.protocol.replace(':', '');
     const effective = new URL(`${proto}://${host}`);
     return supplied.origin === effective.origin;
   } catch {

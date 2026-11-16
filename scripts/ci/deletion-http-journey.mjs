@@ -40,6 +40,9 @@ async function req(method, path, data, expected = 200, authenticated = true) {
     method,
     headers: {
       ...(authenticated ? { cookie } : {}),
+      ...(authenticated && !['GET', 'HEAD'].includes(method)
+        ? { origin: new URL(base).origin }
+        : {}),
       ...(data === undefined ? {} : { 'content-type': 'application/json' }),
     },
     ...(data === undefined ? {} : { body: JSON.stringify(data) }),

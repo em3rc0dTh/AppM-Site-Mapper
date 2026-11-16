@@ -282,9 +282,9 @@ export function FullPowerTraceWorkbench({
       {trace ? (
         <>
           <div className="sm-trace-visual">
-            <FeedRoute feed="A" legs={feedA} selectedPathId={selectedPathId} />
+            <FeedRoute feed="A" legs={feedA} {...(selectedPathId ? { selectedPathId } : {})} />
             <Destination name={trace.root.name} kind={trace.root.kind} feedA={feedA} feedB={feedB} />
-            <FeedRoute feed="B" legs={feedB} selectedPathId={selectedPathId} />
+            <FeedRoute feed="B" legs={feedB} {...(selectedPathId ? { selectedPathId } : {})} />
           </div>
 
           {canReadTelemetry ? (

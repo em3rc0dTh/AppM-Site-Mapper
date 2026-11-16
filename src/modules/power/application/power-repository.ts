@@ -1,9 +1,0 @@
-import type { PowerPath } from '@/modules/power/domain/entities';
-
-export interface PowerRepository {
-  getById(id: string): Promise<PowerPath | null>;
-  listActive(): Promise<readonly PowerPath[]>;
-  listForAccessPort(accessPortId: string): Promise<readonly PowerPath[]>;
-  insert(path: PowerPath): Promise<void>;
-  replace(path: PowerPath): Promise<void>;
-}

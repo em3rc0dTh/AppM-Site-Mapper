@@ -55,11 +55,22 @@ export async function assessNewPassword(
     }
     const body = await response.text();
     if (body.length > 1_000_000) return 'PASSWORD_CHECK_UNAVAILABLE';
-    for (const line of body.split('\n')) {
-      const parts = line.trim().split(':');
-      if (parts[0] === suffix && Number(parts[1]) > 0) return 'PASSWORD_COMPROMISED';
+    // A 200 response is not sufficient evidence: reject malformed or empty
+    // range bodies rather than silently approving an unverified password.
+    let verifiedRows = 0;
+    let breached = false;
+    for (const rawLine of body.split('\n')) {
+      const line = rawLine.trim();
+      if (!line) continue;
+      const match = /^([A-F0-9]{35}):(0|[1-9][0-9]*)$/.exec(line);
+      if (!match) return 'PASSWORD_CHECK_UNAVAILABLE';
+      const count = Number(match[2]);
+      if (!Number.isSafeInteger(count)) return 'PASSWORD_CHECK_UNAVAILABLE';
+      verifiedRows += 1;
+      if (match[1] === suffix && count > 0) breached = true;
     }
-    return 'ACCEPTED';
+    if (verifiedRows === 0) return 'PASSWORD_CHECK_UNAVAILABLE';
+    return breached ? 'PASSWORD_COMPROMISED' : 'ACCEPTED';
   } catch {
     return 'PASSWORD_CHECK_UNAVAILABLE';
   }

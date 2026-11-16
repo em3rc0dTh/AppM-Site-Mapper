@@ -62,6 +62,16 @@ describe('new-password policy', () => {
     );
   });
 
+  it('fails closed for malformed or empty breach-corpus responses', async () => {
+    const samples = ['', 'garbage', 'BAD:42', '0'.repeat(35) + ':NaN', '0'.repeat(35) + ':-1'];
+    for (const sample of samples) {
+      const fakeFetch = async () => new Response(sample, { status: 200 });
+      await expect(
+        assessNewPassword('Unique-vault-test-2026', 'online', fakeFetch as typeof fetch),
+      ).resolves.toBe('PASSWORD_CHECK_UNAVAILABLE');
+    }
+  });
+
   it('fails closed when external breach screening is unavailable', async () => {
     const unavailable = async () => {
       throw new Error('offline');

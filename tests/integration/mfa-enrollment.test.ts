@@ -83,14 +83,13 @@ describe('Site Mapper TOTP MFA', () => {
       ok: false,
       error: 'MFA_REQUIRED',
     });
-    expect(
-      await auth.authenticate(
-        'admin@example.com',
-        'a strong initial password',
-        'mfa-confirm-replay',
-        code,
-      ),
-    ).toEqual({ ok: false, error: 'MFA_INVALID' });
+    const enrollmentReplay = await auth.authenticate(
+      'admin@example.com',
+      'a strong initial password',
+      'mfa-confirm-replay',
+      code,
+    );
+    expect(enrollmentReplay).toEqual({ ok: false, error: 'MFA_INVALID' });
 
     now = new Date('2026-11-16T08:00:31.000Z');
     const loginCode = codeFor(started.value.secret, now);
@@ -101,17 +100,13 @@ describe('Site Mapper TOTP MFA', () => {
       loginCode,
     );
     expect(valid.ok).toBe(true);
-    expect(
-      await auth.authenticate(
-        'admin@example.com',
-        'a strong initial password',
-        'mfa-4',
-        loginCode,
-      ),
-    ).toEqual({
-      ok: false,
-      error: 'MFA_INVALID',
-    });
+    const loginReplay = await auth.authenticate(
+      'admin@example.com',
+      'a strong initial password',
+      'mfa-4',
+      loginCode,
+    );
+    expect(loginReplay).toEqual({ ok: false, error: 'MFA_INVALID' });
 
     if (!valid.ok) throw new Error('expected TOTP login');
     now = new Date('2026-11-16T08:01:01.000Z');

@@ -47,6 +47,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
   const canReadIndustrialSettings = hasPermission(auth.value.role, 'settings:read');
   const t = await getTranslations('pages.device');
   const tf = await getTranslations('front01Ui');
+  const te = await getTranslations('equipmentEditor');
   const { deviceId } = await params;
   const repo = await createTopologyRepository();
   const service = new TopologyService(repo);
@@ -445,6 +446,12 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                   />
                   <details className="front01-equipment-technical-config" id="bdfb-access-ports">
                     <summary>{tf('technicalConfiguration')}</summary>
+                    <div className="front01-equipment-technical-identity">
+                      <span>{te('childMode')}: {node.childMode}</span>
+                      {node.telemetryPointPrefix ? (
+                        <span>{te('telemetryPrefix')}: {node.telemetryPointPrefix}</span>
+                      ) : null}
+                    </div>
                     <div className="front01-equipment-technical-grid">
                       <section>
                         <h3>{tf('ports')}</h3>

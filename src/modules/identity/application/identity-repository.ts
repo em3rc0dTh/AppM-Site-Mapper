@@ -10,6 +10,8 @@ export interface IdentityRepository {
   replaceUser(user: User, expected?: User, actorId?: string): Promise<void>;
   insertSession(session: SessionRecord, expectedUser?: User): Promise<void>;
   getSessionByTokenHash(tokenHash: string): Promise<SessionRecord | null>;
+  /** Atomically renew only non-revoked, non-expired, active sessions. */
+  touchSession(id: string, now: Date, cutoff: Date): Promise<boolean>;
   revokeSession(sessionId: string, revokedAt: Date): Promise<void>;
   revokeUserSessions(userId: string, revokedAt: Date): Promise<void>;
 }

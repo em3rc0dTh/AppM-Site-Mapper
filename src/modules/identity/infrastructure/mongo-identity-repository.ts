@@ -203,6 +203,22 @@ export class MongoIdentityRepository implements IdentityRepository {
     return document ? withoutMongoId<SessionRecord>(document) : null;
   }
 
+  async touchSession(id: string, now: Date, cutoff: Date): Promise<boolean> {
+    const result = await this.sessions.updateOne(
+      {
+        id,
+        revokedAt: null,
+        expiresAt: { $gt: now },
+        $or: [
+          { lastActivityAt: { $gt: cutoff } },
+          { lastActivityAt: { $exists: false }, createdAt: { $gt: cutoff } },
+        ],
+      },
+      { $max: { lastActivityAt: now } },
+    );
+    return result.matchedCount === 1;
+  }
+
   async revokeSession(sessionId: string, revokedAt: Date): Promise<void> {
     await this.sessions.updateOne({ id: sessionId }, { $set: { revokedAt } });
   }

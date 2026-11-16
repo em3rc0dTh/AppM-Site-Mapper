@@ -90,6 +90,19 @@ export class MemoryIdentityRepository implements IdentityRepository {
     return session ? structuredClone(session) : null;
   }
 
+  async touchSession(id: string, now: Date, cutoff: Date): Promise<boolean> {
+    const session = this.sessions.get(id);
+    if (
+      !session ||
+      session.revokedAt ||
+      session.expiresAt.getTime() <= now.getTime() ||
+      (session.lastActivityAt ?? session.createdAt).getTime() <= cutoff.getTime()
+    )
+      return false;
+    this.sessions.set(id, { ...session, lastActivityAt: now });
+    return true;
+  }
+
   async revokeSession(sessionId: string, revokedAt: Date): Promise<void> {
     const session = this.sessions.get(sessionId);
 

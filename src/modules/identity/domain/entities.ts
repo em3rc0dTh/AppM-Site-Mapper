@@ -25,6 +25,8 @@ export interface SessionRecord {
   readonly userId: string;
   readonly tokenHash: string;
   readonly createdAt: Date;
+  /** Absent in sessions created before idle timeout was introduced. */
+  readonly lastActivityAt?: Date;
   readonly expiresAt: Date;
   readonly revokedAt: Date | null;
 }

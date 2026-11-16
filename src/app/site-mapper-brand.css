@@ -76,14 +76,15 @@
   white-space: nowrap;
 }
 
-/* Canonical MK2 product header: AppManager SiteMapper Mk2 | cube | Home.
-   Shells may size the outer slot, but this component owns its internal geometry. */
+/* Canonical MK2 product header.
+   Approved reference: AppManager on the first line, SiteMapper Mk2 beneath it,
+   followed by the cube and the green Home control. */
 .sm-product-header {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 17px;
   min-width: 0;
-  padding: 0 16px 0 22px;
+  padding: 0 13px 0 14px;
   border-right: 1px solid #d4dfe7;
   color: inherit;
   text-decoration: none;
@@ -98,25 +99,26 @@
 .sm-product-header .sm-brand--compact .sm-brand-lockup {
   flex-direction: row-reverse;
   justify-content: flex-end;
-  gap: 14px;
+  gap: 16px;
 }
 
 .sm-product-header .sm-brand--compact .sm-brand-copy {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 7px;
+  display: grid;
+  justify-items: end;
+  gap: 4px;
 }
 
 .sm-product-header .sm-brand--compact .sm-brand-appmanager {
-  font-size: 24px;
-  line-height: 1.05;
+  font-size: 28px;
+  line-height: 0.98;
   font-weight: 400;
 }
 
 .sm-product-header .sm-brand--compact .sm-brand-product-line {
+  justify-self: end;
   gap: 6px;
-  font-size: 18px;
-  line-height: 1.05;
+  font-size: 15px;
+  line-height: 1;
 }
 
 .sm-product-header .sm-brand--compact .sm-brand-tagline {
@@ -124,28 +126,29 @@
 }
 
 .sm-product-header .sm-brand--compact .sm-brand-mark {
-  width: 35px;
-  height: 35px;
+  width: 42px;
+  height: 42px;
+  stroke-width: 1.45;
 }
 
 .sm-product-header-home {
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
-  flex: 0 0 36px;
-  border: 1px solid #c8d5df;
-  border-radius: 8px;
-  background: #fff;
-  color: #263a4a;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  border: 0;
+  border-radius: 10px;
+  background: #18b98f;
+  color: #fff;
 }
 
 .sm-product-header-home svg {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.7;
+  stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
 }

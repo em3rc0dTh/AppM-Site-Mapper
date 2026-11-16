@@ -75,7 +75,16 @@ async function handlePOST(request: Request) {
   );
 
   if (!result.ok) {
-    const status = result.error === 'USER_EXISTS' ? 409 : result.error === 'FORBIDDEN' ? 403 : 400;
+    const status =
+      result.error === 'PASSWORD_CHECK_UNAVAILABLE'
+        ? 503
+        : result.error === 'PASSWORD_COMPROMISED'
+          ? 422
+          : result.error === 'USER_EXISTS'
+            ? 409
+            : result.error === 'FORBIDDEN'
+              ? 403
+              : 400;
     return NextResponse.json({ error: result.error }, { status });
   }
 

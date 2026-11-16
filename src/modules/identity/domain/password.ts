@@ -33,6 +33,9 @@ export async function hashPassword(password: string): Promise<string> {
   if (password.length < 12) {
     throw new Error('Password must contain at least 12 characters.');
   }
+  if (password.length > 1024) {
+    throw new Error('Password exceeds the accepted maximum length.');
+  }
 
   const salt = randomBytes(16);
   const key = await derive(password, salt);

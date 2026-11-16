@@ -5,6 +5,7 @@ import type {
 import type { SafeUser, SessionRecord, User } from '@/modules/identity/domain/entities';
 import { toSafeUser } from '@/modules/identity/domain/entities';
 import { hashPassword, verifyPassword } from '@/modules/identity/domain/password';
+import { assessNewPassword } from '@/modules/identity/application/password-policy';
 import { createSessionToken, hashSessionToken } from '@/modules/identity/domain/session-token';
 import type { Permission, Role } from '@/modules/identity/domain/roles';
 import { canManageRole, hasPermission } from '@/modules/identity/domain/roles';
@@ -21,6 +22,8 @@ const ACTIVITY_WRITE_INTERVAL_MS = 5 * 60 * 1_000;
 export type AuthError =
   | 'INVALID_CREDENTIALS'
   | 'INVALID_INPUT'
+  | 'PASSWORD_COMPROMISED'
+  | 'PASSWORD_CHECK_UNAVAILABLE'
   | 'RATE_LIMITED'
   | 'SESSION_INVALID'
   | 'FORBIDDEN'
@@ -151,9 +154,8 @@ export class AuthService {
       return failure('INVALID_CREDENTIALS');
     }
 
-    if (newPassword.length < 12) {
-      return failure('INVALID_INPUT');
-    }
+    const policy = await assessNewPassword(newPassword);
+    if (policy !== 'ACCEPTED') return failure(policy);
 
     const updated: User = {
       ...user,
@@ -201,9 +203,9 @@ export class AuthService {
       return failure('BOOTSTRAP_CLOSED');
     }
 
-    if (password.length < 12 || !displayName.trim()) {
-      return failure('INVALID_INPUT');
-    }
+    if (!displayName.trim()) return failure('INVALID_INPUT');
+    const policy = await assessNewPassword(password);
+    if (policy !== 'ACCEPTED') return failure(policy);
 
     const timestamp = nowIso();
     const user: User = {
@@ -239,9 +241,9 @@ export class AuthService {
     const email = normalizeEmail(input.email);
     const displayName = input.displayName.trim();
 
-    if (!email || !displayName || input.temporaryPassword.length < 12) {
-      return failure('INVALID_INPUT');
-    }
+    if (!email || !displayName) return failure('INVALID_INPUT');
+    const policy = await assessNewPassword(input.temporaryPassword);
+    if (policy !== 'ACCEPTED') return failure(policy);
 
     if (await this.repository.getUserByEmail(email)) {
       return failure('USER_EXISTS');

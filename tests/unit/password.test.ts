@@ -16,3 +16,37 @@ describe('password hashing', () => {
     await expect(hashPassword('short')).rejects.toThrow('at least 12');
   });
 });
+
+import { createHash } from 'node:crypto';
+
+import { assessNewPassword } from '@/modules/identity/application/password-policy';
+
+describe('new-password policy', () => {
+  it('rejects common secrets and excessively large secrets without remote access', async () => {
+    await expect(assessNewPassword('password123456')).resolves.toBe('PASSWORD_COMPROMISED');
+    await expect(assessNewPassword('safe but short')).resolves.toBe('ACCEPTED');
+    await expect(assessNewPassword('x'.repeat(1025))).resolves.toBe('INVALID_INPUT');
+  });
+
+  it('detects a breached password via k-anonymity without exposing plaintext', async () => {
+    const password = 'Unique-vault-test-2026';
+    const sha1 = createHash('sha1').update(password).digest('hex').toUpperCase();
+    const lookup = async (url: string | URL | Request) => {
+      expect(String(url)).toBe('https://api.pwnedpasswords.com/range/' + sha1.slice(0, 5));
+      expect(String(url)).not.toContain(password);
+      return new Response(sha1.slice(5) + ':42\n', { status: 200 });
+    };
+    await expect(
+      assessNewPassword(password, 'online', lookup as typeof fetch),
+    ).resolves.toBe('PASSWORD_COMPROMISED');
+  });
+
+  it('fails closed when external breach screening is unavailable', async () => {
+    const unavailable = async () => {
+      throw new Error('offline');
+    };
+    await expect(
+      assessNewPassword('Unique-vault-test-2026', 'online', unavailable as typeof fetch),
+    ).resolves.toBe('PASSWORD_CHECK_UNAVAILABLE');
+  });
+});

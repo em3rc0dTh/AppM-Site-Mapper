@@ -57,11 +57,7 @@ async function handlePOST(request: Request) {
 
   if (!result.ok) {
     const status =
-      result.error === 'RATE_LIMITED'
-        ? 429
-        : result.error === 'MFA_KEY_NOT_CONFIGURED'
-          ? 503
-          : 401;
+      result.error === 'RATE_LIMITED' ? 429 : result.error === 'MFA_KEY_NOT_CONFIGURED' ? 503 : 401;
     return NextResponse.json({ error: result.error }, { status });
   }
 

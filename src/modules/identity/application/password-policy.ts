@@ -1,10 +1,7 @@
 import { createHash } from 'node:crypto';
 
 export type PasswordPolicyResult =
-  | 'ACCEPTED'
-  | 'INVALID_INPUT'
-  | 'PASSWORD_COMPROMISED'
-  | 'PASSWORD_CHECK_UNAVAILABLE';
+  'ACCEPTED' | 'INVALID_INPUT' | 'PASSWORD_COMPROMISED' | 'PASSWORD_CHECK_UNAVAILABLE';
 
 // Fast offline emergency denylist. It is NOT a replacement for the large,
 // updated breached-password corpus available through k-anonymous screening.

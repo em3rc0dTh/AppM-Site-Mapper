@@ -61,7 +61,11 @@ describe('Site Mapper TOTP MFA', () => {
     const mfa = new MfaService(repository, throttle, () => now);
     await auth.bootstrapSuperadmin('admin@example.com', 'a strong initial password', 'Admin');
 
-    const first = await auth.authenticate('admin@example.com', 'a strong initial password', 'mfa-1');
+    const first = await auth.authenticate(
+      'admin@example.com',
+      'a strong initial password',
+      'mfa-1',
+    );
     if (!first.ok) throw new Error('expected initial login');
 
     const started = await mfa.start(first.value.token, 'a strong initial password');
@@ -70,13 +74,22 @@ describe('Site Mapper TOTP MFA', () => {
     expect((await mfa.confirm(first.value.token, code)).ok).toBe(true);
     expect(await auth.resolveSession(first.value.token)).toBeNull();
 
-    expect(await auth.authenticate('admin@example.com', 'a strong initial password', 'mfa-2')).toEqual({
+    expect(
+      await auth.authenticate('admin@example.com', 'a strong initial password', 'mfa-2'),
+    ).toEqual({
       ok: false,
       error: 'MFA_REQUIRED',
     });
-    const valid = await auth.authenticate('admin@example.com', 'a strong initial password', 'mfa-3', code);
+    const valid = await auth.authenticate(
+      'admin@example.com',
+      'a strong initial password',
+      'mfa-3',
+      code,
+    );
     expect(valid.ok).toBe(true);
-    expect(await auth.authenticate('admin@example.com', 'a strong initial password', 'mfa-4', code)).toEqual({
+    expect(
+      await auth.authenticate('admin@example.com', 'a strong initial password', 'mfa-4', code),
+    ).toEqual({
       ok: false,
       error: 'MFA_INVALID',
     });
@@ -86,8 +99,9 @@ describe('Site Mapper TOTP MFA', () => {
     const next = codeFor(started.value.secret, now);
     expect((await mfa.disable(valid.value.token, 'a strong initial password', next)).ok).toBe(true);
     expect(await auth.resolveSession(valid.value.token)).toBeNull();
-    expect((await auth.authenticate('admin@example.com', 'a strong initial password', 'mfa-5')).ok)
-      .toBe(true);
+    expect(
+      (await auth.authenticate('admin@example.com', 'a strong initial password', 'mfa-5')).ok,
+    ).toBe(true);
   });
 
   it('fails closed when a mandatory-MFA account has not enrolled', async () => {
@@ -96,7 +110,9 @@ describe('Site Mapper TOTP MFA', () => {
     const throttle = new MemoryAuthThrottle();
     const auth = new AuthService(repository, throttle);
     await auth.bootstrapSuperadmin('admin@example.com', 'a strong initial password', 'Admin');
-    expect(await auth.authenticate('admin@example.com', 'a strong initial password', 'mfa-gate')).toEqual({
+    expect(
+      await auth.authenticate('admin@example.com', 'a strong initial password', 'mfa-gate'),
+    ).toEqual({
       ok: false,
       error: 'MFA_ENROLLMENT_REQUIRED',
     });

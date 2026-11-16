@@ -94,7 +94,11 @@ export function MfaPanel() {
                   onChange={(event) => setPassword(event.target.value)}
                 />
               </label>
-              <button type="button" disabled={busy || !password} onClick={() => void action('start')}>
+              <button
+                type="button"
+                disabled={busy || !password}
+                onClick={() => void action('start')}
+              >
                 {t('start')}
               </button>
             </>
@@ -117,7 +121,11 @@ export function MfaPanel() {
                   onChange={(event) => setCode(event.target.value)}
                 />
               </label>
-              <button type="button" disabled={busy || code.length !== 6} onClick={() => void action('confirm')}>
+              <button
+                type="button"
+                disabled={busy || code.length !== 6}
+                onClick={() => void action('confirm')}
+              >
                 {t('confirm')}
               </button>
             </>

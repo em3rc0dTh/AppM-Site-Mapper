@@ -45,7 +45,10 @@ async function handlePost(request: Request) {
   if (!parsed.value || typeof parsed.value !== 'object' || Array.isArray(parsed.value))
     return Response.json({ error: 'INVALID_REQUEST' }, { status: 400 });
   const body = parsed.value as Record<string, unknown>;
-  if (!hasOnlyKeys(body, ['action', 'currentPassword', 'code']) || !isBoundedString(body.action, 16))
+  if (
+    !hasOnlyKeys(body, ['action', 'currentPassword', 'code']) ||
+    !isBoundedString(body.action, 16)
+  )
     return Response.json({ error: 'INVALID_REQUEST' }, { status: 400 });
 
   const app = await service();

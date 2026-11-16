@@ -31,9 +31,11 @@ export class MfaService {
   ) {}
 
   private async account(token: string) {
-    const session = await new AuthService(this.repository, this.throttle, this.clock).resolveSession(
-      token,
-    );
+    const session = await new AuthService(
+      this.repository,
+      this.throttle,
+      this.clock,
+    ).resolveSession(token);
     if (!session || session.mustChangePassword) return null;
     return this.repository.getUserById(session.id);
   }

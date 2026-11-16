@@ -123,9 +123,7 @@ describe('request security', () => {
         jsonRequest('{}', { 'sec-fetch-site': 'same-site', cookie: 'appm_session=opaque' }),
       ),
     ).toBe(false);
-    expect(isSafeMutationRequest(jsonRequest('{}', { cookie: 'appm_session=opaque' }))).toBe(
-      false,
-    );
+    expect(isSafeMutationRequest(jsonRequest('{}', { cookie: 'appm_session=opaque' }))).toBe(false);
   });
 
   it('preserves origin-less machine-to-machine bearer ingestion', () => {

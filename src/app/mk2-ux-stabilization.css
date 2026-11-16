@@ -2168,91 +2168,6 @@
 }
 
 
-/* MK2 Room navigation identity and SVG tick hierarchy — acceptance correction. */
-/* The legacy Room shell overrode brand typography to ~10px. Restore the
-   shared Mk2 identity at a readable scale, without changing the 67px header. */
-.zip-app-shell.app-shell--blueprint .zip-topbar > .zip-brand {
-  width: 270px !important;
-  flex: 0 0 270px !important;
-  min-width: 0;
-  gap: 9px !important;
-  padding: 0 11px !important;
-  align-items: center;
-}
-.zip-app-shell.app-shell--blueprint .zip-brand .sm-brand-lockup {
-  gap: 8px;
-}
-.zip-app-shell.app-shell--blueprint .zip-brand .sm-brand-mark {
-  width: 30px !important;
-  height: 30px !important;
-  flex: 0 0 30px;
-}
-.zip-app-shell.app-shell--blueprint .zip-brand .sm-brand-appmanager {
-  font-size: 18px !important;
-  font-weight: 500 !important;
-  line-height: 1.05;
-}
-.zip-app-shell.app-shell--blueprint .zip-brand .sm-brand-product-line {
-  font-size: 15px !important;
-  gap: 5px;
-  line-height: 1.1;
-}
-.zip-app-shell.app-shell--blueprint .zip-brand .sm-brand-sitemapper {
-  font-size: 15px !important;
-}
-.zip-app-shell.app-shell--blueprint .zip-brand .sm-brand-mk {
-  font-size: 13px !important;
-}
-.zip-app-shell.app-shell--blueprint .zip-brand .zip-brand-home {
-  width: 42px !important;
-  height: 42px !important;
-  flex: 0 0 42px;
-  border-radius: 9px;
-}
-.zip-app-shell.app-shell--blueprint .zip-brand .zip-brand-home svg {
-  width: 22px !important;
-  height: 22px !important;
-}
-/* The separate Inicio link belongs in the tree's existing top row; do not
-   shrink it to tiny text or place it beneath the collapse action. */
-.zip-app-shell.app-shell--blueprint .telxius-tree-brand {
-  grid-template-columns: 18px minmax(0, 1fr) auto !important;
-  gap: 5px;
-  padding-right: 45px !important;
-}
-.zip-app-shell.app-shell--blueprint .telxius-tree-brand strong {
-  min-width: 0;
-  font-size: 13px !important;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-.zip-app-shell.app-shell--blueprint .telxius-tree-brand > a {
-  font-size: 14px !important;
-  font-weight: 650;
-  line-height: 1.4 !important;
-  color: #27577e !important;
-  white-space: nowrap;
-  text-decoration: none;
-}
-.zip-app-shell.app-shell--blueprint .telxius-tree-brand > a:focus-visible {
-  outline: 2px solid #247bb7;
-  outline-offset: 2px;
-}
-@media (max-width: 1199px) {
-  .zip-app-shell.app-shell--blueprint .zip-topbar > .zip-brand {
-    width: 250px !important;
-    flex-basis: 250px !important;
-    gap: 7px !important;
-    padding-inline: 8px !important;
-  }
-  .zip-app-shell.app-shell--blueprint .zip-brand .sm-brand-lockup {
-    gap: 5px;
-  }
-  .zip-app-shell.app-shell--blueprint .telxius-tree-brand {
-    gap: 4px;
-    padding-right: 39px !important;
-  }
-}
 /* The coordinates are 13px on-screen via BlueprintCanvas's SVG viewport
    measurement. Retain understated color and regular weight, never oversized
    bold ticks that compete with the physical cluster names. */
@@ -2303,54 +2218,6 @@
   outline: 2px solid #0051a5;
   outline-offset: 3px;
 }
-/* Preserve the brand hierarchy, but allocate enough horizontal room for the
-   complete "SiteMapper Mk2" string and the real Home control. */
-.zip-app-shell.app-shell--blueprint .zip-topbar > .zip-brand {
-  width: 315px !important;
-  flex-basis: 315px !important;
-}
-.zip-app-shell.app-shell--blueprint .zip-brand .sm-brand {
-  flex: 0 1 auto;
-  width: auto;
-}
-.zip-app-shell.app-shell--blueprint .zip-brand .sm-brand-copy,
-.zip-app-shell.app-shell--blueprint .zip-brand .sm-brand-product-line {
-  min-width: max-content;
-  overflow: visible;
-}
-.zip-app-shell.app-shell--blueprint .zip-brand .sm-brand-lockup {
-  gap: 10px;
-}
-.zip-app-shell.app-shell--blueprint .zip-brand .zip-brand-home {
-  margin-left: auto;
-}
-@media (max-width: 1199px) {
-  .zip-app-shell.app-shell--blueprint .zip-topbar > .zip-brand {
-    width: 282px !important;
-    flex-basis: 282px !important;
-  }
-  .zip-app-shell.app-shell--blueprint .zip-brand .sm-brand-lockup {
-    gap: 6px;
-  }
-}
-
-
-/* MK2 Room micro-polish: unambiguous navigation, balanced footer and brand. */
-/* Room has a working topbar Home button; the second Inicio link is
-   intentionally not rendered. Keep the tree identity and collapse control. */
-.zip-app-shell.app-shell--blueprint .telxius-tree-brand[data-home-link='hidden'] {
-  grid-template-columns: 18px minmax(0, 1fr) !important;
-  padding-right: 45px !important;
-}
-/* Full SiteMapper Mk2 lettering and both original brand controls need a
-   few pixels of separation, not another global typography pass. */
-.zip-app-shell.app-shell--blueprint .zip-topbar > .zip-brand {
-  width: 322px !important;
-  flex-basis: 322px !important;
-}
-.zip-app-shell.app-shell--blueprint .zip-brand .sm-brand-lockup {
-  gap: 12px !important;
-}
 /* Keep Restore Layout in the footer zone with deliberate bottom/right
    clearance. Do not add a floating overlay over surveyed room geometry. */
 .mk2-room-ergonomics .blueprint-legend {
@@ -2362,13 +2229,6 @@
   right: calc(var(--s03-inspector-width) + 18px) !important;
 }
 @media (max-width: 1199px) {
-  .zip-app-shell.app-shell--blueprint .zip-topbar > .zip-brand {
-    width: 292px !important;
-    flex-basis: 292px !important;
-  }
-  .zip-app-shell.app-shell--blueprint .zip-brand .sm-brand-lockup {
-    gap: 7px !important;
-  }
   .mk2-room-ergonomics .blueprint-legend {
     padding: 10px 12px 56px !important;
   }

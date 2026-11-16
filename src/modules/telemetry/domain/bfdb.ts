@@ -195,7 +195,13 @@ export function buildBfdbBreakerReadings(
           .find((candidate) => candidate !== null) ?? null;
       if (!mapping) continue;
       const resolved = byBreaker.get(mapping.targetId);
-      if (!resolved) continue;
+      // A stale binding must never project a field meter's point onto a
+      // different physical panel/position (e.g. slave 3/A2 onto slave 5/B3).
+      if (
+        !resolved ||
+        resolved.panelLabel !== point.panelLabel ||
+        resolved.position !== point.panelPosition
+      ) continue;
 
       const accepts = (name: BfdbMetric) => mapping.metrics.has(name);
       const voltageV = accepts('VOLTAGE')

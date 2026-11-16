@@ -202,10 +202,10 @@ export function FullPowerTraceWorkbench({
 
   useEffect(() => {
     const controller = new AbortController();
-    void refresh(controller.signal);
+    const initial = window.setTimeout(() => void refresh(controller.signal), 0);
     const poll = window.setInterval(() => void refresh(controller.signal), 60_000);
     const tick = window.setInterval(() => setClock(Date.now()), 30_000);
-    return () => { controller.abort(); window.clearInterval(poll); window.clearInterval(tick); };
+    return () => { controller.abort(); window.clearTimeout(initial); window.clearInterval(poll); window.clearInterval(tick); };
   }, [refresh]);
 
   const feedA = useMemo(() => trace?.feedA ?? [], [trace]);

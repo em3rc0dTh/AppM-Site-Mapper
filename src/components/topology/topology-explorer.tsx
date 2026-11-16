@@ -219,15 +219,15 @@ export function TopologyExplorer({
                   <div className="topology-unlocated-inline" aria-label={t('unsurveyedInventory')}>
                     <strong>{t('unlocated', { count: unlocated.length })}</strong>
                     {unlocated.map((entry) => (
-                      <button
+                      <Link
                         key={entry.node.id}
-                        type="button"
+                        href={entry.href}
                         className={selected === entry.node.id ? 'is-selected' : ''}
-                        onClick={() => setSelected(entry.node.id)}
-                        onDoubleClick={() => window.location.assign(entry.href)}
+                        onMouseEnter={() => setSelected(entry.node.id)}
+                        onFocus={() => setSelected(entry.node.id)}
                       >
-                        {entry.node.name} · {t('inspectAction')}
-                      </button>
+                        {entry.node.name} ↗
+                      </Link>
                     ))}
                   </div>
                 )}

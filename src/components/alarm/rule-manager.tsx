@@ -396,9 +396,7 @@ export function RuleManager({
                         key={targetKey(target.scope, target.id)}
                         type="button"
                         role="option"
-                        aria-selected={
-                          targetKey(target.scope, target.id) === selectedTarget
-                        }
+                        aria-selected={targetKey(target.scope, target.id) === selectedTarget}
                         onMouseDown={(event) => {
                           event.preventDefault();
                           chooseTarget(target);

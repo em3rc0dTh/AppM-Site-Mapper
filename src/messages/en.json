@@ -2607,6 +2607,7 @@
     "relatedConditions": "relatedConditions",
     "relatedDesc": "relatedDesc",
     "activeConditions": "activeConditions",
-    "inspectEvidence": "inspectEvidence"
+    "inspectEvidence": "inspectEvidence",
+    "configureBreakerAlarmRules": "Inspect and configure breaker alarm policies"
   }
 }

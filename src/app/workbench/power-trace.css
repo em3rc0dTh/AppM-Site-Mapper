@@ -1,4 +1,4 @@
-/* Power Trace v2.1 — detached operational window, no AppShell/overlay. */
+/* Power Trace v2.1 — detached operational content inside the shared MK2 workbench shell. */
 html:has(.sm-power-trace-workbench),
 body:has(.sm-power-trace-workbench) {
   background: #f7faff;
@@ -51,22 +51,6 @@ body:has(.sm-power-trace-workbench) {
   font-size: 23px;
   letter-spacing: -0.025em;
   color: #11264b;
-}
-.sm-trace-brand {
-  display: flex;
-  gap: 7px;
-  align-items: center;
-  color: #146ce8;
-  font-size: 20px;
-  white-space: nowrap;
-}
-.sm-trace-brand b {
-  color: #14264d;
-  font-size: 15px;
-}
-.sm-trace-heading-divider {
-  height: 28px;
-  border-left: 1px solid #c1d0e2;
 }
 .sm-trace-version {
   border: 1px solid #c5dcfd;

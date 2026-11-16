@@ -275,9 +275,3 @@ The retest record must identify both the superseded and new release SHAs.
 The RFP's ACC-001..ACC-018 remain the contractual baseline and their original result register remains unchanged. The merged #223–#226 software code baseline `7a43be8161ef938dbd2da7b1586fefcd329fbd79` adds security/MFA, Alarm Rule Manager, retirement of Operational Console and detached Power Trace v2.1 acceptance.
 
 Use [10-UAT-MK1-V2-PLAN.md](10-UAT-MK1-V2-PLAN.md) for the 33 supplemental UAT procedures and [11-UAT-MK1-V2-RESULTS.md](11-UAT-MK1-V2-RESULTS.md) for their initially `NOT_RUN` execution register. The reference commit is a **code target, not a deployed or accepted release**; the actual runtime SHA, image digest, environment and provenance must be frozen using [09-RELEASE-IDENTIFICATION.md](09-RELEASE-IDENTIFICATION.md). No customer data or infrastructure may be altered by a documentation update.
-
-## 15. MK1 v2.0 post-merge supplemental UAT (2026-11-16)
-
-ACC-001..018 remain the contractual baseline and their result register is unchanged. The merged #223–#226 code target `7a43be8161ef938dbd2da7b1586fefcd329fbd79` adds security/MFA, Alarm Rule Manager, retirement of Operational Console and detached Power Trace v2.1 acceptance.
-
-Use [10-UAT-MK1-V2-PLAN.md](10-UAT-MK1-V2-PLAN.md) for 33 supplemental UAT procedures and [11-UAT-MK1-V2-RESULTS.md](11-UAT-MK1-V2-RESULTS.md) for their initially `NOT_RUN` register. This SHA is a **code target, not a deployed or accepted release**; runtime SHA, image digest, environment and provenance must be frozen using [09-RELEASE-IDENTIFICATION.md](09-RELEASE-IDENTIFICATION.md). Documentation-only changes must not alter customer data or infrastructure.

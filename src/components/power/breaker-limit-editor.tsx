@@ -49,6 +49,7 @@ export function BreakerLimitEditor({
   onClose: () => void;
 }>) {
   const t = useTranslations('breakerLimits');
+  const tr = useTranslations('alarmRules');
   const [data, setData] = useState<LimitsView | null>(null);
   const [history, setHistory] = useState<readonly Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -201,9 +202,9 @@ export function BreakerLimitEditor({
           <div className="sm-breaker-limit-actions">
             <Link
               href={'/alarms/rules?breakerId=' + encodeURIComponent(breakerId)}
-              title="Inspect and configure breaker alarm policies"
+              title={tr('configureBreakerAlarmRules')}
             >
-              Alarm Rules
+              {tr('alarmRules')}
             </Link>
             <button type="button" onClick={onClose} aria-label={t('close')}>
               ✕

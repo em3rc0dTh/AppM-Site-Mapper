@@ -663,7 +663,7 @@ export function BlueprintCanvas({
       <footer className="blueprint-legend">
         <StatusBadge tone="accent">{t('clusters', { count: clusters.length })}</StatusBadge>
         <StatusBadge tone="accent">{t('racks', { count: racks.length })}</StatusBadge>
-        <StatusBadge>{t('tiles', { count: slots.length })}</StatusBadge>
+        {slots.length > 0 && <StatusBadge>{t('tiles', { count: slots.length })}</StatusBadge>}
         <span>{tool === 'pan' ? t('panHelp') : t('selectHelp')}</span>
       </footer>
       {focusedRackId && (

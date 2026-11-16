@@ -310,8 +310,6 @@ export function TopologyExplorer({
         <section>
           <h3>{t('info')}</h3>
           <dl>
-            <dt>{t('type')}</dt>
-            <dd>{displayKind(focusedNode.kind)}</dd>
             <dt>{t('contained')}</dt>
             <dd>{item ? (item.directChildCount ?? '—') : items.length}</dd>
             <dt>{t('status')}</dt>
@@ -330,12 +328,6 @@ export function TopologyExplorer({
             )}
           </dl>
         </section>
-        {item ? (
-          <Link className="mk-primary zip-open-action" href={item.href}>
-            ↗ {t('openAction')}{' '}
-            {item.node.kind === 'ROOM_SUBSTRUCTURE' ? t('roomType') : displayKind(item.node.kind)}
-          </Link>
-        ) : null}
         <ThradexAttribution variant="inspector" />
       </aside>
     </section>

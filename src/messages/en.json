@@ -2608,6 +2608,12 @@
     "relatedDesc": "relatedDesc",
     "activeConditions": "activeConditions",
     "inspectEvidence": "inspectEvidence",
-    "configureBreakerAlarmRules": "Inspect and configure breaker alarm policies"
+    "configureBreakerAlarmRules": "Inspect and configure breaker alarm policies",
+    "allMetrics": "All metrics",
+    "allBreakers": "All breakers",
+    "draft": "Draft",
+    "draftPending": "Draft / Pending",
+    "loadLossCandidate": "Candidate: LOAD_LOSS",
+    "noLoadLossCandidate": "No Load Loss candidate"
   }
 }

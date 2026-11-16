@@ -67,6 +67,32 @@ The five Equipment composition screens (CHASSIS, SHELF, FRAME, PANEL, CIRCUIT_BR
 
 No presentation sample value was used to replace runtime data. The global AppManager identity, operational state logic and physical QDF-2/4/5 overview layout are unchanged.
 
+## Operator language — technical detail on demand (Nov 16)
+
+Goal: each always-visible phrase must either help the operator understand the asset, its readings, its condition, or the next useful action. Do not equate **installed**, **has readings**, and **operational**.
+
+The presentation layer now:
+- Rewords live-coverage summaries to **Equipment/positions/panels with readings**, using the existing real projection and its actual denominators. A receipt with clock skew may still have readings; it must not be mislabeled healthy.
+- Fixes Spanish singular/plural grammar for sets, frames, panels, positions and registered terminals; uses concise count labels.
+- Moves the hierarchical aggregation method into the existing composition's expandable technical detail, keeping the number of reporting descendant circuits and direct-child mean method intact.
+- Keeps allowed child Equipment types in **Configure Equipment** rather than the page heading; lifecycle, child mode and telemetry identifier remain inspectable in configuration detail.
+- Shows the focused Breaker's **last packet receipt in America/Lima**, derived from the original `receivedAt` timestamp without touching the stored UTC/source value. The original timestamp, MQTT source identifier, and diagnostic remain available on demand.
+- Replaces the physical terminal metadata sentence with a simple registered-terminal count, retaining the original physical terminals and connections; retains the front-facing orientation cue.
+- Leaves SNMP measurements and critical qualifiers such as **NO VERIFICADO**, shared inputs and unavailable capacity visible, without asserting fabricated electrical limits.
+
+| Check | Expected local behavior |
+| --- | --- |
+| Chassis/Shelf/Frame | Counts describe actual installed and reporting equipment; the technical aggregation explanation opens on request |
+| Panel | All 24 positions, actual V/I/P/E measurements, and status/alarm columns stay intact; installed and reporting are not conflated |
+| Breaker | Last receipt is legible in Lima time. Raw timestamp and MQTT source are accessible in technical detail. LIVE/CLOCK SKEW/STALE/CONFLICT status remains discernible |
+| Equipment header | No customer-facing raw MQTT point prefix or allowed-child-type policy; those remain accessible through technical/configuration sections |
+| Terminals | Original number of registered terminals and the front-side ports remain operable; no unprovisioned ports are fabricated |
+| i18n | Spanish and English show complete meaningful labels and correct grammatical count handling |
+| Roles | Only previously authorized users can edit configuration; technical disclosures do not grant new actions |
+| Falsifiability | Never call a device "operative" merely because it has received readings. Do not reinterpret a packet receive timestamp as the underlying sensor observation timestamp |
+
+**Still pending operator sign-off** at local widths and zoom levels. No tests/builds/deployments have been run for this copy pass.
+
 ## Manual local acceptance (after checkout)
 
 Review the feature branch using the existing local environment and seeded/connected data. Compare against the approved MK2 screenshot.

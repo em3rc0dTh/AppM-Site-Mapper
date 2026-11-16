@@ -61,6 +61,15 @@ export class AuthService {
     throttleKey: string,
     mfaCode?: string,
   ): Promise<Result<AuthenticatedSession, AuthError>> {
+    if (
+      !email.trim() ||
+      email.length > 254 ||
+      !password ||
+      password.length > 1024 ||
+      (mfaCode !== undefined && mfaCode.length > 35)
+    ) {
+      return failure('INVALID_INPUT');
+    }
     const now = this.clock();
 
     if (!(await this.throttle.consume(throttleKey, now, LOGIN_LIMIT, LOGIN_WINDOW_MS))) {

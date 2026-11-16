@@ -29,6 +29,26 @@ Implement the accepted light-theme MK2 frame, grounded in the November 13 UX rev
 - Arbitrary new metrics, circuit descriptions, alarm states or inspector fields not backed by runtime data.
 - Deploying to TFARM04 or merging to main.
 
+## Equipment composition ergonomics — accepted TO-BE (Nov 16)
+
+The AS-IS screenshots for **Chassis → Shelf → Frame → Panel → Circuit Breaker** are the source of truth, including content below the initial fold. The AI visual drafts are **layout guidance only**; they are not a license to introduce new metrics, statuses, identifiers, tabs, charts or equipment names.
+
+Only the existing equipment composition route is styled. The accepted BDFB/QDF physical stage is a separate interface and remains unchanged.
+
+| Level | Manual check on local live data |
+| --- | --- |
+| Chassis | Real Equipment identity/allowed types/configure/delete, child Shelves + Frames, exact occupancy; SNMP input-capacity values and A/B feed labels; complete four-metric legend; all physical input terminals with connection inspection; Manage Positions and Technical Configuration remain reachable |
+| Shelf | Real Frames and nested Panel lists, panel presence, live MQTT counts and alarm badges; original SNMP capacity/readiness labels, feed tags, metric legend, Manage Positions, Technical Configuration |
+| Frame | Actual panel names and positions (e.g. A3/A2), occupied counts, live coverage and alarms remain linked; SNMP block, legend, original actions/permissions preserved |
+| Panel | All 24 physical rows, installed and available positions, V/I/P/E, alarm and status columns; keep install-action buttons only where authorized; table retains horizontal and vertical scrolling and header remains visible while scrolling |
+| Circuit Breaker | Exact individual V/I/P/E readings, live/stale/clock-skew condition, MQTT source/timestamp, alarms and power-path action; registered physical terminal(s), add/secondary-equipment actions and technical configuration remain reachable |
+| Three-column contract | Topology, Canvas and Inspector still resize/restores with the same storage key; breadcrumb and selected Equipment remain valid |
+| Ergonomic density | Smaller gutters, compact cards, readable text, no artificial stretching or duplicate cards; no content overlays at the final scroll position |
+| Responsiveness | At 1440×900, 1920×1080 and with Inspector narrowed manually, all existing content and buttons still work without hidden fields |
+| Roles/data | Read-only users see no new editing ability; data, counts, alarms and statuses never come from reference renders |
+
+Do not merge this presentation pass until the operator confirms the local screenshots and checks the final-scroll regions of all five views.
+
 ## Manual local acceptance (after checkout)
 
 Review the feature branch using the existing local environment and seeded/connected data. Compare against the approved MK2 screenshot.

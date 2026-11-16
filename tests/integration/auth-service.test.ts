@@ -175,4 +175,24 @@ describe('AuthService', () => {
       app.bootstrapSuperadmin('admin@example.com', 'strong password 2026', 'a'.repeat(121)),
     ).resolves.toEqual({ ok: false, error: 'INVALID_INPUT' });
   });
+  it('throttles repeated current-password guesses without mutating the user', async () => {
+    const repository = new MemoryIdentityRepository();
+    const limiter = new MemoryAuthThrottle();
+    const service = new AuthService(repository, limiter);
+    await service.bootstrapSuperadmin('admin@example.com', 'secure unchanged password', 'Admin');
+    const login = await service.authenticate(
+      'admin@example.com',
+      'secure unchanged password',
+      'password-guessing-login',
+    );
+    if (!login.ok) throw new Error('Expected login');
+    for (let i = 0; i < 5; i += 1) {
+      await expect(
+        service.changeOwnPassword(login.value.token, 'wrong password', 'new safe password 2026'),
+      ).resolves.toEqual({ ok: false, error: 'INVALID_CREDENTIALS' });
+    }
+    await expect(
+      service.changeOwnPassword(login.value.token, 'secure unchanged password', 'new safe password 2026'),
+    ).resolves.toEqual({ ok: false, error: 'RATE_LIMITED' });
+  });
 });

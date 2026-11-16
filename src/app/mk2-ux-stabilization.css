@@ -1453,3 +1453,35 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+
+/* Equipment's original Topology tree must remain readable when navigating
+   deep physical ancestry. Wrapping is safer than ellipsis for long IDs.
+   Do not alter its three-column width, selected path or scroll ownership. */
+.mk2-equipment-ergonomics .telxius-topology-tree .telxius-tree-node > a {
+  min-height: 42px;
+  align-items: center;
+  padding-block: 7px;
+}
+.zip-app-shell:not(.app-shell--blueprint) .mk2-equipment-ergonomics .telxius-topology-tree .telxius-tree-copy strong {
+  font-size: 14px;
+  font-weight: 550;
+  line-height: 1.5;
+  text-overflow: clip;
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  letter-spacing: 0;
+}
+.mk2-equipment-ergonomics .telxius-topology-tree .telxius-tree-chevron {
+  font-size: 15px;
+}
+.mk2-equipment-ergonomics .telxius-topology-tree .topology-tree-selection {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.mk2-equipment-ergonomics .telxius-topology-tree .topology-tree-selection small,
+.mk2-equipment-ergonomics .telxius-topology-tree .topology-tree-selection a {
+  font-size: 14px;
+  line-height: 1.5;
+}

@@ -143,6 +143,18 @@ body:has(.sm-power-trace-workbench) {
   text-align: center;
   overflow: visible;
 }
+.sm-trace-destination { position: relative; }
+.sm-trace-destination::before,
+.sm-trace-destination::after {
+  content: '';
+  position: absolute;
+  top: 48%;
+  width: 32px;
+  height: 3px;
+  pointer-events: none;
+}
+.sm-trace-destination::before { left: -34px; background: #ee605d; }
+.sm-trace-destination::after { right: -34px; background: #20aa71; }
 .sm-trace-server { display: grid; place-items: center; width: 58px; height: 65px; background: #eaf3ff; border: 1px solid #99bbed; border-radius: 7px; color: #2875d9; font-size: 37px; }
 .sm-trace-destination-name { margin-top: 8px; font-size: 24px; color: #12336e; }
 .sm-trace-destination > small { font-size: 10px; font-weight: 750; color: #71849a; }
@@ -197,6 +209,7 @@ body:has(.sm-power-trace-workbench) {
   .sm-trace-visual { gap: 12px; grid-template-columns: minmax(0,1fr) 210px minmax(0,1fr); }
   .sm-trace-steps li { grid-template-columns: 95px minmax(0,1fr); }
   .sm-trace-metrics b { font-size: 13px; }
+  .sm-trace-destination::before, .sm-trace-destination::after { display: none; }
 }
 @media(max-width: 940px) {
   html:has(.sm-power-trace-workbench), body:has(.sm-power-trace-workbench) { min-width: 0; }

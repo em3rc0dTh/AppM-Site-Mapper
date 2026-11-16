@@ -72,11 +72,16 @@ function BreakerMeasurementStrip({ reading }: Readonly<{ reading: CompositionBre
         <details className="equipment-breaker-source-technical">
           <summary>{t('sourceTechnical')}</summary>
           {reading.sourceIdentity && (
-            <p>{t('sourceCaption')} {reading.sourceIdentity}
+            <p>
+              {t('sourceCaption')} {reading.sourceIdentity}
               {reading.sourcePointId ? ` / ${reading.sourcePointId}` : ` / ${t('ownSource')}`}
             </p>
           )}
-          {reading.receivedAt && <p>{t('rawTimestamp')} {reading.receivedAt}</p>}
+          {reading.receivedAt && (
+            <p>
+              {t('rawTimestamp')} {reading.receivedAt}
+            </p>
+          )}
           {reading.diagnostic && <p>{reading.diagnostic}</p>}
         </details>
       )}

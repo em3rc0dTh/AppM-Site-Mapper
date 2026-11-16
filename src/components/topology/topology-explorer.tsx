@@ -289,7 +289,6 @@ export function TopologyExplorer({
             <button onClick={() => setZoom((value) => Math.min(2, value + 0.1))}>+</button>
           </div>
           <button onClick={() => setZoom(1)}>{t('fit')}</button>
-
         </footer>
       </div>
 
@@ -302,9 +301,7 @@ export function TopologyExplorer({
           <span className="zip-inspector-glyph">{nodeGlyph(item?.node.kind ?? node.kind)}</span>
           <div>
             <h2>{(item?.node.name ?? node.name).toUpperCase()}</h2>
-            <small>
-              {displayKind(focusedNode.kind)}
-            </small>
+            <small>{displayKind(focusedNode.kind)}</small>
           </div>
         </div>
         <section>

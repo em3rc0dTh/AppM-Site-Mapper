@@ -446,9 +446,7 @@ export function EquipmentCompositionEditor({
       {isActive && configurationOpen ? (
         <form className="equipment-configuration-form" onSubmit={configureEquipment}>
           <p className="equipment-configuration-allowed">
-            {allowed.length
-              ? t('allowed', { types: allowed.map(label).join(', ') })
-              : t('anyType')}
+            {allowed.length ? t('allowed', { types: allowed.map(label).join(', ') }) : t('anyType')}
           </p>
           <label>
             {t('equipmentType')}

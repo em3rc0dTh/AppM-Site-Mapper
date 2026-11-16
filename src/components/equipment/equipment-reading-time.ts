@@ -2,10 +2,7 @@
  * Operator-facing wall time uses the fixed site timezone, America/Lima.
  * Never reinterpret the source timestamp as local time or alter telemetry.
  */
-export function formatEquipmentReadingTime(
-  raw: string | undefined,
-  locale: string,
-): string | null {
+export function formatEquipmentReadingTime(raw: string | undefined, locale: string): string | null {
   if (!raw) return null;
   const timestamp = new Date(raw);
   if (Number.isNaN(timestamp.getTime())) return null;

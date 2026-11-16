@@ -356,8 +356,7 @@ export function EquipmentContractViews({
                     total: summary.installedChildren,
                   })}
           </span>
-          {summary.reporting > 0 &&
-          ['CHASSIS', 'SHELF', 'SUB_SHELF', 'FRAME'].includes(type) ? (
+          {summary.reporting > 0 && ['CHASSIS', 'SHELF', 'SUB_SHELF', 'FRAME'].includes(type) ? (
             <span className="ec-circuit-reading-total">
               {t('reportingCircuits', { count: summary.reporting })}
             </span>
@@ -542,8 +541,13 @@ export function EquipmentContractViews({
           </p>
           <details className="ec-telemetry-source-details">
             <summary>{t('sourceTechnical')}</summary>
-            <p>{t('mqttSourceCaption')} {focusedBreakerReading?.sourceIdentity ?? t('noVerifiedBinding')}</p>
-            <p>{t('rawTimestamp')} {focusedBreakerReading?.receivedAt ?? '—'}</p>
+            <p>
+              {t('mqttSourceCaption')}{' '}
+              {focusedBreakerReading?.sourceIdentity ?? t('noVerifiedBinding')}
+            </p>
+            <p>
+              {t('rawTimestamp')} {focusedBreakerReading?.receivedAt ?? '—'}
+            </p>
           </details>
           <AlarmOccurrenceList entityId={root.id} descendants={false} />
           <DetachedWorkbenchButton

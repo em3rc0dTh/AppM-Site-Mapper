@@ -289,7 +289,9 @@
   background: #fff;
   box-shadow: none;
 }
-.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage .sm-bdfb-physical-panel[data-selected='true'] {
+.zip-bdfb-page[data-mk2-ux-physical='true']
+  .sm-bdfb-stage
+  .sm-bdfb-physical-panel[data-selected='true'] {
   border-color: #4388bb;
   background: #f0f7fd;
   box-shadow: none;
@@ -431,7 +433,10 @@
   font-size: 16px;
   font-weight: 600;
 }
-.zip-bdfb-page[data-mk2-ux-physical='true'] .front01-compact-inspector .zip-bdfb-inspector-id small {
+.zip-bdfb-page[data-mk2-ux-physical='true']
+  .front01-compact-inspector
+  .zip-bdfb-inspector-id
+  small {
   font-size: 11px;
   line-height: 1.5;
   overflow-wrap: anywhere;
@@ -460,11 +465,20 @@
   gap: 10px 8px;
 }
 @container (max-width: 305px) {
-  .zip-bdfb-page[data-mk2-ux-physical='true'] .front01-compact-inspector .front01-summary-facts dt:nth-of-type(2),
-  .zip-bdfb-page[data-mk2-ux-physical='true'] .front01-compact-inspector .front01-summary-facts dd:nth-of-type(2) {
+  .zip-bdfb-page[data-mk2-ux-physical='true']
+    .front01-compact-inspector
+    .front01-summary-facts
+    dt:nth-of-type(2),
+  .zip-bdfb-page[data-mk2-ux-physical='true']
+    .front01-compact-inspector
+    .front01-summary-facts
+    dd:nth-of-type(2) {
     grid-column: 1 / -1;
   }
-  .zip-bdfb-page[data-mk2-ux-physical='true'] .front01-compact-inspector .front01-summary-facts dd:nth-of-type(2) {
+  .zip-bdfb-page[data-mk2-ux-physical='true']
+    .front01-compact-inspector
+    .front01-summary-facts
+    dd:nth-of-type(2) {
     margin-top: -5px;
   }
 }
@@ -538,12 +552,16 @@
   min-width: 0;
   margin-left: auto;
 }
-.zip-bdfb-page[data-mk2-ux-physical='true'] .front01-stage-heading-controls .front01-stage-report-actions {
+.zip-bdfb-page[data-mk2-ux-physical='true']
+  .front01-stage-heading-controls
+  .front01-stage-report-actions {
   display: flex;
   flex: 0 1 auto;
   margin: 0;
 }
-.zip-bdfb-page[data-mk2-ux-physical='true'] .front01-stage-report-actions .sm-detached-workbench-button {
+.zip-bdfb-page[data-mk2-ux-physical='true']
+  .front01-stage-report-actions
+  .sm-detached-workbench-button {
   min-height: 34px;
   padding: 6px 10px;
   border-color: #a3c8e3;
@@ -603,7 +621,9 @@
   border-radius: 4px;
   box-shadow: none;
 }
-.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage .sm-bdfb-physical-panel[data-selected='true'] {
+.zip-bdfb-page[data-mk2-ux-physical='true']
+  .sm-bdfb-stage
+  .sm-bdfb-physical-panel[data-selected='true'] {
   border-color: var(--mk2-physical-selected);
   background: #edf6fc;
   box-shadow: none;
@@ -712,7 +732,9 @@
 }
 /* Read-only operators have no creation dock. Keep a clear reset area
    without moving or hiding the only existing layout-reset action. */
-.zip-bdfb-page[data-mk2-ux-physical='true'] .telxius-operational-stage:not(:has(> .operational-edit-dock)) > .operational-stage-body {
+.zip-bdfb-page[data-mk2-ux-physical='true']
+  .telxius-operational-stage:not(:has(> .operational-edit-dock))
+  > .operational-stage-body {
   padding-bottom: 48px !important;
 }
 @media (max-width: 899px) {
@@ -1122,7 +1144,6 @@
   }
 }
 
-
 /* MK2 Equipment readability pass — operator-first, without data removal. */
 /* Typography, not a redesign. Readability takes precedence over packing data
    into one viewport; long names/feeds may wrap and tables may scroll.
@@ -1414,15 +1435,27 @@
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
-.mk2-equipment-ergonomics .zip-device-inspector .front01-equipment-summary .zip-device-identity small {
+.mk2-equipment-ergonomics
+  .zip-device-inspector
+  .front01-equipment-summary
+  .zip-device-identity
+  small {
   font-size: 14px;
   line-height: 1.5;
 }
 .mk2-equipment-ergonomics .zip-device-inspector .front01-equipment-summary .front01-summary-facts {
   min-width: 0;
 }
-.mk2-equipment-ergonomics .zip-device-inspector .front01-equipment-summary .front01-summary-facts dt,
-.mk2-equipment-ergonomics .zip-device-inspector .front01-equipment-summary .front01-summary-facts dd {
+.mk2-equipment-ergonomics
+  .zip-device-inspector
+  .front01-equipment-summary
+  .front01-summary-facts
+  dt,
+.mk2-equipment-ergonomics
+  .zip-device-inspector
+  .front01-equipment-summary
+  .front01-summary-facts
+  dd {
   font-size: 14px !important;
   line-height: 1.55;
   overflow-wrap: anywhere;
@@ -1438,7 +1471,10 @@
   container-type: inline-size;
 }
 @container (max-width: 270px) {
-  .mk2-equipment-ergonomics .zip-device-inspector .front01-equipment-summary .front01-summary-facts {
+  .mk2-equipment-ergonomics
+    .zip-device-inspector
+    .front01-equipment-summary
+    .front01-summary-facts {
     grid-template-columns: minmax(0, 1fr) !important;
   }
 }
@@ -1454,7 +1490,6 @@
   }
 }
 
-
 /* Equipment's original Topology tree must remain readable when navigating
    deep physical ancestry. Wrapping is safer than ellipsis for long IDs.
    Do not alter its three-column width, selected path or scroll ownership. */
@@ -1463,7 +1498,11 @@
   align-items: center;
   padding-block: 7px;
 }
-.zip-app-shell:not(.app-shell--blueprint) .mk2-equipment-ergonomics .telxius-topology-tree .telxius-tree-copy strong {
+.zip-app-shell:not(.app-shell--blueprint)
+  .mk2-equipment-ergonomics
+  .telxius-topology-tree
+  .telxius-tree-copy
+  strong {
   font-size: 14px;
   font-weight: 550;
   line-height: 1.5;
@@ -1485,7 +1524,6 @@
   font-size: 14px;
   line-height: 1.5;
 }
-
 
 /* Operator copy: technical provenance remains available without headline noise. */
 .mk2-equipment-ergonomics .front01-equipment-technical-identity {
@@ -1574,16 +1612,13 @@
   color: #405b72;
   overflow-wrap: anywhere;
 }
-.mk2-equipment-ergonomics :is(
-  .ec-telemetry-calculation,
-  .ec-telemetry-source-details,
-  .equipment-breaker-source-technical
-) > summary:focus-visible {
+.mk2-equipment-ergonomics
+  :is(.ec-telemetry-calculation, .ec-telemetry-source-details, .equipment-breaker-source-technical)
+  > summary:focus-visible {
   outline: 2px solid #247bb7;
   outline-offset: 3px;
   border-radius: 3px;
 }
-
 
 /* MK2 physical infrastructure — source-grounded ergonomics for Network/Site/Structure/Level/Room. */
 /* Deliberately scoped: no QDF, Equipment, telemetry, RBAC or geometry changes. */
@@ -1719,11 +1754,7 @@
   right: 5%;
   bottom: 18%;
   opacity: 0.36;
-  background: repeating-linear-gradient(
-      90deg,
-      #7997b3 0 24px,
-      #e9f1f9 24px 35px
-    );
+  background: repeating-linear-gradient(90deg, #7997b3 0 24px, #e9f1f9 24px 35px);
   border-block: 4px solid #a8bbce;
 }
 .mk-explorer-page .mk2-building-floor-list {
@@ -1935,7 +1966,7 @@
   font-size: 17px;
   line-height: 1.4;
 }
-.mk2-room-ergonomics .zip-blueprint-toolbar :is(span,small),
+.mk2-room-ergonomics .zip-blueprint-toolbar :is(span, small),
 .mk2-room-ergonomics .mk-draft-toolbar button,
 .mk2-room-ergonomics .mk-lens-switch button {
   font-size: 14px;
@@ -1954,7 +1985,7 @@
   font-size: 16px;
   line-height: 1.4;
 }
-.mk2-room-ergonomics .room-general-info :is(dt,dd),
+.mk2-room-ergonomics .room-general-info :is(dt, dd),
 .mk2-room-ergonomics .mk2-room-cluster-list li {
   font-size: 14px;
   line-height: 1.55;
@@ -2006,7 +2037,6 @@
     margin-top: 8px;
   }
 }
-
 
 /* MK2 Room typographic hierarchy — readability correction against user screenshot 2026-11-16. */
 /* One page title, one canvas title, and one consistent operator-readable body
@@ -2167,7 +2197,6 @@
   }
 }
 
-
 /* The coordinates are 13px on-screen via BlueprintCanvas's SVG viewport
    measurement. Retain understated color and regular weight, never oversized
    bold ticks that compete with the physical cluster names. */
@@ -2176,7 +2205,6 @@
   letter-spacing: 0 !important;
   fill: #597186 !important;
 }
-
 
 /* MK2 Room acceptance refinement — no composition or geometry changes. */
 /* Leave the accepted coordinate-tick scaling untouched. Keep the physical
@@ -2234,7 +2262,6 @@
   }
 }
 
-
 /* Room topology header: keep TODOS clear of the collapse control. */
 /* The collapse button is absolutely positioned at the heading's right edge
    (34px wide, 7px inset). Reserve its full hit area plus breathing room so
@@ -2249,6 +2276,7 @@
 }
 .zip-app-shell.app-shell--blueprint
   .telxius-topology-tree[data-collapsed='false']
-  .telxius-tree-heading b {
+  .telxius-tree-heading
+  b {
   flex: 0 0 auto;
 }

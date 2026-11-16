@@ -253,8 +253,7 @@ export function BlueprintCanvas({
     const updateViewport = () => {
       const rect = svg.getBoundingClientRect();
       setSvgViewport((current) =>
-        Math.abs(current.width - rect.width) < 0.5 &&
-        Math.abs(current.height - rect.height) < 0.5
+        Math.abs(current.width - rect.width) < 0.5 && Math.abs(current.height - rect.height) < 0.5
           ? current
           : { width: rect.width, height: rect.height },
       );
@@ -328,9 +327,7 @@ export function BlueprintCanvas({
   // ticks, skip some displayed captions instead of shrinking them to microtext.
   // The underlying 600mm grid and every coordinate remain unchanged.
   const axisColumnStride =
-    pxPerSurveyUnit > 0
-      ? Math.max(1, Math.ceil((13 * 1.55) / (600 * pxPerSurveyUnit)))
-      : 1;
+    pxPerSurveyUnit > 0 ? Math.max(1, Math.ceil((13 * 1.55) / (600 * pxPerSurveyUnit))) : 1;
 
   return (
     <section className="blueprint-panel">
@@ -435,17 +432,19 @@ export function BlueprintCanvas({
           />
 
           <g className="blueprint-coordinate-labels" aria-hidden="true">
-            {labels.columns.filter((_, index) => index % axisColumnStride === 0).map((column) => (
-              <text
-                key={`column-${column.label}-${column.x}`}
-                x={column.x}
-                y={labels.minY - 320}
-                textAnchor="middle"
-                style={{ fontSize: axisFontSize }}
-              >
-                {column.label}
-              </text>
-            ))}
+            {labels.columns
+              .filter((_, index) => index % axisColumnStride === 0)
+              .map((column) => (
+                <text
+                  key={`column-${column.label}-${column.x}`}
+                  x={column.x}
+                  y={labels.minY - 320}
+                  textAnchor="middle"
+                  style={{ fontSize: axisFontSize }}
+                >
+                  {column.label}
+                </text>
+              ))}
             {labels.rows.map((row) => (
               <text
                 key={`row-${row.label}-${row.y}`}
@@ -589,8 +588,7 @@ export function BlueprintCanvas({
             // inside its recorded footprint at narrow widths.
             const rackFontSize = Math.min(
               pxPerSurveyUnit > 0 ? 14 / pxPerSurveyUnit : 210 / zoom,
-              (rack.rect.width * 0.9) /
-                (Math.max(1, rack.name.trim().length) * 0.62),
+              (rack.rect.width * 0.9) / (Math.max(1, rack.name.trim().length) * 0.62),
               rack.rect.depth * 0.7,
             );
             // Short physical identifiers (QDF2/4/5) must not be ellipsized.

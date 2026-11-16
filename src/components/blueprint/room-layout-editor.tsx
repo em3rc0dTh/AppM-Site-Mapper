@@ -320,56 +320,58 @@ export function RoomLayoutEditor({
       {(editing || (canWrite && draft.polygon.length < 3)) && (
         <header className="mk-draft-toolbar">
           {editing && <strong>{t('editDraft')}</strong>}
-          {canWrite && !editing && <button onClick={() => setEditing(true)}>{t('editRoom')}</button>}
+          {canWrite && !editing && (
+            <button onClick={() => setEditing(true)}>{t('editRoom')}</button>
+          )}
           {editing && (
-          <>
-            <button
-              disabled={busy || !!boundary || !!placement || !past.length}
-              onClick={() => {
-                const prev = past.at(-1);
-                if (prev) {
-                  setFuture((f) => [draft, ...f]);
-                  setDraft(prev);
-                  setPast((p) => p.slice(0, -1));
-                }
-              }}
-            >
-              {t('undo')}
-            </button>
-            <button
-              disabled={busy || !!boundary || !!placement || !future.length}
-              onClick={() => {
-                const next = future[0];
-                if (next) {
-                  setPast((p) => [...p, draft]);
-                  setDraft(next);
-                  setFuture((f) => f.slice(1));
-                }
-              }}
-            >
-              {t('redo')}
-            </button>
-            <button
-              disabled={busy}
-              onClick={() => {
-                setDraft(saved);
-                setPast([]);
-                setFuture([]);
-                setEditing(false);
-                setBoundary(null);
-                setPlacement(null);
-                setError('');
-              }}
-            >
-              {t('cancel')}
-            </button>
-            <button
-              disabled={busy || !!validation || !!boundary || !!placement}
-              onClick={() => void save()}
-            >
-              {busy ? t('saving') : t('saveLayout')}
-            </button>
-          </>
+            <>
+              <button
+                disabled={busy || !!boundary || !!placement || !past.length}
+                onClick={() => {
+                  const prev = past.at(-1);
+                  if (prev) {
+                    setFuture((f) => [draft, ...f]);
+                    setDraft(prev);
+                    setPast((p) => p.slice(0, -1));
+                  }
+                }}
+              >
+                {t('undo')}
+              </button>
+              <button
+                disabled={busy || !!boundary || !!placement || !future.length}
+                onClick={() => {
+                  const next = future[0];
+                  if (next) {
+                    setPast((p) => [...p, draft]);
+                    setDraft(next);
+                    setFuture((f) => f.slice(1));
+                  }
+                }}
+              >
+                {t('redo')}
+              </button>
+              <button
+                disabled={busy}
+                onClick={() => {
+                  setDraft(saved);
+                  setPast([]);
+                  setFuture([]);
+                  setEditing(false);
+                  setBoundary(null);
+                  setPlacement(null);
+                  setError('');
+                }}
+              >
+                {t('cancel')}
+              </button>
+              <button
+                disabled={busy || !!validation || !!boundary || !!placement}
+                onClick={() => void save()}
+              >
+                {busy ? t('saving') : t('saveLayout')}
+              </button>
+            </>
           )}
         </header>
       )}

@@ -94,7 +94,7 @@ export function ruleMetric(code: ManagedRuleCode): 'V' | 'A' | 'P' | 'E' {
 }
 
 /** Strict schema: refuse arbitrary Mongo-like objects, unknown fields and unsafe numeric settings. */
-export function parseRuleDraft(value: unknown): RuleDraftInput {
+export function parseRuleDraft(value: unknown, requireCommissioned = false): RuleDraftInput {
   if (!value || typeof value !== 'object' || Array.isArray(value))
     throw new Error('INVALID_RULE_DRAFT');
   const row = value as Record<string, unknown>;
@@ -144,7 +144,7 @@ export function parseRuleDraft(value: unknown): RuleDraftInput {
   for (const key of boolKeys) if (p[key] !== true)
     throw new Error('EXPECTED_LOAD_REQUIRED');
   const a = (key: string) => Number(p[key]);
-  if (
+  if (requireCommissioned && (
     (row.code === 'LOW_VOLTAGE' && a('clearAboveV') <= a('assertBelowV')) ||
     (row.code === 'HIGH_VOLTAGE' && a('clearBelowV') >= a('assertAboveV')) ||
     (row.code === 'VOLTAGE_LOSS' && a('clearAboveV') <= a('zeroToleranceV')) ||
@@ -157,7 +157,7 @@ export function parseRuleDraft(value: unknown): RuleDraftInput {
     (row.code === 'NO_ENERGY_INCREMENT' && a('windowMs') < 60_000) ||
     (row.code === 'ENERGY_CONSUMPTION_ANOMALY' && (
       a('windowMs') < 60_000 || a('maxDeltaKwh') <= a('minDeltaKwh')))
-  ) throw new Error('INVALID_RULE_HYSTERESIS');
+  )) throw new Error('INVALID_RULE_HYSTERESIS');
   return {
     ...(row.id ? { id: row.id as string } : {}),
     ...(row.expectedRevision ? { expectedRevision: row.expectedRevision as number } : {}),

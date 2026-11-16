@@ -280,7 +280,13 @@ export class FullPowerTraceService {
         entityName: sourceDevice?.name ?? sourceEquipment?.name ?? path.sourceAccessPortId,
         ...(sourceDevice?.kind === 'DEVICE' ? { deviceType: sourceDevice.deviceType } : {}),
         ...(source?.port
-          ? { accessPort: { id: source.port.id, label: source.port.name, ...(sourceFeed ? { feed: sourceFeed } : {}) } }
+          ? {
+              accessPort: {
+                id: source.port.id,
+                label: source.port.name,
+                ...(sourceFeed ? { feed: sourceFeed } : {}),
+              },
+            }
           : {}),
         ...(sourceDevice?.kind === 'DEVICE' && sourceDevice.serialNumber
           ? { deviceSerialNumber: sourceDevice.serialNumber }

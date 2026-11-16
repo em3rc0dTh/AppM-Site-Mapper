@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
+import { QRCodeSVG } from 'qrcode.react';
 
 interface MfaState {
   enabled: boolean;
@@ -112,10 +113,28 @@ export function MfaPanel() {
           ) : null}
           {!state.enabled && secret ? (
             <>
-              <p>{t('secretIntro')}</p>
-              <code>{secret}</code>
-              <p>{t('uri')}</p>
-              <code>{uri}</code>
+              {uri ? (
+                <div className="sm-mfa-qr-enrollment" role="group" aria-label={t('qrTitle')}>
+                  <p className="sm-mfa-qr-instructions">{t('qrInstructions')}</p>
+                  <div className="sm-mfa-qr-frame">
+                    <QRCodeSVG
+                      value={uri}
+                      title={t('qrTitle')}
+                      size={224}
+                      level="M"
+                      marginSize={4}
+                      bgColor="#ffffff"
+                      fgColor="#121923"
+                    />
+                  </div>
+                </div>
+              ) : null}
+              <details className="sm-mfa-manual">
+                <summary>{t('manualToggle')}</summary>
+                <p>{t('manualInstructions')}</p>
+                <code className="sm-mfa-manual-secret">{secret}</code>
+              </details>
+              <p className="sm-mfa-security-note">{t('securityNote')}</p>
               <label>
                 {t('code')}
                 <input

@@ -202,13 +202,15 @@ export function TopologyContextTree({
         {collapsed ? '›' : '‹'}
       </button>
       <div className="telxius-tree-collapsible-content" ref={treeContent}>
-        <header className="telxius-tree-brand" data-home-link={showHomeLink ? 'visible' : 'hidden'}>
-          <span className="telxius-tree-brand-icon">
-            <Icon name="network" />
-          </span>
-          <strong>APPMANAGER</strong>
-          {showHomeLink && <Link href="/workspace">{t('home')}</Link>}
-        </header>
+        {showHomeLink && (
+          <header className="telxius-tree-brand">
+            <span className="telxius-tree-brand-icon">
+              <Icon name="network" />
+            </span>
+            <strong>APPMANAGER</strong>
+            <Link href="/workspace">{t('home')}</Link>
+          </header>
+        )}
         <div className="telxius-tree-heading">
           <span>{t('topology')}</span>
           <b>{t('all')}</b>

@@ -9,6 +9,11 @@ export interface User extends DomainEntity {
   readonly role: Role;
   readonly passwordHash: string;
   readonly mustChangePassword: boolean;
+  /** Active and pending MFA secrets stay encrypted and never appear in SafeUser. */
+  readonly mfaSecretCiphertext?: string;
+  readonly mfaPendingSecretCiphertext?: string;
+  readonly mfaPendingStartedAt?: string;
+  readonly mfaLastUsedStep?: number;
 }
 
 export interface SafeUser {
@@ -18,6 +23,7 @@ export interface SafeUser {
   readonly role: Role;
   readonly lifecycle: User['lifecycle'];
   readonly mustChangePassword: boolean;
+  readonly mfaEnabled?: boolean;
 }
 
 export interface SessionRecord {
@@ -39,5 +45,6 @@ export function toSafeUser(user: User): SafeUser {
     role: user.role,
     lifecycle: user.lifecycle,
     mustChangePassword: user.mustChangePassword,
+    mfaEnabled: Boolean(user.mfaSecretCiphertext),
   };
 }

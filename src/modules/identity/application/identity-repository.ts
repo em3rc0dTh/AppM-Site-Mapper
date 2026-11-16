@@ -5,6 +5,8 @@ export interface IdentityRepository {
   listUsers(): Promise<readonly User[]>;
   getUserById(id: string): Promise<User | null>;
   getUserByEmail(email: string): Promise<User | null>;
+  /** Rejects reuse of an already accepted TOTP time step across replicas. */
+  consumeMfaStep(userId: string, sealedSecret: string, step: number): Promise<boolean>;
   bootstrapUser?(user: User): Promise<boolean>;
   insertUser(user: User, actorId?: string): Promise<void>;
   replaceUser(user: User, expected?: User, actorId?: string): Promise<void>;

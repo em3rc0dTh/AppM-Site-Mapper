@@ -57,6 +57,19 @@ export class MongoIdentityRepository implements IdentityRepository {
     return document ? withoutMongoId<User>(document) : null;
   }
 
+  async consumeMfaStep(userId: string, sealedSecret: string, step: number): Promise<boolean> {
+    const result = await this.users.updateOne(
+      {
+        id: userId,
+        lifecycle: 'ACTIVE',
+        mfaSecretCiphertext: sealedSecret,
+        $or: [{ mfaLastUsedStep: { $lt: step } }, { mfaLastUsedStep: { $exists: false } }],
+      },
+      { $max: { mfaLastUsedStep: step } },
+    );
+    return result.matchedCount === 1;
+  }
+
   private async audit(actorId: string, action: string, targetId: string, session: ClientSession) {
     await this.database
       .collection('admin_audit')
@@ -162,7 +175,8 @@ export class MongoIdentityRepository implements IdentityRepository {
         user.lifecycle !== 'ACTIVE' ||
         user.role !== current.role ||
         user.passwordHash !== current.passwordHash ||
-        user.mustChangePassword !== current.mustChangePassword
+        user.mustChangePassword !== current.mustChangePassword ||
+        user.mfaSecretCiphertext !== current.mfaSecretCiphertext
       ) {
         await this.sessions.updateMany(
           { userId: user.id, revokedAt: null },

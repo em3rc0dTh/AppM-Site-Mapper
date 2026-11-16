@@ -5,6 +5,7 @@ import type {
 import type { SafeUser, SessionRecord, User } from '@/modules/identity/domain/entities';
 import { toSafeUser } from '@/modules/identity/domain/entities';
 import { hashPassword, verifyPassword } from '@/modules/identity/domain/password';
+import { decryptMfaSecret, matchTotpStep } from '@/modules/identity/application/mfa-totp';
 import { assessNewPassword } from '@/modules/identity/application/password-policy';
 import { createSessionToken, hashSessionToken } from '@/modules/identity/domain/session-token';
 import type { Permission, Role } from '@/modules/identity/domain/roles';
@@ -24,6 +25,10 @@ export type AuthError =
   | 'INVALID_INPUT'
   | 'PASSWORD_COMPROMISED'
   | 'PASSWORD_CHECK_UNAVAILABLE'
+  | 'MFA_REQUIRED'
+  | 'MFA_INVALID'
+  | 'MFA_KEY_NOT_CONFIGURED'
+  | 'MFA_ENROLLMENT_REQUIRED'
   | 'RATE_LIMITED'
   | 'SESSION_INVALID'
   | 'FORBIDDEN'
@@ -54,6 +59,7 @@ export class AuthService {
     email: string,
     password: string,
     throttleKey: string,
+    mfaCode?: string,
   ): Promise<Result<AuthenticatedSession, AuthError>> {
     const now = this.clock();
 
@@ -69,6 +75,22 @@ export class AuthService {
       !(await verifyPassword(password, user.passwordHash))
     ) {
       return failure('INVALID_CREDENTIALS');
+    }
+
+    if (user.mfaSecretCiphertext) {
+      if (!mfaCode) return failure('MFA_REQUIRED');
+      const secret = decryptMfaSecret(user.id, user.mfaSecretCiphertext);
+      if (!secret) return failure('MFA_KEY_NOT_CONFIGURED');
+      const step = matchTotpStep(secret, mfaCode, now.getTime());
+      if (
+        step === null ||
+        !(await this.repository.consumeMfaStep(user.id, user.mfaSecretCiphertext, step))
+      ) {
+        return failure('MFA_INVALID');
+      }
+    } else if (process.env.SITE_MAPPER_MFA_REQUIRED === 'true') {
+      // Roll out only after account enrollment and recovery provisioning.
+      return failure('MFA_ENROLLMENT_REQUIRED');
     }
 
     await this.throttle.reset(throttleKey);

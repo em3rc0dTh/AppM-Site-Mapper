@@ -142,7 +142,48 @@ export class AlarmService {
       }
     }
 
-    return { occurrences, rollups, global };
+    // Group closely-timed active conditions on the same breaker for operator
+    // review. This is a presentation correlation: no cause is inferred and
+    // individual occurrences remain independently acknowledged/resolved.
+    const correlationGroups: NonNullable<AlarmSnapshot['correlationGroups']>[number][] = [];
+    const byTarget = new Map<string, AlarmOccurrenceView[]>();
+    for (const item of occurrences.filter((a) => a.lifecycle === 'ACTIVE')) {
+      const group = byTarget.get(item.targetId) ?? [];
+      group.push(item);
+      byTarget.set(item.targetId, group);
+    }
+    for (const [targetId, alarms] of byTarget) {
+      const ordered = alarms.sort((a, b) => a.openedAt.localeCompare(b.openedAt));
+      const clusters: AlarmOccurrenceView[][] = [];
+      for (const item of ordered) {
+        const cluster = clusters.at(-1);
+        const start = cluster?.[0];
+        if (
+          cluster &&
+          start &&
+          Date.parse(item.openedAt) - Date.parse(start.openedAt) <= 10 * 60_000
+        ) {
+          cluster.push(item);
+        } else clusters.push([item]);
+      }
+      for (const cluster of clusters.filter((x) => x.length > 1)) {
+        const ranked = [...cluster].sort(
+          (a, b) =>
+            severityRank[b.severity] - severityRank[a.severity] ||
+            Number(b.alarmCode === 'POWER_LOSS') - Number(a.alarmCode === 'POWER_LOSS') ||
+            Number(b.alarmCode === 'LOAD_LOSS') - Number(a.alarmCode === 'LOAD_LOSS'),
+        );
+        correlationGroups.push({
+          id: 'target:' + targetId + ':' + cluster[0]!.id,
+          targetId,
+          occurrenceIds: cluster.map((x) => x.id),
+          primaryCode: ranked[0]!.alarmCode,
+          highestSeverity: ranked[0]!.severity,
+          firstObservedAt: cluster[0]!.openedAt,
+        });
+      }
+    }
+    return { occurrences, rollups, global, correlationGroups };
   }
 
   async history(

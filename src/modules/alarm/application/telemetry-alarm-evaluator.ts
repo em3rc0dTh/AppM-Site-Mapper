@@ -20,7 +20,20 @@ import {
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type { EquipmentNode } from '@/modules/topology/domain/entities';
 
-type RuleCode = 'LOW_VOLTAGE' | 'OVERCURRENT' | 'POWER_LOSS';
+type RuleCode =
+  | 'LOW_VOLTAGE'
+  | 'OVERCURRENT'
+  | 'POWER_LOSS'
+  | 'HIGH_VOLTAGE'
+  | 'VOLTAGE_LOSS'
+  | 'LOW_CURRENT'
+  | 'LOAD_LOSS'
+  | 'SUDDEN_CURRENT_DROP'
+  | 'LOW_POWER'
+  | 'HIGH_POWER'
+  | 'NO_ENERGY_INCREMENT'
+  | 'ENERGY_COUNTER_RESET'
+  | 'ENERGY_CONSUMPTION_ANOMALY';
 type Counter = { assert: number; clear: number };
 
 export interface AutomaticTelemetryAlarmOptions {
@@ -101,6 +114,10 @@ function isPointMetric(metricName: string): boolean {
 export class TelemetryAlarmEvaluator {
   private readonly commands: AlarmCommandService;
   private readonly counters = new Map<string, Counter>();
+  private readonly lastManagedSampleAt = new Map<string, number>();
+  private readonly seenExpectedLoad = new Set<string>();
+  private readonly lastEnergyReading = new Map<string, { value: number; at: number }>();
+  private readonly energyWindows = new Map<string, { value: number; at: number }>();
   private readonly lastSeen = new Map<string, string>();
   private readonly automaticLossAfterMs: number;
   private readonly automaticRecoverySamples: number;
@@ -851,6 +868,159 @@ export class TelemetryAlarmEvaluator {
       );
     }
 
+    // Managed rules are evaluated only from finite, accepted metrics on the exact
+    // breaker Equipment target. Missing values never assert or resolve electrical alarms.
+    const powerW = metric(sample, 'powerW');
+    const energyKwh = metric(sample, 'energyKwh');
+    if (policy.highVoltage && voltageV !== null) {
+      const r = policy.highVoltage;
+      await this.evaluateBooleanRule(
+        policy,
+        sample,
+        'HIGH_VOLTAGE',
+        voltageV >= r.assertAboveV,
+        voltageV <= r.clearBelowV,
+        r.debounceSamples,
+        r.recoverySamples,
+        r.severity,
+        [
+          evidence(sample, 'VOLTAGE', voltageV, 'V', {
+            id: policy.id,
+            assertThreshold: r.assertAboveV,
+            clearThreshold: r.clearBelowV,
+          }),
+        ],
+      );
+    }
+    if (policy.voltageLoss && voltageV !== null) {
+      const r = policy.voltageLoss;
+      await this.evaluateBooleanRule(
+        policy,
+        sample,
+        'VOLTAGE_LOSS',
+        voltageV >= 0 && voltageV <= r.zeroToleranceV,
+        voltageV >= r.clearAboveV,
+        r.debounceSamples,
+        r.recoverySamples,
+        r.severity,
+        [
+          evidence(sample, 'VOLTAGE', voltageV, 'V', {
+            id: policy.id,
+            assertThreshold: r.zeroToleranceV,
+            clearThreshold: r.clearAboveV,
+          }),
+        ],
+      );
+    }
+    if (policy.lowCurrent && currentA !== null) {
+      const r = policy.lowCurrent;
+      await this.evaluateBooleanRule(
+        policy,
+        sample,
+        'LOW_CURRENT',
+        currentA >= 0 && currentA <= r.assertBelowA,
+        currentA >= r.clearAboveA,
+        r.debounceSamples,
+        r.recoverySamples,
+        r.severity,
+        [
+          evidence(sample, 'CURRENT', currentA, 'A', {
+            id: policy.id,
+            assertThreshold: r.assertBelowA,
+            clearThreshold: r.clearAboveA,
+          }),
+        ],
+      );
+    }
+    if (policy.loadLoss && currentA !== null) {
+      const r = policy.loadLoss;
+      if (currentA >= r.referenceMinA) this.seenExpectedLoad.add(policy.id);
+      const expected = r.expectedLoad === true && this.seenExpectedLoad.has(policy.id);
+      await this.evaluateBooleanRule(
+        policy,
+        sample,
+        'LOAD_LOSS',
+        expected && currentA >= 0 && currentA <= r.zeroToleranceA,
+        currentA >= r.referenceMinA,
+        r.debounceSamples,
+        r.recoverySamples,
+        r.severity,
+        [
+          evidence(sample, 'CURRENT', currentA, 'A', {
+            id: policy.id,
+            assertThreshold: r.zeroToleranceA,
+            clearThreshold: r.referenceMinA,
+          }),
+        ],
+      );
+    }
+    if (policy.suddenCurrentDrop && currentA !== null) {
+      const r = policy.suddenCurrentDrop;
+      if (currentA >= r.referenceCurrentA) this.seenExpectedLoad.add(policy.id + ':drop');
+      const seen = this.seenExpectedLoad.has(policy.id + ':drop');
+      const drop = Math.max(0, ((r.referenceCurrentA - currentA) / r.referenceCurrentA) * 100);
+      await this.evaluateBooleanRule(
+        policy,
+        sample,
+        'SUDDEN_CURRENT_DROP',
+        seen && drop >= r.dropPercent,
+        drop <= r.clearDropPercent,
+        r.debounceSamples,
+        r.recoverySamples,
+        r.severity,
+        [
+          evidence(sample, 'CURRENT', currentA, 'A', {
+            id: policy.id,
+            assertThreshold: r.dropPercent,
+            clearThreshold: r.clearDropPercent,
+          }),
+        ],
+      );
+    }
+    if (policy.lowPower && powerW !== null) {
+      const r = policy.lowPower;
+      await this.evaluateBooleanRule(
+        policy,
+        sample,
+        'LOW_POWER',
+        powerW <= r.assertBelowW,
+        powerW >= r.clearAboveW,
+        r.debounceSamples,
+        r.recoverySamples,
+        r.severity,
+        [
+          evidence(sample, 'POWER', powerW, 'W', {
+            id: policy.id,
+            assertThreshold: r.assertBelowW,
+            clearThreshold: r.clearAboveW,
+          }),
+        ],
+      );
+    }
+    if (policy.highPower && powerW !== null) {
+      const r = policy.highPower;
+      await this.evaluateBooleanRule(
+        policy,
+        sample,
+        'HIGH_POWER',
+        powerW >= r.assertAboveW,
+        powerW <= r.clearBelowW,
+        r.debounceSamples,
+        r.recoverySamples,
+        r.severity,
+        [
+          evidence(sample, 'POWER', powerW, 'W', {
+            id: policy.id,
+            assertThreshold: r.assertAboveW,
+            clearThreshold: r.clearBelowW,
+          }),
+        ],
+      );
+    }
+    if (energyKwh !== null && energyKwh >= 0) {
+      await this.evaluateEnergyRules(policy, sample, energyKwh);
+    }
+
     if (policy.powerLoss && voltageV !== null && currentA !== null) {
       await this.evaluateBooleanRule(
         policy,
@@ -868,6 +1038,98 @@ export class TelemetryAlarmEvaluator {
     }
   }
 
+  private async evaluateEnergyRules(
+    policy: AlarmPolicy,
+    sample: TelemetrySample,
+    energyKwh: number,
+  ): Promise<void> {
+    const at = Date.parse(sample.sourceObservedAt ?? sample.receivedAt);
+    if (!Number.isFinite(at)) return;
+    const last = this.lastEnergyReading.get(policy.id);
+    if (last && at <= last.at) return;
+    const delta = last ? energyKwh - last.value : null;
+    this.lastEnergyReading.set(policy.id, { value: energyKwh, at });
+
+    if (policy.energyCounterReset && delta !== null) {
+      const r = policy.energyCounterReset;
+      await this.evaluateBooleanRule(
+        policy,
+        sample,
+        'ENERGY_COUNTER_RESET',
+        delta < -r.minDecrementKwh,
+        delta >= 0,
+        r.debounceSamples,
+        r.recoverySamples,
+        r.severity,
+        [evidence(sample, 'ENERGY', energyKwh, 'kWh')],
+      );
+    }
+    const evaluateWindow = async (
+      code: 'NO_ENERGY_INCREMENT' | 'ENERGY_CONSUMPTION_ANOMALY',
+      windowMs: number,
+      minimum: number,
+      maximum: number,
+      debounceSamples: number,
+      recoverySamples: number,
+      severity: AlarmSeverity | undefined,
+    ) => {
+      const key = policy.id + '|' + code;
+      const baseline = this.energyWindows.get(key);
+      if (!baseline) {
+        this.energyWindows.set(key, { value: energyKwh, at });
+        return;
+      }
+      if (at - baseline.at < windowMs) return;
+      const consumed = energyKwh - baseline.value;
+      this.energyWindows.set(key, { value: energyKwh, at });
+      // A reset or rollover is evaluated separately. It is not low consumption.
+      if (consumed < 0) return;
+      const anomaly =
+        code === 'NO_ENERGY_INCREMENT'
+          ? consumed <= maximum
+          : consumed < minimum || consumed > maximum;
+      const recovered =
+        code === 'NO_ENERGY_INCREMENT'
+          ? consumed > maximum
+          : consumed >= minimum && consumed <= maximum;
+      await this.evaluateBooleanRule(
+        policy,
+        sample,
+        code,
+        anomaly,
+        recovered,
+        debounceSamples,
+        recoverySamples,
+        severity,
+        [evidence(sample, 'ENERGY', consumed, 'kWh')],
+      );
+    };
+    if (policy.noEnergyIncrement?.expectedLoad) {
+      const r = policy.noEnergyIncrement;
+      await evaluateWindow(
+        'NO_ENERGY_INCREMENT',
+        r.windowMs,
+        0,
+        r.maxDeltaKwh,
+        r.debounceSamples,
+        r.recoverySamples,
+        r.severity,
+      );
+    }
+    if (policy.energyConsumptionAnomaly) {
+      const r = policy.energyConsumptionAnomaly;
+      await evaluateWindow(
+        'ENERGY_CONSUMPTION_ANOMALY',
+        r.windowMs,
+        r.minDeltaKwh,
+        r.maxDeltaKwh,
+        r.debounceSamples,
+        r.recoverySamples,
+        r.severity,
+      );
+    }
+  }
+
   private async evaluateBooleanRule(
     policy: AlarmPolicy,
     sample: TelemetrySample,
@@ -880,6 +1142,14 @@ export class TelemetryAlarmEvaluator {
     evidenceRefs: readonly AlarmEvidenceRef[],
     confidence?: 'SUSPECTED',
   ): Promise<void> {
+    // Guard managed rules against duplicate or out-of-order MQTT packets. A replay
+    // must not satisfy multiple debounce samples or undo a recovery.
+    if (policy.id.startsWith('managed:')) {
+      const at = Date.parse(sample.sourceObservedAt ?? sample.receivedAt);
+      const key = policy.id + '|' + code;
+      if (!Number.isFinite(at) || at <= (this.lastManagedSampleAt.get(key) ?? -Infinity)) return;
+      this.lastManagedSampleAt.set(key, at);
+    }
     const counter = this.counter(policy, code);
     const correlationKey = this.correlationKey(policy, code);
     const active = await this.alarms.getActiveByCorrelationKey(correlationKey);

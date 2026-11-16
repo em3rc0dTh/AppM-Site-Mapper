@@ -156,7 +156,7 @@ MongoDB replica set
 TimescaleDB
 Telemetry Store
 Modbus sidecar
-Operational Console when enabled
+Operational Console: absent (retired; verify no old container remains)
 SNMP collector when selected
 ```
 

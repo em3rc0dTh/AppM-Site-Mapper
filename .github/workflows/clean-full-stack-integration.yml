@@ -254,7 +254,7 @@ jobs:
             sleep 2
           done
 
-      - name: Require Modbus and operational surfaces
+      - name: Require Site Mapper and Modbus surfaces (no retired console)
         run: |
           set -eu
           dc() {
@@ -262,7 +262,14 @@ jobs:
           }
 
           curl --fail --silent --show-error http://127.0.0.1:3000/login >/dev/null
-          curl --fail --silent --show-error http://127.0.0.1:3100/ >/dev/null
+          # This service is retired from the default Compose deployment.
+          if dc config --services | grep -qx 'operational-console'; then
+            echo "Retired operational-console unexpectedly exists in resolved Compose"
+            exit 1
+          fi
+          # Do not confuse an independently assigned CI Next.js port with the
+          # retired service. The acceptance target is Site Mapper :3000.
+          curl --fail --silent --show-error http://127.0.0.1:3000/api/health >/dev/null
 
           dc exec -T modbus-tcp node -e '
             const m=JSON.parse(process.env.MODBUS_SOURCE_UNITS_JSON||"{}");

@@ -7,7 +7,7 @@ Execute only after snapshot, change approval, independent admin access, and reco
 
 1. Identify actual OS, Docker Engine + Compose versions, host interfaces, gateway, DNS/DHCP authority and static/reserved IP.
 2. Record `docker compose config` with the exact environment and overlays used by that installation, redacting passwords and tokens before storing evidence.
-3. Enumerate bindings for Next.js :3000, MQTT :1883, Mongo :27017, Timescale :55432, console :3100, Modbus and telemetry store. Identify required OT ingress/egress.
+3. Enumerate bindings for Next.js :3000, MQTT :1883, Mongo :27017, Timescale :55432, Modbus and telemetry store. Verify that the retired Operational Console container and its :3100 listener are absent. Identify required OT ingress/egress.
 4. Verify whether TCP/443 and TCP/80 are free, and whether a local resolver can create the hostname record.
 5. Confirm who distributes trust to client endpoints, who maintains clock sync, and where CA/data backups reside.
 6. Confirm approved mode: strict FIELD LAN (no cloudflared) or LAB REMOTE (Cloudflare Access reviewed).

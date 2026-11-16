@@ -1,6 +1,6 @@
 # Site Mapper Operational Console — MK0/MK1
 
-An independent, lightweight operational HTTP service supplied with the Site Mapper Docker Compose stack. Default local URL: `http://127.0.0.1:3100`. It is **not** a second spatial editor.
+**ARCHIVED / NOT DEPLOYED.** This independent HTTP service was formerly shipped in the Site Mapper Compose stack on `127.0.0.1:3100`. It is not a second spatial editor and is no longer included in the default stack, FIELD images or operational UAT. Its source is retained only for historical traceability.
 
 ## Supported consultation
 
@@ -30,24 +30,17 @@ Writes are available only to ADMIN/SUPERADMIN and still pass the main applicatio
 
 The first release intentionally does **not** duplicate topology/power domain services inside the console. If Next.js is down, existing authenticated operators can still inspect inventory, connections and independent MQTT LIVE, but they must wait for the application API to return before submitting mutations. Independent write operations can follow after the domain is factored into a shared process-safe package.
 
-## Deployment
+## Deployment status: retired
 
-The `docker-compose.telemetry.yml` stack contains `operational-console`, alongside the existing TimescaleDB telemetry-store and Modbus sidecar.
+The default `docker-compose.telemetry.yml` does not define this service.
+No Site Mapper component requires this service for bootstrap, storage, MQTT,
+SNMP, Modbus, telemetry, alarm evaluation or the main UI.
 
-Configure:
-
-```sh
-MONGODB_URI=mongodb://<reachable-host>:27017/
-MONGODB_DB_NAME=appm_site_mapper
-SITE_MAPPER_API_URL=http://host.docker.internal:3000
-MQTT_BROKER_URL=mqtt://<reachable-broker>:1883
-MQTT_USERNAME=<username-if-applicable>
-MQTT_PASSWORD=<password-if-applicable>
-```
-
-Start with `docker compose -f docker-compose.telemetry.yml up -d --build operational-console`. On the host, open `http://127.0.0.1:3100`. Container networking differs from host `localhost`; use a resolvable service name or gateway address for Mongo/MQTT in Docker. In production use an authenticated `mqtts://` broker and protect console HTTP with an authorized HTTPS reverse proxy.
-
-**Security:** port 3100 binds to the host loopback by default. Never expose to a public interface without TLS/reverse proxy and network restrictions. Console session lifetime is 1h; in-memory sessions are invalidated by restarting the console. A Site Mapper account must authenticate while the application API is available.
+Do not restart an old `operational-console` container as a workaround:
+its historical independent database access and session caching are not
+accepted within the FIELD security baseline. The approved offboarding and
+non-destructive runtime cleanup are documented in
+[Retire Operational Console](../operations/retire-operational-console.md).
 
 ## Tests
 
@@ -57,7 +50,7 @@ npm install
 npm test
 ```
 
-The GitHub workflow additionally builds the production Docker image and checks authentication, tabular navigation, CSV export, spatial creation rejection, origin validation and independent MQTT commissioning filters.
+Legacy tests are manual-only and do not build a container image. Historical behavior is not part of current FIELD or UAT acceptance.
 
 ## Limitations / release gates
 
@@ -65,4 +58,4 @@ The GitHub workflow additionally builds the production Docker image and checks a
 - Historical telemetry is read from TimescaleDB; if both the MQTT broker and TimescaleDB are offline, no credible telemetry reading is presented.
 - Database queries cap results at 5,000 records per view; pagination is required for larger deployments.
 - Production rollout requires site-specific networking, TLS, backups, audit-event verification, workload limits and a real data end-to-end test on the target infrastructure.
-- Password changes, user suspension or session revocation during a cached console session currently become effective after the console's 1-hour session expires (or process restart); deploy behind private access boundaries until shared revocation is implemented.
+- Password changes, user suspension or session revocation during an old cached console session may take up to one hour to become effective. The accepted mitigation is to keep this service **not deployed**, not to expose it behind another proxy.

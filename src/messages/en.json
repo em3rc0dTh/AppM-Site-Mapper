@@ -867,7 +867,8 @@
     "sourceTechnical": "Original source and timestamp",
     "lastReceivedLima": "Last received (Lima):",
     "rawTimestamp": "Original timestamp:",
-    "statusClockWarning": "Clock warning: review readings status and source"
+    "statusClockWarning": "Clock warning: review readings status and source",
+    "reportingCircuits": "{count, plural, one {# circuit with readings} other {# circuits with readings}}"
   },
   "warehouseForms": {
     "creation": "Template creation mode",

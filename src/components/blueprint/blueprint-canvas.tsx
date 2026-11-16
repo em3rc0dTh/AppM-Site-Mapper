@@ -239,6 +239,27 @@ export function BlueprintCanvas({
   );
   const pointer = useRef<Readonly<{ x: number; y: number }> | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const [svgViewport, setSvgViewport] = useState({ width: 0, height: 0 });
+
+  // The room footprint is recorded in millimetres, while SVG text is painted
+  // on a resizable viewport. Measure the displayed SVG, not its survey size.
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const updateViewport = () => {
+      const rect = svg.getBoundingClientRect();
+      setSvgViewport((current) =>
+        Math.abs(current.width - rect.width) < 0.5 &&
+        Math.abs(current.height - rect.height) < 0.5
+          ? current
+          : { width: rect.width, height: rect.height },
+      );
+    };
+    updateViewport();
+    const observer = new ResizeObserver(updateViewport);
+    observer.observe(svg);
+    return () => observer.disconnect();
+  }, []);
 
   // React delegates wheel listeners as passive. The drafting canvas needs
   // a direct non-passive listener so zoom does not also scroll the page.
@@ -291,10 +312,21 @@ export function BlueprintCanvas({
       event.currentTarget.releasePointerCapture(event.pointerId);
   }
 
-  // The room canvas uses surveyed millimetres as SVG user units. These
-  // typography values are therefore deliberately larger than CSS pixels
-  // and compensate for the current viewport zoom without altering geometry.
-  const axisFontSize = Math.max(250, Math.min(410, 390 / zoom));
+  // Convert the 13px operator-facing target to SVG units using the *actual*
+  // painted viewport (preserveAspectRatio defaults to xMidYMid meet).
+  // The calculation does not touch persisted coordinates or grid geometry.
+  const pxPerSurveyUnit =
+    svgViewport.width > 0 && svgViewport.height > 0
+      ? Math.min(svgViewport.width / view.width, svgViewport.height / view.height)
+      : 0;
+  const axisFontSize = pxPerSurveyUnit > 0 ? 13 / pxPerSurveyUnit : 300 / zoom;
+  // If a saved/resized Canvas becomes too narrow for adjacent two-character
+  // ticks, skip some displayed captions instead of shrinking them to microtext.
+  // The underlying 600mm grid and every coordinate remain unchanged.
+  const axisColumnStride =
+    pxPerSurveyUnit > 0
+      ? Math.max(1, Math.ceil((13 * 1.55) / (600 * pxPerSurveyUnit)))
+      : 1;
 
   return (
     <section className="blueprint-panel">
@@ -392,7 +424,7 @@ export function BlueprintCanvas({
           />
 
           <g className="blueprint-coordinate-labels" aria-hidden="true">
-            {labels.columns.map((column) => (
+            {labels.columns.filter((_, index) => index % axisColumnStride === 0).map((column) => (
               <text
                 key={`column-${column.label}-${column.x}`}
                 x={column.x}

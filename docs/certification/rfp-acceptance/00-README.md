@@ -95,6 +95,8 @@ then re-test"]
 
 **November 16, 2026 addendum:** the [MK1 v2.0 UAT plan](10-UAT-MK1-V2-PLAN.md) and [v2.0 execution register](11-UAT-MK1-V2-RESULTS.md) cover the merged #223–#226 baseline (`7a43be8`) with 33 additional, initially NOT_RUN cases. They do not replace the 18 contractual ACC cases, the RFP, FIELD SAT or historical evidence.
 
+**Addendum 2026-11-16:** [MK1 v2.0 UAT plan](10-UAT-MK1-V2-PLAN.md) and [execution register](11-UAT-MK1-V2-RESULTS.md) cover the merged #223–#226 code baseline (`7a43be8`) with 33 additional cases, initially NOT_RUN. They do not replace ACC-001..018, field SAT or historical evidence.
+
 The documents do not turn an implemented feature into a contractual PASS. A PASS only exists after
 the corresponding procedure has been executed against a frozen release and the required evidence
 has been recorded.

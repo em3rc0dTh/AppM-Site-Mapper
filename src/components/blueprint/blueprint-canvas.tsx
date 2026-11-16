@@ -110,6 +110,8 @@ export function BlueprintCanvas({
   onSelectRack,
   onSelectBay,
   onPlace,
+  onEditRoom,
+  editRoomLabel,
   focusRackId,
   focusBayId,
   focusPositionId,
@@ -129,6 +131,8 @@ export function BlueprintCanvas({
   onSelectRack?: ((id: string) => void) | undefined;
   onSelectBay?: ((id: string) => void) | undefined;
   onPlace?: ((point: PointMm) => void) | undefined;
+  onEditRoom?: (() => void) | undefined;
+  editRoomLabel?: string | undefined;
   focusRackId?: string | undefined;
   focusBayId?: string | undefined;
   focusPositionId?: string | undefined;
@@ -338,9 +342,16 @@ export function BlueprintCanvas({
             600 × 600 mm {t('grid')} · {Math.round(zoom * 100)}%
           </span>
         </div>
-        <div className="zip-blueprint-mode">
-          <span className="zip-blueprint-mode-dot" />
-          <b>{onPlace ? t('place') : t('mode')}</b>
+        <div className="mk2-blueprint-toolbar-actions">
+          {onEditRoom && editRoomLabel && (
+            <button type="button" className="mk2-blueprint-edit-room" onClick={onEditRoom}>
+              {editRoomLabel}
+            </button>
+          )}
+          <div className="zip-blueprint-mode">
+            <span className="zip-blueprint-mode-dot" />
+            <b>{onPlace ? t('place') : t('mode')}</b>
+          </div>
         </div>
       </header>
 
@@ -452,7 +463,17 @@ export function BlueprintCanvas({
           {clusters.map((cluster) => {
             if (!cluster.polygon || cluster.polygon.length < 3) return null;
             const center = polygonCentroid(cluster.polygon);
-            const clusterFontSize = Math.max(270, Math.min(480, 450 / zoom));
+            const clusterHeight =
+              Math.max(...cluster.polygon.map((point) => point.y)) -
+              Math.min(...cluster.polygon.map((point) => point.y));
+            // Fit the text within the surveyed strip, targeting 17 rendered px.
+            // Never offset the label into the top border of its real polygon.
+            const clusterFontSize = Math.min(
+              pxPerSurveyUnit > 0 ? 17 / pxPerSurveyUnit : 220 / zoom,
+              (horizontalSpan(cluster.polygon) * 0.88) /
+                (Math.max(1, cluster.name.trim().length) * 0.62),
+              clusterHeight * 0.7,
+            );
             const clusterLabel = readableLabel(
               cluster.name,
               horizontalSpan(cluster.polygon),
@@ -479,8 +500,9 @@ export function BlueprintCanvas({
                 />
                 <text
                   x={center.x}
-                  y={center.y - 250}
+                  y={center.y}
                   textAnchor="middle"
+                  dominantBaseline="central"
                   className="blueprint-cluster-label"
                   style={{ fontSize: clusterFontSize }}
                 >
@@ -563,7 +585,14 @@ export function BlueprintCanvas({
           ))}
 
           {racks.map((rack) => {
-            const rackFontSize = Math.max(190, Math.min(350, 330 / zoom));
+            // Target 14 rendered px, but keep the whole real rack name
+            // inside its recorded footprint at narrow widths.
+            const rackFontSize = Math.min(
+              pxPerSurveyUnit > 0 ? 14 / pxPerSurveyUnit : 210 / zoom,
+              (rack.rect.width * 0.9) /
+                (Math.max(1, rack.name.trim().length) * 0.62),
+              rack.rect.depth * 0.7,
+            );
             // Short physical identifiers (QDF2/4/5) must not be ellipsized.
             // Full name remains available in the existing SVG title for all racks.
             const rackLabel =

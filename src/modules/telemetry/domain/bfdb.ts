@@ -199,8 +199,9 @@ export function buildBfdbBreakerReadings(
       // different physical panel/position (e.g. slave 3/A2 onto slave 5/B3).
       if (
         !resolved ||
-        resolved.panelLabel !== point.panelLabel ||
-        resolved.position !== point.panelPosition
+        (profile === 'FIELD_DUAL_12' &&
+          (resolved.panelLabel !== point.panelLabel ||
+            resolved.position !== point.panelPosition))
       ) continue;
 
       const accepts = (name: BfdbMetric) => mapping.metrics.has(name);

@@ -60,7 +60,7 @@ export function buildBoundBfdbEquipmentPatches(
       );
       if (!links.length) continue;
 
-      if (physicalLocations) {
+      if (physicalLocations && profile === 'FIELD_DUAL_12') {
         const assigned = physicalLocations.get(links[0]!.targetId);
         if (
           !assigned ||

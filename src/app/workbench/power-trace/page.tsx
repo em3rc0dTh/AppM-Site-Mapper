@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 
 import { FullPowerTraceWorkbench } from '@/components/workbench/full-power-trace-workbench';
+import { hasPermission } from '@/modules/identity/domain/roles';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 import { TopologyService } from '@/modules/topology/application/topology-service';
@@ -43,6 +44,7 @@ export default async function PowerTraceWorkbenchPage({
       kind={entity.kind}
       location={location}
       selectedPathId={query.path?.trim() || undefined}
+      canReadTelemetry={hasPermission(auth.value.role, 'telemetry:read')}
     />
   );
 }

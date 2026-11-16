@@ -159,15 +159,20 @@ describe('AuthService', () => {
     const repo = new MemoryIdentityRepository();
     const limiter = new MemoryAuthThrottle();
     const app = new AuthService(repo, limiter);
-    await expect(app.authenticate('x'.repeat(255), 'strong password 2026', 'oversized')).resolves.toEqual({
+    await expect(
+      app.authenticate('x'.repeat(255), 'strong password 2026', 'oversized'),
+    ).resolves.toEqual({
       ok: false,
       error: 'INVALID_INPUT',
     });
-    await expect(app.authenticate('admin@example.com', 'x'.repeat(1025), 'oversized')).resolves.toEqual({
+    await expect(
+      app.authenticate('admin@example.com', 'x'.repeat(1025), 'oversized'),
+    ).resolves.toEqual({
       ok: false,
       error: 'INVALID_INPUT',
     });
-    await expect(app.bootstrapSuperadmin('admin@example.com', 'strong password 2026', 'a'.repeat(121)))
-      .resolves.toEqual({ ok: false, error: 'INVALID_INPUT' });
+    await expect(
+      app.bootstrapSuperadmin('admin@example.com', 'strong password 2026', 'a'.repeat(121)),
+    ).resolves.toEqual({ ok: false, error: 'INVALID_INPUT' });
   });
 });

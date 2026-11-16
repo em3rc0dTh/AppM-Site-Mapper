@@ -129,5 +129,7 @@ export function createMfaRecoveryCodes(): readonly string[] {
 export function hashMfaRecoveryCode(userId: string, code: string): string | null {
   const clean = code.replaceAll('-', '').trim().toUpperCase();
   if (!/^[A-F0-9]{32}$/.test(clean)) return null;
-  return createHash('sha256').update('mfa-recovery:' + userId + ':' + clean).digest('hex');
+  return createHash('sha256')
+    .update('mfa-recovery:' + userId + ':' + clean)
+    .digest('hex');
 }

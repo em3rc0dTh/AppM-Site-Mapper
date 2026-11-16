@@ -6,7 +6,11 @@ const PARALLELIZATION = 5;
 const LEGACY_PARALLELIZATION = 1;
 const KEY_LENGTH = 64;
 
-function derive(password: string, salt: Buffer, parallelization = PARALLELIZATION): Promise<Buffer> {
+function derive(
+  password: string,
+  salt: Buffer,
+  parallelization = PARALLELIZATION,
+): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     scrypt(
       password,
@@ -67,7 +71,11 @@ export async function verifyPassword(password: string, encoded: string): Promise
   }
 
   const expected = Buffer.from(keyEncoded, 'base64url');
-  const actual = await derive(password, Buffer.from(saltEncoded, 'base64url'), Number(parallelization));
+  const actual = await derive(
+    password,
+    Buffer.from(saltEncoded, 'base64url'),
+    Number(parallelization),
+  );
 
   return expected.length === actual.length && timingSafeEqual(expected, actual);
 }

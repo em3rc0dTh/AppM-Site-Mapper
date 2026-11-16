@@ -5,7 +5,11 @@ import type {
 import type { SafeUser, SessionRecord, User } from '@/modules/identity/domain/entities';
 import { toSafeUser } from '@/modules/identity/domain/entities';
 import { hashPassword, verifyPassword } from '@/modules/identity/domain/password';
-import { decryptMfaSecret, hashMfaRecoveryCode, matchTotpStep } from '@/modules/identity/application/mfa-totp';
+import {
+  decryptMfaSecret,
+  hashMfaRecoveryCode,
+  matchTotpStep,
+} from '@/modules/identity/application/mfa-totp';
 import { assessNewPassword } from '@/modules/identity/application/password-policy';
 import { createSessionToken, hashSessionToken } from '@/modules/identity/domain/session-token';
 import type { Permission, Role } from '@/modules/identity/domain/roles';

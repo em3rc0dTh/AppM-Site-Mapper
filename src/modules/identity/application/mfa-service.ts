@@ -85,7 +85,9 @@ export class MfaService {
   async confirm(
     token: string,
     code: string,
-  ): Promise<Result<{ reauthenticationRequired: true; recoveryCodes: readonly string[] }, MfaError>> {
+  ): Promise<
+    Result<{ reauthenticationRequired: true; recoveryCodes: readonly string[] }, MfaError>
+  > {
     const user = await this.account(token);
     if (!user) return failure('SESSION_INVALID');
     if (user.mfaSecretCiphertext) return failure('MFA_ALREADY_ENABLED');
@@ -146,10 +148,7 @@ export class MfaService {
         return failure('MFA_CODE_INVALID');
     } else {
       const recoveryHash = hashMfaRecoveryCode(user.id, code);
-      if (
-        !recoveryHash ||
-        !(await this.repository.consumeMfaRecoveryCode(user.id, recoveryHash))
-      )
+      if (!recoveryHash || !(await this.repository.consumeMfaRecoveryCode(user.id, recoveryHash)))
         return failure('MFA_CODE_INVALID');
     }
 

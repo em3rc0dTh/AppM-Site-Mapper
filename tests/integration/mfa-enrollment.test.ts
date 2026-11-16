@@ -115,7 +115,11 @@ describe('Site Mapper TOTP MFA', () => {
     const auth = new AuthService(repository, throttle);
     const mfa = new MfaService(repository, throttle);
     await auth.bootstrapSuperadmin('admin@example.com', 'a strong initial password', 'Admin');
-    const first = await auth.authenticate('admin@example.com', 'a strong initial password', 'recovery-a');
+    const first = await auth.authenticate(
+      'admin@example.com',
+      'a strong initial password',
+      'recovery-a',
+    );
     if (!first.ok) throw new Error('expected login');
     const started = await mfa.start(first.value.token, 'a strong initial password');
     if (!started.ok) throw new Error('expected enrollment');
@@ -133,7 +137,12 @@ describe('Site Mapper TOTP MFA', () => {
     );
     expect(signedIn.ok).toBe(true);
     expect(
-      await auth.authenticate('admin@example.com', 'a strong initial password', 'recovery-c', recovery),
+      await auth.authenticate(
+        'admin@example.com',
+        'a strong initial password',
+        'recovery-c',
+        recovery,
+      ),
     ).toEqual({ ok: false, error: 'MFA_INVALID' });
   });
 

@@ -318,7 +318,7 @@ export function RoomLayoutEditor({
   return (
     <section className="mk-room-editor">
       <header className="mk-draft-toolbar">
-        <strong>{editing ? t('editDraft') : t('floorPlan')}</strong>
+        {editing && <strong>{t('editDraft')}</strong>}
         {canWrite && !editing && <button onClick={() => setEditing(true)}>{t('editRoom')}</button>}
         {editing && (
           <>

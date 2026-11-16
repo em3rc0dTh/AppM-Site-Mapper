@@ -76,7 +76,7 @@ export async function POST(request: Request) {
           scope:d.scope,scopeId:d.scopeId,electricalProfileId:d.electricalProfileId,
           parameters:d.parameters,severity:d.severity,
           debounceSamples:d.debounceSamples,recoverySamples:d.recoverySamples,
-        });
+        }, true);
         await assertScope(checked);
       }
       const record = await store.changeStatus(

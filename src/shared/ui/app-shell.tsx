@@ -10,7 +10,7 @@ import { CommandPalette } from './command-palette';
 import { ContextTracker } from './context-tracker';
 import { ContextualHelp } from '@/modules/help/components/contextual-help';
 import { AlarmHeaderBadge } from '@/components/alarm/alarm-header-badge';
-import { SiteMapperBrand } from './site-mapper-brand';
+import { SiteMapperProductHeader } from './site-mapper-product-header';
 
 export function AppShell({ children }: { children: ReactNode }) {
   const t = useTranslations('shell');
@@ -133,21 +133,12 @@ export function AppShell({ children }: { children: ReactNode }) {
       </a>
 
       <header className="app-topbar zip-topbar">
-        <Link
+        <SiteMapperProductHeader
           ref={brandRef}
-          href="/workspace"
+          tagline={t('tagline')}
+          ariaLabel={t('goHome')}
           className="zip-brand"
-          aria-label={t('goHome')}
-          title={t('goHome')}
-        >
-          <SiteMapperBrand variant="compact" tagline={t('tagline')} />
-          <span className="zip-brand-home" aria-hidden="true">
-            <svg viewBox="0 0 24 24" focusable="false">
-              <path d="M3 11.5 12 4l9 7.5" />
-              <path d="M5.5 10.5V20h13v-9.5M9.5 20v-6h5v6" />
-            </svg>
-          </span>
-        </Link>
+        />
 
         <div className="zip-context-slot">
           {!immersive ? <div className="zip-static-context">{contextLabel}</div> : null}

@@ -7,9 +7,7 @@ import { SiteMapperBrand } from '@/shared/ui/site-mapper-brand';
 import './workbench.css';
 import './power-trace.css';
 
-export default async function WorkbenchLayout({
-  children,
-}: Readonly<{ children: ReactNode }>) {
+export default async function WorkbenchLayout({ children }: Readonly<{ children: ReactNode }>) {
   const t = await getTranslations('shell');
 
   return (

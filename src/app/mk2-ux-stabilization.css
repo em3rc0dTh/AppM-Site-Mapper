@@ -2,63 +2,16 @@
    Pure presentation layer: no inventory, alarm, RBAC or telemetry contract changes.
    Imported last so the approved light-theme palette remains authoritative. */
 
-/* Header: AppManager SiteMapper Mk2 | cube | home. */
+/* Header slot. Internal product identity is owned by SiteMapperProductHeader. */
 .zip-app-shell .zip-brand {
   width: auto;
   flex: 0 0 auto;
-  gap: 12px;
-  padding: 0 16px 0 22px;
-  border-right: 1px solid #d4dfe7;
   align-self: stretch;
-}
-.zip-app-shell .zip-brand .sm-brand {
-  width: auto;
-  flex: 0 0 auto;
-}
-.zip-app-shell .sm-brand--compact .sm-brand-lockup {
-  flex-direction: row-reverse;
-  justify-content: flex-end;
-  gap: 14px;
-}
-.zip-app-shell .sm-brand--compact .sm-brand-copy {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 7px;
-}
-.zip-app-shell .sm-brand--compact .sm-brand-appmanager {
-  font-size: 24px;
-  line-height: 1.05;
-  font-weight: 400;
-}
-.zip-app-shell .sm-brand--compact .sm-brand-product-line {
-  font-size: 18px;
-  line-height: 1.05;
-  gap: 6px;
-}
-.zip-app-shell .sm-brand--compact .sm-brand-tagline {
-  display: none;
-}
-.zip-app-shell .sm-brand--compact .sm-brand-mark {
-  width: 35px;
-  height: 35px;
-}
-.zip-app-shell .zip-brand-home {
-  width: 36px;
-  height: 36px;
-  border-color: #c8d5df;
-}
-.zip-app-shell .zip-brand-home svg {
-  width: 20px;
-  height: 20px;
 }
 .zip-app-shell .zip-topbar {
   top: 0;
   z-index: 100;
   box-shadow: 0 1px 3px rgb(22 42 61 / 6%);
-}
-.zip-app-shell .zip-brand:focus-visible {
-  outline: 2px solid #087e66;
-  outline-offset: -3px;
 }
 
 /* Home: product name belongs to the brand, not a second banner lockup. */

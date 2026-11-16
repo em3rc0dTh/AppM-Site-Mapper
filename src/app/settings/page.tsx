@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
 import { PasswordForm } from '@/components/settings/password-form';
+import { MfaPanel } from '@/components/settings/mfa-panel';
 import { ProfileForm } from '@/components/settings/profile-form';
 import { UserAdminTable } from '@/components/settings/user-admin-table';
 import { UserCreateForm } from '@/components/settings/user-create-form';
@@ -100,6 +101,7 @@ export default async function SettingsPage({
               <h2>{t('tabs.security')}</h2>
               <p>{t('passwordPolicy')}</p>
               <PasswordForm />
+              <MfaPanel />
             </>
           )}
 

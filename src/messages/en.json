@@ -196,7 +196,10 @@
       "submitting": "Establishing secure session…",
       "connectionError": "Connection unavailable. Please try again.",
       "credentialsError": "Invalid email or password.",
-      "loginError": "Unable to sign in. Please try again."
+      "loginError": "Unable to sign in. Please try again.",
+      "mfaCode": "Authenticator code (if enabled)",
+      "mfaNeeded": "Enter the six-digit code from your authenticator.",
+      "mfaEnrollmentRequired": "MFA enrollment is required. Contact the administrator."
     },
     "changePassword": {
       "eyebrow": "Identity / credential policy",
@@ -204,6 +207,24 @@
       "forcedDescription": "Replace the temporary credential before operational access is enabled.",
       "description": "Update your credential and revoke every existing session.",
       "signedInAs": "Signed in as"
+    },
+    "mfa": {
+      "title": "Multifactor authentication (TOTP)",
+      "loading": "Checking security configuration...",
+      "unavailable": "The administrator must configure an MFA encryption key on the server.",
+      "enabled": "Enabled. An authenticator code is required to sign in.",
+      "disabled": "Disabled. Configure your authenticator to protect this account.",
+      "currentPassword": "Current Site Mapper password",
+      "start": "Configure authenticator",
+      "secretIntro": "Setup secret (only shown during enrollment):",
+      "uri": "Authenticator import URI:",
+      "code": "Six-digit authenticator code",
+      "confirm": "Enable MFA",
+      "disableIntro": "Disabling MFA requires your password and a current code.",
+      "disable": "Disable MFA",
+      "startInstructions": "Add the secret to your authenticator and confirm the six-digit code.",
+      "failed": "Could not complete the MFA operation.",
+      "connectionError": "Could not connect to the server."
     }
   },
   "workspace": {

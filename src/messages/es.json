@@ -255,7 +255,10 @@
       "clusters": "CLÚSTERES TOTALES",
       "racks": "RACKS EN ESTA SALA · {count}",
       "inspect": "INSPECCIONAR ↗",
-      "instruction": "SELECCIONA UN CLÚSTER O GABINETE PARA INSPECCIONAR SUS PROPIEDADES"
+      "instruction": "SELECCIONA UN CLÚSTER O GABINETE PARA INSPECCIONAR SUS PROPIEDADES",
+      "manageRoom": "Administrar sala",
+      "racksRegistered": "Racks registrados",
+      "clustersList": "Clusters registrados"
     },
     "settings": {
       "title": "CONFIGURACIÓN",

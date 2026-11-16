@@ -1121,3 +1121,335 @@
     margin-inline: 10px;
   }
 }
+
+
+/* MK2 Equipment readability pass — operator-first, without data removal. */
+/* Typography, not a redesign. Readability takes precedence over packing data
+   into one viewport; long names/feeds may wrap and tables may scroll.
+   Scope: only existing Equipment Chassis/Shelf/Frame/Panel/Breaker screens. */
+.mk2-equipment-ergonomics {
+  --mk2-type-body: 16px;
+  --mk2-type-label: 14px;
+  --mk2-type-section: 18px;
+  --mk2-type-action: 14px;
+  --mk2-readable-muted: #405b72;
+  --mk2-readable-ink: #162e43;
+}
+.mk2-equipment-ergonomics .equipment-composition {
+  font-size: var(--mk2-type-body);
+  line-height: 1.5;
+}
+.mk2-equipment-ergonomics .zip-device-stage > h1 {
+  font-size: 24px;
+  line-height: 1.3;
+}
+.mk2-equipment-ergonomics .equipment-composition-header h2,
+.mk2-equipment-ergonomics .ec-focus h2 {
+  font-size: 21px;
+  line-height: 1.35;
+}
+.mk2-equipment-ergonomics .equipment-composition-header span,
+.mk2-equipment-ergonomics .equipment-composition-header small,
+.mk2-equipment-ergonomics .ec-focus small,
+.mk2-equipment-ergonomics .ec-section-heading small,
+.mk2-equipment-ergonomics .ec-frame-heading small,
+.mk2-equipment-ergonomics .ec-shelf-card-heading small,
+.mk2-equipment-ergonomics .ec-topline,
+.mk2-equipment-ergonomics .ec-topline-status,
+.mk2-equipment-ergonomics .ec-live-cover,
+.mk2-equipment-ergonomics .ec-live-cover small,
+.mk2-equipment-ergonomics .ec-eyebrow,
+.mk2-equipment-ergonomics .ec-count,
+.mk2-equipment-ergonomics .ec-muted {
+  font-size: var(--mk2-type-label);
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: normal;
+  color: var(--mk2-readable-muted);
+}
+.mk2-equipment-ergonomics .ec-eyebrow,
+.mk2-equipment-ergonomics .ec-section-heading small,
+.mk2-equipment-ergonomics .ec-focus small,
+.mk2-equipment-ergonomics .ec-frame-heading small,
+.mk2-equipment-ergonomics .ec-shelf-card-heading small {
+  color: #195e91;
+}
+.mk2-equipment-ergonomics .ec-section-heading strong {
+  font-size: var(--mk2-type-section);
+  line-height: 1.35;
+  color: var(--mk2-readable-ink);
+}
+.mk2-equipment-ergonomics .equipment-composition-policy p,
+.mk2-equipment-ergonomics .ec-focus p,
+.mk2-equipment-ergonomics .ec-shelf-card-heading,
+.mk2-equipment-ergonomics .ec-card-status,
+.mk2-equipment-ergonomics .ec-frame-heading-status,
+.mk2-equipment-ergonomics .ec-frame-row-status,
+.mk2-equipment-ergonomics .ec-chassis-frame small,
+.mk2-equipment-ergonomics .ec-panel-meta,
+.mk2-equipment-ergonomics .ec-panel-presence,
+.mk2-equipment-ergonomics .ec-frame-row .ec-count {
+  font-size: var(--mk2-type-label);
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--mk2-readable-muted);
+}
+.mk2-equipment-ergonomics .ec-shelf-link,
+.mk2-equipment-ergonomics .ec-frame-title,
+.mk2-equipment-ergonomics .ec-frame-row-name,
+.mk2-equipment-ergonomics .ec-chassis-frame strong,
+.mk2-equipment-ergonomics .ec-panel-name {
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.45;
+  color: #17558a;
+  overflow-wrap: anywhere;
+}
+.mk2-equipment-ergonomics .ec-focus-badges span,
+.mk2-equipment-ergonomics .ec-heading-counts span,
+.mk2-equipment-ergonomics .ec-status,
+.mk2-equipment-ergonomics .ec-status-available,
+.mk2-equipment-ergonomics .ec-alarm-cell,
+.mk2-equipment-ergonomics .ec-frame-row .ec-pos,
+.mk2-equipment-ergonomics .ec-pos {
+  font-size: var(--mk2-type-label);
+  line-height: 1.45;
+  letter-spacing: normal;
+}
+.mk2-equipment-ergonomics .ec-chassis-frame,
+.mk2-equipment-ergonomics .ec-panel-line,
+.mk2-equipment-ergonomics .ec-frame-row {
+  min-height: 60px;
+}
+.mk2-equipment-ergonomics .equipment-composition button,
+.mk2-equipment-ergonomics .equipment-composition .equipment-lifecycle-actions button,
+.mk2-equipment-ergonomics .equipment-composition .equipment-composition-workbench-actions button,
+.mk2-equipment-ergonomics .equipment-composition .equipment-faceplate button,
+.mk2-equipment-ergonomics .front01-equipment-technical-config > summary,
+.mk2-equipment-ergonomics .zip-device-stage .front01-primary-tabs button {
+  font-size: var(--mk2-type-action);
+  line-height: 1.4;
+}
+.mk2-equipment-ergonomics .equipment-composition button,
+.mk2-equipment-ergonomics .equipment-composition .equipment-lifecycle-actions button,
+.mk2-equipment-ergonomics .equipment-composition .equipment-composition-workbench-actions button,
+.mk2-equipment-ergonomics .zip-device-stage .front01-primary-tabs button {
+  min-height: 40px;
+}
+.mk2-equipment-ergonomics .equipment-composition-policy p,
+.mk2-equipment-ergonomics .ec-frame-heading-status,
+.mk2-equipment-ergonomics .ec-chassis-frame small,
+.mk2-equipment-ergonomics .ec-panel-meta {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+/* Panel: every position, measurement, alarm and allowed install action stays
+   visible; horizontal scrolling is preferred over shrinking numerical text. */
+.mk2-equipment-ergonomics .ec-breaker-table {
+  min-width: 1040px;
+}
+.mk2-equipment-ergonomics .ec-breaker-columns,
+.mk2-equipment-ergonomics .ec-breaker-row,
+.mk2-equipment-ergonomics .ec-empty-breaker-row {
+  grid-template-columns:
+    48px minmax(176px, 2fr)
+    repeat(4, minmax(100px, 1fr))
+    minmax(114px, 1fr)
+    minmax(116px, 1fr);
+  gap: 9px;
+  padding-block: 11px;
+  min-height: 45px;
+}
+.mk2-equipment-ergonomics .ec-breaker-columns {
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: 0;
+  line-height: 1.4;
+}
+.mk2-equipment-ergonomics .ec-breaker-row .ec-reading strong,
+.mk2-equipment-ergonomics .ec-breaker-row .ec-breaker-name,
+.mk2-equipment-ergonomics .ec-empty-breaker-row {
+  font-size: 15px;
+  line-height: 1.45;
+}
+.mk2-equipment-ergonomics .ec-breaker-row .ec-reading small {
+  font-size: 13px;
+  color: #42647e;
+}
+.mk2-equipment-ergonomics .ec-breaker-row .ec-status,
+.mk2-equipment-ergonomics .ec-empty-breaker-row .ec-status-available,
+.mk2-equipment-ergonomics .ec-breaker-row .ec-alarm-cell {
+  font-size: 14px;
+  font-weight: 600;
+}
+.mk2-equipment-ergonomics .ec-empty-breaker-row button {
+  min-height: 40px;
+  padding: 7px 10px;
+  font-size: 14px;
+}
+
+/* Individual Breaker: preserve V/I/P/E precision, MQTT provenance and the
+   original status semantics. Only visual type and spacing change. */
+.mk2-equipment-ergonomics .ec-breaker-detail .ec-breaker-metrics .ec-reading strong {
+  font-size: 24px;
+  line-height: 1.25;
+  font-variant-numeric: tabular-nums;
+}
+.mk2-equipment-ergonomics .ec-breaker-detail .ec-breaker-metrics .ec-metric-key {
+  font-size: 14px;
+}
+.mk2-equipment-ergonomics .ec-breaker-detail .ec-breaker-metrics .ec-reading small,
+.mk2-equipment-ergonomics .ec-breaker-source,
+.mk2-equipment-ergonomics .ec-breaker-no-data,
+.mk2-equipment-ergonomics .ec-legend,
+.mk2-equipment-ergonomics .ec-legend b {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--mk2-readable-muted);
+}
+.mk2-equipment-ergonomics .ec-breaker-source {
+  overflow-wrap: anywhere;
+}
+.mk2-equipment-ergonomics .ec-trace-link,
+.mk2-equipment-ergonomics .ec-breaker-detail a {
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+/* SNMP: actual shunt capacity and shared/incomplete qualifications must be
+   readable; never transform an unverified value into a verified one. */
+.mk2-equipment-ergonomics .ec-snmp-capacity header strong {
+  font-size: 18px;
+  line-height: 1.35;
+}
+.mk2-equipment-ergonomics .ec-snmp-capacity header small,
+.mk2-equipment-ergonomics .ec-snmp-capacity header > span,
+.mk2-equipment-ergonomics .ec-snmp-capacity-metrics small,
+.mk2-equipment-ergonomics .ec-snmp-feed-tags span,
+.mk2-equipment-ergonomics .ec-snmp-capacity > p,
+.mk2-equipment-ergonomics .ec-snmp-utilization > span {
+  font-size: 14px;
+  line-height: 1.55;
+  color: #315a54;
+  overflow-wrap: anywhere;
+}
+.mk2-equipment-ergonomics .ec-snmp-capacity-metrics strong {
+  font-size: 21px;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+}
+.mk2-equipment-ergonomics .ec-snmp-capacity-metrics > div {
+  gap: 7px;
+  padding: 12px;
+}
+.mk2-equipment-ergonomics .ec-snmp-feed-tags span {
+  padding: 8px 10px;
+  white-space: normal;
+}
+.mk2-equipment-ergonomics .ec-snmp-capacity-metrics {
+  gap: 9px;
+}
+
+/* Existing physical connectors and their registered metadata are
+   operational content, not miniature decorative captions. */
+.mk2-equipment-ergonomics .equipment-faceplate-header strong {
+  font-size: 18px;
+  line-height: 1.4;
+}
+.mk2-equipment-ergonomics .equipment-faceplate-header span,
+.mk2-equipment-ergonomics .equipment-faceplate-status,
+.mk2-equipment-ergonomics .equipment-faceplate-hint,
+.mk2-equipment-ergonomics .equipment-faceplate-selection,
+.mk2-equipment-ergonomics .equipment-faceplate-selection small,
+.mk2-equipment-ergonomics .equipment-faceplate-selection dt,
+.mk2-equipment-ergonomics .equipment-faceplate-selection dd,
+.mk2-equipment-ergonomics .equipment-faceplate-port small,
+.mk2-equipment-ergonomics .equipment-terminal-occupied {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.mk2-equipment-ergonomics .equipment-faceplate-port strong {
+  font-size: 15px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.mk2-equipment-ergonomics .equipment-faceplate-port {
+  min-height: 96px;
+  padding: 12px;
+}
+.mk2-equipment-ergonomics .equipment-faceplate-hint {
+  color: var(--mk2-readable-muted);
+}
+
+/* Settings, composer and Inspector use the same legibility baseline,
+   preserving permissions, input values and user-resized side panels. */
+.mk2-equipment-ergonomics .front01-equipment-technical-config > summary {
+  min-height: 40px;
+  padding-block: 11px;
+}
+.mk2-equipment-ergonomics .front01-equipment-technical-grid h3 {
+  font-size: 18px;
+}
+.mk2-equipment-ergonomics .front01-equipment-technical-grid,
+.mk2-equipment-ergonomics .front01-equipment-technical-grid p,
+.mk2-equipment-ergonomics .front01-equipment-technical-grid label,
+.mk2-equipment-ergonomics .ec-inspector-port {
+  font-size: 14px;
+  line-height: 1.55;
+}
+.mk2-equipment-ergonomics .equipment-composer,
+.mk2-equipment-ergonomics .equipment-configuration-form {
+  font-size: 16px;
+}
+.mk2-equipment-ergonomics .equipment-composer form label,
+.mk2-equipment-ergonomics .equipment-composer-tabs button,
+.mk2-equipment-ergonomics .equipment-configuration-form label,
+.mk2-equipment-ergonomics .equipment-composer > header small {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.mk2-equipment-ergonomics .zip-device-inspector .front01-equipment-summary .zip-device-identity h2 {
+  font-size: 20px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.mk2-equipment-ergonomics .zip-device-inspector .front01-equipment-summary .zip-device-identity small {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.mk2-equipment-ergonomics .zip-device-inspector .front01-equipment-summary .front01-summary-facts {
+  min-width: 0;
+}
+.mk2-equipment-ergonomics .zip-device-inspector .front01-equipment-summary .front01-summary-facts dt,
+.mk2-equipment-ergonomics .zip-device-inspector .front01-equipment-summary .front01-summary-facts dd {
+  font-size: 14px !important;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.mk2-equipment-ergonomics .zip-device-inspector .front01-equipment-summary .front01-summary-note {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--mk2-readable-muted);
+}
+/* The columns remain resizable; if the Inspector is manually narrow,
+   keep labels and values on separate lines rather than reduce fonts. */
+.mk2-equipment-ergonomics .zip-device-inspector .front01-equipment-summary {
+  container-type: inline-size;
+}
+@container (max-width: 270px) {
+  .mk2-equipment-ergonomics .zip-device-inspector .front01-equipment-summary .front01-summary-facts {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
+/* Small resizable Canvas: legibility continues via wrapping or scrolling.
+   No row, SNMP feed, terminal or Equipment action is hidden. */
+@container (max-width: 680px) {
+  .mk2-equipment-ergonomics .ec-snmp-capacity-metrics {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .mk2-equipment-ergonomics .ec-breaker-metrics {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

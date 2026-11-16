@@ -64,19 +64,6 @@ const PARAMS: Readonly<Record<ManagedRuleCode, readonly InputField[]>> = {
     { key: 'windowMs', label: 'Observation window', unit: 'ms', defaultValue: 300000 },
   ],
 };
-const titles: Record<ManagedRuleCode, string> = {
-  LOW_VOLTAGE: 'Low Voltage',
-  HIGH_VOLTAGE: 'High Voltage',
-  VOLTAGE_LOSS: 'Voltage Loss',
-  LOW_CURRENT: 'Low Current',
-  LOAD_LOSS: 'Load Loss',
-  SUDDEN_CURRENT_DROP: 'Sudden Current Drop',
-  LOW_POWER: 'Low Power',
-  HIGH_POWER: 'High Power',
-  NO_ENERGY_INCREMENT: 'No Energy Increment',
-  ENERGY_COUNTER_RESET: 'Energy Counter Reset',
-  ENERGY_CONSUMPTION_ANOMALY: 'Energy Consumption Anomaly',
-};
 const profileItems = [
   ['Nominal voltage', 'nominalVoltageV', 'V'],
   ['Battery cells', 'batteryCells', 'cells'],
@@ -105,6 +92,8 @@ export function RuleManager({
   initialBreakerId?: string;
 }) {
   const t = useTranslations('alarmRules');
+  const ruleTitle = (value: ManagedRuleCode) => String(t.raw('ruleNames.' + value));
+  const parameterLabel = (key: string) => String(t.raw('parameterLabels.' + key));
   const [view, setView] = useState<View>(initialBreakerId ? 'ASSIGNMENTS' : 'RULES');
   const [metric, setMetric] = useState<Metric>('ALL');
   const [records, setRecords] = useState<readonly ManagedRuleRecord[]>([]);
@@ -394,7 +383,7 @@ export function RuleManager({
                     onClick={() => showCode(c)}
                   >
                     <span>
-                      <b>{titles[c]}</b>
+                      <b>{ruleTitle(c)}</b>
                       <small>
                         {c} · {ruleMetric(c)}
                       </small>
@@ -416,7 +405,7 @@ export function RuleManager({
                     className={selectedId === r.id ? 'selected' : ''}
                   >
                     <span>
-                      <b>{titles[r.draft.code]}</b>
+                      <b>{ruleTitle(r.draft.code)}</b>
                       <small>
                         {r.draft.scope} · {r.draft.scopeId ?? t('allBreakers')}
                       </small>
@@ -433,7 +422,7 @@ export function RuleManager({
             <div className="sm-rule-panel-head">
               <div>
                 <small>{t('inspector')}</small>
-                <h2>{titles[code]}</h2>
+                <h2>{ruleTitle(code)}</h2>
                 <p>
                   {code} · {ruleMetric(code)}
                 </p>
@@ -472,7 +461,7 @@ export function RuleManager({
               <div className="sm-rule-form-grid">
                 {PARAMS[code].map((f) => (
                   <label key={f.key}>
-                    {f.label} ({f.unit})
+                    {parameterLabel(f.key)} ({f.unit})
                     <input
                       type="number"
                       min={0}

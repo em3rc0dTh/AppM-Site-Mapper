@@ -78,7 +78,19 @@ export class MongoIdentityRepository implements IdentityRepository {
         mfaSecretCiphertext: { $exists: true },
         mfaRecoveryHashes: codeHash,
       },
-      { $pull: { mfaRecoveryHashes: codeHash } },
+      [
+        {
+          $set: {
+            mfaRecoveryHashes: {
+              $filter: {
+                input: '$mfaRecoveryHashes',
+                as: 'hash',
+                cond: { $ne: ['$$hash', codeHash] },
+              },
+            },
+          },
+        },
+      ],
     );
     return result.matchedCount === 1;
   }

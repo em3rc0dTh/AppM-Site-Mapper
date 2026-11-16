@@ -150,7 +150,6 @@ código permanece archivado para trazabilidad; no se construye, publica ni
 arranca como parte del paquete de Site Mapper. Consultar
 [retirada segura](retire-operational-console.md).
 
-
 ## Estado
 
 ```bash

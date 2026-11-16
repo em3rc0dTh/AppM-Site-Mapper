@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import type { AlarmPolicyRepository } from '@/modules/alarm/application/alarm-policy-repository';
 import type { AlarmPolicy } from '@/modules/alarm/domain/policy';
 import { resolveRules, type ManagedAlarmRule } from '@/modules/alarm/domain/rule-manager';
@@ -71,12 +72,16 @@ export class EffectiveAlarmPolicyRepository implements AlarmPolicyRepository {
       (b) => b.lifecycle === 'ACTIVE' && b.protocol === 'MQTT' && b.sourcePointId &&
         ['VOLTAGE','CURRENT','POWER','ENERGY'].includes(b.metric.toUpperCase()),
     );
-    const sources = [...new Set(activeBindings.map((b) => b.sourceIdentity))];
-    if (sources.length !== 1) return null;
+    if (!activeBindings.length) return null;
+    const sources = new Map<string, Set<string>>();
+    for (const binding of activeBindings) {
+      const metrics = sources.get(binding.sourceIdentity) ?? new Set<string>();
+      metrics.add(binding.metric.toUpperCase());
+      sources.set(binding.sourceIdentity,metrics);
+    }
     return {
-      sourceIdentity: sources[0]!,
+      sources,
       scope: { breakerId:targetId, qdfIds, panelIds },
-      availableMetrics: new Set(activeBindings.map((b)=>b.metric.toUpperCase())),
     };
   }
 
@@ -97,9 +102,13 @@ export class EffectiveAlarmPolicyRepository implements AlarmPolicyRepository {
         continue;
       }
       const configured = managed.find((r)=>r.code===code);
-      if (configured) result.push({
-        code,source:'MANAGED',scope:configured.scope,ruleId:configured.id,rule:configured,
-      });
+      if (configured) {
+        const metric = code.includes('VOLTAGE') ? 'VOLTAGE'
+          : code.includes('CURRENT') || code === 'LOAD_LOSS' ? 'CURRENT'
+          : code.includes('POWER') ? 'POWER' : 'ENERGY';
+        if ([...eligible.sources.values()].some((m)=>m.has(metric)))
+          result.push({code,source:'MANAGED',scope:configured.scope,ruleId:configured.id,rule:configured});
+      }
     }
     return result;
   }
@@ -115,29 +124,33 @@ export class EffectiveAlarmPolicyRepository implements AlarmPolicyRepository {
       (await this.managed.list()).flatMap((record) => record.published ? [record.published] : []),
       context.scope,
     );
-    const additions: Record<string, unknown> = {};
-    for (const rule of rules) {
-      const field = POLICY_FIELDS[rule.code];
-      if (!field || existing.some((policy)=>Boolean(policy[field]))) continue;
-      const metric = rule.code.includes('VOLTAGE') ? 'VOLTAGE'
-        : rule.code.includes('CURRENT') || rule.code === 'LOAD_LOSS' ? 'CURRENT'
-        : rule.code.includes('POWER') ? 'POWER' : 'ENERGY';
-      if (!context.availableMetrics.has(metric)) continue;
-      additions[field] = assignedRuleFields(rule);
+    const managed: AlarmPolicy[] = [];
+    for (const [sourceIdentity,availableMetrics] of context.sources) {
+      const additions: Record<string,unknown> = {};
+      for (const rule of rules) {
+        const field = POLICY_FIELDS[rule.code];
+        if (!field || existing.some((policy)=>Boolean(policy[field]))) continue;
+        const metric = rule.code.includes('VOLTAGE') ? 'VOLTAGE'
+          : rule.code.includes('CURRENT') || rule.code === 'LOAD_LOSS' ? 'CURRENT'
+          : rule.code.includes('POWER') ? 'POWER' : 'ENERGY';
+        if (!availableMetrics.has(metric)) continue;
+        additions[field] = assignedRuleFields(rule);
+      }
+      if (!Object.keys(additions).length) continue;
+      const at = new Date().toISOString();
+      const key = createHash('sha256').update(sourceIdentity).digest('hex').slice(0,12);
+      managed.push({
+        id:'managed:' + targetId + ':' + key,
+        targetType:'EQUIPMENT',
+        targetId,
+        sourceContext:'managed:' + targetId + ':' + key,
+        sourceIdentity,
+        enabled:true,
+        createdAt:at,
+        updatedAt:at,
+        ...additions,
+      } as AlarmPolicy);
     }
-    if (!Object.keys(additions).length) return existing;
-    const at = new Date().toISOString();
-    const synthetic = {
-      id:'managed:' + targetId,
-      targetType:'EQUIPMENT' as const,
-      targetId,
-      sourceContext:'managed:' + targetId,
-      sourceIdentity:context.sourceIdentity,
-      enabled:true,
-      createdAt:at,
-      updatedAt:at,
-      ...additions,
-    } as AlarmPolicy;
-    return [...existing,synthetic];
+    return [...existing,...managed];
   }
 }

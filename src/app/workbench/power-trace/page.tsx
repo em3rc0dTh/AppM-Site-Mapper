@@ -43,7 +43,7 @@ export default async function PowerTraceWorkbenchPage({
       entityName={entity.name}
       kind={entity.kind}
       location={location}
-      selectedPathId={query.path?.trim() || undefined}
+      {...(query.path?.trim() ? { selectedPathId: query.path.trim() } : {})}
       canReadTelemetry={hasPermission(auth.value.role, 'telemetry:read')}
     />
   );

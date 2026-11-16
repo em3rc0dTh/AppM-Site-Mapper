@@ -356,6 +356,12 @@ export function EquipmentContractViews({
                     total: summary.installedChildren,
                   })}
           </span>
+          {summary.reporting > 0 &&
+          ['CHASSIS', 'SHELF', 'SUB_SHELF', 'FRAME'].includes(type) ? (
+            <span className="ec-circuit-reading-total">
+              {t('reportingCircuits', { count: summary.reporting })}
+            </span>
+          ) : null}
           {summary.reporting > 0 && type !== 'CIRCUIT_BREAKER' ? (
             <details className="ec-telemetry-calculation">
               <summary>{t('telemetryMethod')}</summary>

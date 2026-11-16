@@ -23,11 +23,11 @@
 
 | Estado  | Número |
 | ------- | -----: |
-| PASS    | 0      |
-| FAIL    | 0      |
-| BLOCKED | 0      |
-| N/A     | 0      |
-| NOT_RUN | 33     |
+| PASS    |      0 |
+| FAIL    |      0 |
+| BLOCKED |      0 |
+| N/A     |      0 |
+| NOT_RUN |     33 |
 
 **Disposición:** `NOT_EXECUTED` · NO UAT PASS · NO FIELD ACCEPTED. Los ACC-001..018 permanecen en su [registro histórico separado](04-TEST-RESULTS.md).
 

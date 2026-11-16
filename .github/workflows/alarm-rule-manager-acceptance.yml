@@ -150,7 +150,7 @@ jobs:
           name: alarm-rule-manager-acceptance-${{ github.sha }}
           path: artifacts/alarm-rule-manager/
           retention-days: 14
-          if-no-files-found: warn
+          if-no-files-found: error
       - name: Stop isolated development server
         if: always()
         run: |

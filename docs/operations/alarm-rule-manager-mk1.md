@@ -1,6 +1,6 @@
 # Site Mapper MK1 — Alarm Rule Manager / DC 48 V
 
-Status: **implementation on feature branch; NOT commissioned for customer production**.
+Status (2026-11-16): **code merged into main in PR #224; NOT commissioned for customer production**. Software CI is not site electrical acceptance. See [UAT MK1 v2.0](../certification/rfp-acceptance/10-UAT-MK1-V2-PLAN.md) (UAT-201..207).
 The Alarm Center and legacy `alarm_policies` remain authoritative for existing occurrences.
 
 ## User surfaces

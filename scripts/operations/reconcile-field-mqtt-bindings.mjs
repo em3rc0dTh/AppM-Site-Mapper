@@ -130,6 +130,12 @@ try {
         { count: sourceOwners.length });
       continue;
     }
+    const sourceOwner = sourceOwners[0];
+    if (!((sourceOwner.targetType === 'DEVICE' && sourceOwner.targetId === owner.id) ||
+      (sourceOwner.targetType === 'EQUIPMENT' && byId.has(sourceOwner.targetId)))) {
+      report('BLOCK_SOURCE_WRONG_QDF', spec.key, '*', '*');
+      continue;
+    }
     const expectedTargets = new Set();
     for (const [label, slaveId] of Object.entries(PUBLISHED)) {
       const panelList = equipment.filter((e) => e.equipmentType === 'PANEL' && e.name === label);
@@ -164,6 +170,17 @@ try {
             continue;
           }
           if (expected.accepted.includes(binding.sourcePointId)) {
+            const attr = binding.attributes ?? {};
+            const meterId = meters.find((m) => m.reference.panel === label)?.actual[0]?.id;
+            if ((attr.panelLabel !== undefined && attr.panelLabel !== label) ||
+                (attr.position !== undefined && attr.position !== index + 1) ||
+                (attr.matchedPanelId !== undefined && attr.matchedPanelId !== panel.id) ||
+                (attr.meterEquipmentId !== undefined && attr.meterEquipmentId !== meterId) ||
+                (attr.wireRawPointId !== undefined && attr.wireRawPointId !== expected.rawPoint) ||
+                (attr.wireChannel !== undefined && attr.wireChannel !== expected.channel)) {
+              report('BLOCK_BINDING_PROVENANCE', spec.key, label, labelPos, { metric });
+              continue;
+            }
             report('MATCH', spec.key, label, labelPos, { metric, sourcePointId: binding.sourcePointId });
             continue;
           }

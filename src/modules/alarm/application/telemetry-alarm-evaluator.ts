@@ -972,16 +972,21 @@ export class TelemetryAlarmEvaluator {
       this.energyWindows.set(key,{value:energyKwh,at});
       // A reset or rollover is evaluated separately. It is not low consumption.
       if (consumed < 0) return;
+      const anomaly = code === 'NO_ENERGY_INCREMENT'
+        ? consumed <= maximum
+        : consumed < minimum || consumed > maximum;
+      const recovered = code === 'NO_ENERGY_INCREMENT'
+        ? consumed > maximum
+        : consumed >= minimum && consumed <= maximum;
       await this.evaluateBooleanRule(policy,sample,code,
-        consumed < minimum || consumed > maximum,
-        consumed >= minimum && consumed <= maximum,
+        anomaly, recovered,
         debounceSamples,recoverySamples,severity,
         [evidence(sample,'ENERGY',consumed,'kWh')]);
     };
     if (policy.noEnergyIncrement?.expectedLoad) {
       const r = policy.noEnergyIncrement;
       await evaluateWindow('NO_ENERGY_INCREMENT',r.windowMs,
-        r.maxDeltaKwh,Number.POSITIVE_INFINITY,
+        0,r.maxDeltaKwh,
         r.debounceSamples,r.recoverySamples,r.severity);
     }
     if (policy.energyConsumptionAnomaly) {

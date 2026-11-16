@@ -38,6 +38,38 @@ async function handlePATCH(request: Request, context: Context) {
     return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
   }
 
+  if ('temporaryPassword' in body) {
+    if (
+      typeof body.temporaryPassword !== 'string' ||
+      Object.keys(body).some((key) => key !== 'temporaryPassword')
+    ) {
+      return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
+    }
+
+    const { id } = await context.params;
+    const runtime = await getIdentityRuntime();
+    const result = await new AuthService(
+      runtime.repository,
+      runtime.throttle,
+    ).resetManagedUserPassword(auth.value, id, body.temporaryPassword);
+
+    if (!result.ok) {
+      const status =
+        result.error === 'USER_NOT_FOUND'
+          ? 404
+          : result.error === 'FORBIDDEN' || result.error === 'SELF_MANAGEMENT_RESTRICTED'
+            ? 403
+            : result.error === 'PASSWORD_CHECK_UNAVAILABLE'
+              ? 503
+              : result.error === 'PASSWORD_COMPROMISED'
+                ? 422
+                : 400;
+      return NextResponse.json({ error: result.error }, { status });
+    }
+
+    return NextResponse.json({ user: result.value });
+  }
+
   const update: {
     displayName?: string;
     role?: Role;

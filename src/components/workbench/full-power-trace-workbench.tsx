@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { DetachedWorkbenchButton } from '@/components/workbench/detached-workbench-button';
 import type {
   FullPowerTrace,
@@ -106,10 +106,10 @@ function Destination({
   name: string; kind: string;
   feedA: readonly FullPowerTraceLeg[]; feedB: readonly FullPowerTraceLeg[];
 }>) {
-  const ports = (legs: readonly FullPowerTraceLeg[], feed: Feed) =>
+  const ports = (legs: readonly FullPowerTraceLeg[]) =>
     [...new Set(legs.map((leg) => leg.target.accessPort?.label).filter((value): value is string => Boolean(value)))];
-  const a = ports(feedA, 'A');
-  const b = ports(feedB, 'B');
+  const a = ports(feedA);
+  const b = ports(feedB);
   return (
     <article className="sm-trace-destination">
       <span className="sm-trace-server" aria-hidden="true">▤</span>
@@ -162,7 +162,7 @@ function comparisonLabel(leg: FullPowerTraceLeg | undefined, value: 'topology' |
   return status === 'MAPPED' || status === 'UNMAPPED' ? 'Sin lectura' : statusName(status);
 }
 
-function Finding({ children, warning }: Readonly<{ children: React.ReactNode; warning?: boolean }>) {
+function Finding({ children, warning }: Readonly<{ children: ReactNode; warning?: boolean }>) {
   return <li data-warning={warning ? 'true' : 'false'}>{warning ? '⚠ ' : '• '}{children}</li>;
 }
 

@@ -2262,7 +2262,8 @@
     "s05_target": "Target",
     "s05_commissioning": "Commissioning",
     "s05_unavailable": "Unavailable",
-    "s05_generated_at": "Generated"
+    "s05_generated_at": "Generated",
+    "mk1_site_mapper_password_reveal_confirmation": "Current Site Mapper password (required to reveal)"
   },
   "industrialSignalExplorer": {
     "show": "Open universal SNMP / Industrial inspector",

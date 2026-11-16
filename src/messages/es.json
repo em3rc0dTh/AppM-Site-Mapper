@@ -2262,7 +2262,8 @@
     "s05_target": "Destino",
     "s05_commissioning": "Commissioning",
     "s05_unavailable": "No disponible",
-    "s05_generated_at": "Generado"
+    "s05_generated_at": "Generado",
+    "mk1_site_mapper_password_reveal_confirmation": "Contraseña actual de Site Mapper (obligatoria para revelar)"
   },
   "industrialSignalExplorer": {
     "show": "Abrir inspector universal SNMP / Industrial",

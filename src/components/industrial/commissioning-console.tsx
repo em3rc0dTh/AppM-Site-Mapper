@@ -857,9 +857,11 @@ export function CommissioningConsole({
                         </button>
                       </>
                     ) : null}
-                    {canReadCredentials && credentialMetadata?.hasCredential && !revealedPassword ? (
+                    {canReadCredentials &&
+                    credentialMetadata?.hasCredential &&
+                    !revealedPassword ? (
                       <label style={fieldStyle}>
-                        Contraseña actual de Site Mapper (confirmación para revelar)
+                        {t('mk1_site_mapper_password_reveal_confirmation')}
                         <input
                           type="password"
                           maxLength={1024}

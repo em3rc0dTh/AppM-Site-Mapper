@@ -111,6 +111,7 @@ export function RuleManager({
   const [selectedTarget, setSelectedTarget] = useState(
     initialBreakerId ? targetKey('BREAKER', initialBreakerId) : targetKey('GLOBAL', null),
   );
+  const [targetSearch, setTargetSearch] = useState('');
   const [severity, setSeverity] = useState<AlarmSeverity>('WARNING');
   const [debounce, setDebounce] = useState(3);
   const [recovery, setRecovery] = useState(2);
@@ -136,6 +137,21 @@ export function RuleManager({
   const selectedTargetRecord =
     targets.find((target) => targetKey(target.scope, target.id) === selectedTarget) ?? null;
   const selected = records.find((record) => record.id === selectedId) ?? null;
+  const normalizedTargetSearch = targetSearch.trim().toLocaleLowerCase();
+  const filteredTargets = normalizedTargetSearch
+    ? targets.filter((target) =>
+        targetLabel(target).toLocaleLowerCase().includes(normalizedTargetSearch),
+      )
+    : targets;
+  const visibleTargets =
+    selectedTargetRecord &&
+    !filteredTargets.some(
+      (target) =>
+        targetKey(target.scope, target.id) ===
+        targetKey(selectedTargetRecord.scope, selectedTargetRecord.id),
+    )
+      ? [selectedTargetRecord, ...filteredTargets]
+      : filteredTargets;
 
   const reload = useCallback(async () => {
     const [rulesResponse, targetsResponse] = await Promise.all([
@@ -183,6 +199,7 @@ export function RuleManager({
     setSelectedId(record.id);
     setCode(draft.code);
     setSelectedTarget(targetKey(draft.scope, draft.scopeId));
+    setTargetSearch('');
     setSeverity(draft.severity);
     setDebounce(draft.debounceSamples);
     setRecovery(draft.recoverySamples);
@@ -197,6 +214,7 @@ export function RuleManager({
     setSelectedTarget(
       initialBreakerId ? targetKey('BREAKER', initialBreakerId) : targetKey('GLOBAL', null),
     );
+    setTargetSearch('');
     setSeverity('WARNING');
     setDebounce(3);
     setRecovery(2);
@@ -325,26 +343,42 @@ export function RuleManager({
         ) : null}
 
         <div className="sm-rule-simple-grid">
-          <label>
-            {t('appliesTo')}
+          <div className="sm-rule-target-picker">
+            <label htmlFor="alarm-target-search">{t('appliesTo')}</label>
+            <input
+              id="alarm-target-search"
+              type="search"
+              value={targetSearch}
+              placeholder={t('targetSearchPlaceholder')}
+              autoComplete="off"
+              onChange={(event) => setTargetSearch(event.target.value)}
+            />
             <select
+              aria-label={t('appliesTo')}
               value={selectedTarget}
               disabled={loading}
               onChange={(event) => {
                 setSelectedTarget(event.target.value);
                 setSelectedId(null);
+                setTargetSearch('');
               }}
             >
-              {targets.map((target) => (
-                <option
-                  key={targetKey(target.scope, target.id)}
-                  value={targetKey(target.scope, target.id)}
-                >
-                  {targetLabel(target)}
+              {visibleTargets.length ? (
+                visibleTargets.map((target) => (
+                  <option
+                    key={targetKey(target.scope, target.id)}
+                    value={targetKey(target.scope, target.id)}
+                  >
+                    {targetLabel(target)}
+                  </option>
+                ))
+              ) : (
+                <option value="" disabled>
+                  {t('noTargetMatches')}
                 </option>
-              ))}
+              )}
             </select>
-          </label>
+          </div>
 
           <label>
             {t('rule')}

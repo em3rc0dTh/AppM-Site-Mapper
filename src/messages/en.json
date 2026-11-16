@@ -2702,6 +2702,8 @@
     "savedRuleOptional": "Edit saved rule (optional)",
     "newRule": "New rule",
     "appliesTo": "Applies to",
+    "targetSearchPlaceholder": "Search QDF, panel or breaker...",
+    "noTargetMatches": "No matches",
     "chooseTarget": "Select a valid target.",
     "wholeQdf": "Whole QDF",
     "wholePanel": "Whole panel",

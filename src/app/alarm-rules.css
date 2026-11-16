@@ -685,3 +685,16 @@
     flex-direction: column;
   }
 }
+
+
+/* MK2 alarm target quick search */
+.sm-rule-target-picker {
+  display: grid;
+  gap: 6px;
+}
+.sm-rule-target-picker > label {
+  display: block;
+}
+.sm-rule-target-picker input[type='search'] {
+  min-width: 0;
+}

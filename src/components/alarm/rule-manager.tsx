@@ -60,9 +60,7 @@ const PARAMS: Readonly<Record<ManagedRuleCode, readonly InputField[]>> = {
     { key: 'maxDeltaKwh', unit: 'kWh', defaultValue: 0.001 },
     { key: 'windowMs', unit: 'ms', defaultValue: 300000 },
   ],
-  ENERGY_COUNTER_RESET: [
-    { key: 'minDecrementKwh', unit: 'kWh', defaultValue: 0.001 },
-  ],
+  ENERGY_COUNTER_RESET: [{ key: 'minDecrementKwh', unit: 'kWh', defaultValue: 0.001 }],
   ENERGY_CONSUMPTION_ANOMALY: [
     { key: 'minDeltaKwh', unit: 'kWh', defaultValue: 0.001 },
     { key: 'maxDeltaKwh', unit: 'kWh', defaultValue: 5 },

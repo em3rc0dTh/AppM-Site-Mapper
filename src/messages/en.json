@@ -1411,7 +1411,8 @@
     "anchor": "Anchor: {row}-{column}",
     "placementDescription": "Placement: automatic left-to-right · X {minX}–{maxX} mm · Y {y} mm · grid ref {row}-{column}",
     "rackCapacityHelp": "{totalU} U · capacity changes require a separate CAS migration.",
-    "correction": "Layout requires correction: {error}"
+    "correction": "Layout requires correction: {error}",
+    "floorPlan": "Room floor plan"
   },
   "visualStage": {
     "schematic": "SCHEMATIC SITE VIEW",

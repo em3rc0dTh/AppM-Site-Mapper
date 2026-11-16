@@ -70,16 +70,14 @@ export async function POST(request: Request) {
       if (!existing) throw new Error('RULE_NOT_FOUND');
       if (input.action === 'PUBLISH') {
         // Re-validate stored draft and active topology at publication time.
-        parseRuleDraft({
-          ...existing.draft,
-          id:existing.id,
-          expectedRevision:existing.revision,
-          status:undefined,
-          createdAt:undefined,
-          updatedAt:undefined,
-          updatedBy:undefined,
-          revision:undefined,
+        const d = existing.draft;
+        const checked = parseRuleDraft({
+          id:d.id,expectedRevision:existing.revision,code:d.code,
+          scope:d.scope,scopeId:d.scopeId,electricalProfileId:d.electricalProfileId,
+          parameters:d.parameters,severity:d.severity,
+          debounceSamples:d.debounceSamples,recoverySamples:d.recoverySamples,
         });
+        await assertScope(checked);
       }
       const record = await store.changeStatus(
         input.id,Number(input.expectedRevision),

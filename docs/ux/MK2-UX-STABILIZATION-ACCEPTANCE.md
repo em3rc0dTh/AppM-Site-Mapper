@@ -93,6 +93,22 @@ The presentation layer now:
 
 **Still pending operator sign-off** at local widths and zoom levels. No tests/builds/deployments have been run for this copy pass.
 
+## Physical infrastructure ergonomics — Network / Site / Structure / Level / Room
+
+The user's five red/black-marked screenshot revisions govern presentation. **Reuse the existing light MK2 design, three visible panes, original features and real operator data.** Red/black marks flag unnecessary/intrusive summaries; do not delete source records or real actions.
+
+| Screen | Applied UI changes | What must remain grounded |
+| --- | --- | --- |
+| Network | Center registered site links, remove decorative connector lines without actual edges, remove repeated schematic/status labels and generic Inspector telemetry text. Site card opens with a single click. | Existing registered sites and deep links; topology tree; zoom/fit; actual lifecycle and child counts |
+| Site | Keep the surveyed site perimeter and real structure polygons; enlarge their in-canvas labels and open the selected structure directly. Simplify Inspector; retain Edit Boundary and overlap/recovery warnings. | Persisted vertices and actual geometry only, no synthetic latitude/longitude, sizes or extra structures |
+| Structure | Replace the miniature isolated level slabs with legible full-size level links over an explicitly **schematic** building illustration. | Real registered levels and links only. No repository-authorized photograph, 3D building model or floor-to-facade mapping was available; this is **not** a surveyed exterior reconstruction |
+| Level | Make real surveyed Room labels readable in the actual polygon view and open Rooms in one click; rooms without surveyed geometry remain correctly identified as unsurveyed inventory, not placed on fictitious map points. | Actual room footprints, geometry-conflict notice, room create/edit contract and full geometry preserved |
+| Room | Preserve native BlueprintCanvas, real clusters/QDF/racks, Físico/Telemetría, registered room boundary, editing/placement tools, zoom, keyboard focus. Reduce repeated property information, use real racks and clusters, move destructive management into a disclosure, clarify the floor-plan header. | Real room area/vertices, rack count, cluster names; no fabricated occupancy, percent, cluster connectivity or new alarm state |
+
+Presentation adjustments are scoped to `mk-explorer-page` and `mk2-room-ergonomics`, with existing `mk2-ux-stabilization.css` as the styling layer. No changes to stored topology, spatial coordinates, power paths, persistence, auth, RBAC, telemetry APIs or topology traversal.
+
+**Manual acceptance still required**: 1440×900 and 1920×1080; narrow/resized panes; 125%, 150%, 200% zoom; select/open each Network → Site → Structure → Level → Room item; geometry labels and polygons aligned; inspect site polygon with real measured area; unsurveyed branches do not claim a position; Room editor still saves real draft and can open Telemetry; no overlaps with Reset Layout. Verify keyboard link navigation and contrast before approval.
+
 ## Manual local acceptance (after checkout)
 
 Review the feature branch using the existing local environment and seeded/connected data. Compare against the approved MK2 screenshot.

@@ -76,6 +76,85 @@
   white-space: nowrap;
 }
 
+/* Canonical MK2 product header: AppManager SiteMapper Mk2 | cube | Home.
+   Shells may size the outer slot, but this component owns its internal geometry. */
+.sm-product-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 0 16px 0 22px;
+  border-right: 1px solid #d4dfe7;
+  color: inherit;
+  text-decoration: none;
+}
+
+.sm-product-header .sm-brand {
+  width: auto;
+  min-width: 0;
+  flex: 0 0 auto;
+}
+
+.sm-product-header .sm-brand--compact .sm-brand-lockup {
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  gap: 14px;
+}
+
+.sm-product-header .sm-brand--compact .sm-brand-copy {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.sm-product-header .sm-brand--compact .sm-brand-appmanager {
+  font-size: 24px;
+  line-height: 1.05;
+  font-weight: 400;
+}
+
+.sm-product-header .sm-brand--compact .sm-brand-product-line {
+  gap: 6px;
+  font-size: 18px;
+  line-height: 1.05;
+}
+
+.sm-product-header .sm-brand--compact .sm-brand-tagline {
+  display: none;
+}
+
+.sm-product-header .sm-brand--compact .sm-brand-mark {
+  width: 35px;
+  height: 35px;
+}
+
+.sm-product-header-home {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border: 1px solid #c8d5df;
+  border-radius: 8px;
+  background: #fff;
+  color: #263a4a;
+}
+
+.sm-product-header-home svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sm-product-header:focus-visible {
+  outline: 2px solid #087e66;
+  outline-offset: -3px;
+}
+
 /* Global compact identity — same component in every AppShell view. */
 .sm-brand--compact,
 .zip-brand .sm-brand {

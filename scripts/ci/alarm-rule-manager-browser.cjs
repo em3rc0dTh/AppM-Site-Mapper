@@ -31,7 +31,11 @@ async function main() {
     await page.locator('.sm-rule-list button').first().waitFor({ timeout: 20_000 });
     const catalogCount = await page.locator('.sm-rule-list button').count();
     assert.ok(catalogCount >= 11, 'Rule Catalog did not render all definitions');
-    checks.push({ test: 'Rule Manager renders interactive catalog', result: 'PASS', count: catalogCount });
+    checks.push({
+      test: 'Rule Manager renders interactive catalog',
+      result: 'PASS',
+      count: catalogCount,
+    });
     await page.screenshot({ path: path.join(dest, 'rule-manager-catalog.png'), fullPage: true });
 
     await page.locator('.sm-rule-tabs button').nth(1).click();
@@ -46,7 +50,10 @@ async function main() {
 
     await page.locator('.sm-rule-tabs button').nth(2).click();
     await page.locator('.sm-rule-preview input').waitFor();
-    checks.push({ test: 'Assignments / effective breaker inspector route renders', result: 'PASS' });
+    checks.push({
+      test: 'Assignments / effective breaker inspector route renders',
+      result: 'PASS',
+    });
 
     await page.locator('.sm-rule-tabs button').nth(3).click();
     await page.locator('.sm-rule-table').waitFor();
@@ -61,13 +68,24 @@ async function main() {
 
     assert.deepEqual(browserErrors, [], 'Uncaught browser exceptions');
     checks.push({ test: 'No uncaught browser errors', result: 'PASS' });
-    writeFileSync(path.join(dest, 'browser-acceptance.json'), JSON.stringify({
-      at: new Date().toISOString(), checks,
-      screenshots: ['rule-manager-catalog.png','dc-48v-profile.png','alarm-center.png'],
-    }, null, 2) + '\n');
+    writeFileSync(
+      path.join(dest, 'browser-acceptance.json'),
+      JSON.stringify(
+        {
+          at: new Date().toISOString(),
+          checks,
+          screenshots: ['rule-manager-catalog.png', 'dc-48v-profile.png', 'alarm-center.png'],
+        },
+        null,
+        2,
+      ) + '\n',
+    );
     console.log('BROWSER ACCEPTANCE PASS: ' + checks.length + ' checks');
   } finally {
     await browser.close();
   }
 }
-main().catch((err) => { console.error(err); process.exitCode = 1; });
+main().catch((err) => {
+  console.error(err);
+  process.exitCode = 1;
+});

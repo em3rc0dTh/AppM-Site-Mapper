@@ -35,7 +35,9 @@ describe.skipIf(!enabled)('Alarm Rule Manager — isolated real MongoDB acceptan
       process.env.APP_ENV !== 'test' ||
       !/^mongodb:\/\/127\.0\.0\.1:\d+\/\?replicaSet=[\w-]+$/.test(uri)
     ) {
-      throw new Error('Rule Manager Mongo acceptance requires an isolated loopback test replica set');
+      throw new Error(
+        'Rule Manager Mongo acceptance requires an isolated loopback test replica set',
+      );
     }
     client = await MongoClient.connect(uri, { serverSelectionTimeoutMS: 8_000 });
     db = client.db(databaseName);
@@ -59,7 +61,10 @@ describe.skipIf(!enabled)('Alarm Rule Manager — isolated real MongoDB acceptan
     expect(published.published?.parameters.assertBelowA).toBe(1.0);
 
     const updated = await store.saveDraft(
-      { ...draft(published.revision, published.id), parameters: { assertBelowA: 1.5, clearAboveA: 2.5 } },
+      {
+        ...draft(published.revision, published.id),
+        parameters: { assertBelowA: 1.5, clearAboveA: 2.5 },
+      },
       'ci-admin',
     );
     expect(updated.draft.parameters.assertBelowA).toBe(1.5);
@@ -68,10 +73,14 @@ describe.skipIf(!enabled)('Alarm Rule Manager — isolated real MongoDB acceptan
     const reopened = await new MongoRuleManagerStore(db).get(first.id);
     expect(reopened?.published?.parameters.assertBelowA).toBe(1.0);
     expect(reopened?.audit.map((event) => event.action)).toEqual([
-      'CREATED', 'PUBLISHED', 'DRAFT_UPDATED',
+      'CREATED',
+      'PUBLISHED',
+      'DRAFT_UPDATED',
     ]);
     expect(reopened?.audit.map((event) => event.revision)).toEqual([1, 2, 3]);
-    expect(await db.collection('alarm_rule_configurations').countDocuments({ id: first.id })).toBe(1);
+    expect(await db.collection('alarm_rule_configurations').countDocuments({ id: first.id })).toBe(
+      1,
+    );
   });
 
   it('enforces compare-and-swap under concurrent publication and forbids stale mutation', async () => {
@@ -86,8 +95,9 @@ describe.skipIf(!enabled)('Alarm Rule Manager — isolated real MongoDB acceptan
     expect(winner.revision).toBe(existing.revision + 1);
     expect(winner.audit).toHaveLength(existing.audit.length + 1);
     expect(winner.audit.at(-1)?.actorId).toMatch(/^ci-[ab]$/);
-    await expect(store.saveDraft(draft(existing.revision, existing.id), 'ci-stale'))
-      .rejects.toThrow('RULE_STALE_WRITE');
+    await expect(
+      store.saveDraft(draft(existing.revision, existing.id), 'ci-stale'),
+    ).rejects.toThrow('RULE_STALE_WRITE');
   });
 
   it('disables a rule without deleting its historical audit entries or affecting legacy alarm collections', async () => {

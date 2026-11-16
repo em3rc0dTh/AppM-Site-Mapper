@@ -803,3 +803,321 @@
     transition: none;
   }
 }
+
+/* MK2 Equipment composition ergonomic acceptance — Chassis/Shelf/Frame/Panel/Breaker. */
+/* Presentation-only. Use the real DOM, physical hierarchy, telemetry and
+   permissions; never replace real content with values from an AI mockup.
+   Topology/Canvas/Inspector sizing and user-saved widths stay untouched. */
+.mk2-equipment-ergonomics .zip-device-stage {
+  padding-bottom: 54px !important;
+}
+.mk2-equipment-ergonomics .zip-device-stage > h1 {
+  min-height: 36px;
+  height: auto;
+  margin-bottom: 7px;
+  font-size: 21px;
+  line-height: 1.25;
+}
+.mk2-equipment-ergonomics .zip-device-stage .front01-primary-tabs {
+  padding: 4px 0 9px;
+  gap: 6px;
+}
+.mk2-equipment-ergonomics .zip-device-stage .front01-primary-tabs button {
+  min-height: 34px;
+  padding: 7px 13px;
+}
+.mk2-equipment-ergonomics .equipment-composition {
+  box-sizing: border-box;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+  padding: 13px 14px 12px;
+  container-type: inline-size;
+}
+.mk2-equipment-ergonomics .equipment-composition-header {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 20px;
+  margin-bottom: 10px;
+}
+.mk2-equipment-ergonomics .equipment-composition-header > div:first-child {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.mk2-equipment-ergonomics .equipment-composition-header h2 {
+  margin: 3px 0;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.mk2-equipment-ergonomics .equipment-composition-header small {
+  line-height: 1.4;
+}
+.mk2-equipment-ergonomics .equipment-composition-policy {
+  display: flex;
+  flex: 1 1 285px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 7px 12px;
+  min-width: 0;
+}
+.mk2-equipment-ergonomics .equipment-composition-policy p {
+  flex: 1 1 210px;
+  max-width: none;
+  text-align: right;
+  line-height: 1.45;
+}
+.mk2-equipment-ergonomics .equipment-lifecycle-actions {
+  flex: 0 0 auto;
+}
+.mk2-equipment-ergonomics .equipment-contract-canvas {
+  gap: 11px;
+}
+.mk2-equipment-ergonomics .ec-contract {
+  border-radius: 9px;
+  box-shadow: none;
+}
+.mk2-equipment-ergonomics .ec-topline {
+  gap: 7px 12px;
+  padding: 9px 14px;
+  flex-wrap: wrap;
+  line-height: 1.4;
+}
+.mk2-equipment-ergonomics .ec-live-cover {
+  gap: 6px 12px;
+  padding: 8px 14px;
+  line-height: 1.45;
+}
+.mk2-equipment-ergonomics .ec-focus {
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px 16px;
+  padding: 13px 15px 10px;
+}
+.mk2-equipment-ergonomics .ec-focus h2 {
+  font-size: clamp(17px, 1.45vw, 21px);
+  line-height: 1.3;
+}
+.mk2-equipment-ergonomics .ec-focus p {
+  margin-top: 3px;
+  line-height: 1.5;
+}
+.mk2-equipment-ergonomics .ec-focus-badges {
+  justify-content: flex-end;
+  margin-left: auto;
+}
+.mk2-equipment-ergonomics .ec-focus-badges span,
+.mk2-equipment-ergonomics .ec-heading-counts span {
+  padding: 5px 8px;
+}
+.mk2-equipment-ergonomics .ec-main-section,
+.mk2-equipment-ergonomics .ec-panel-composition {
+  padding: 0 14px 13px;
+}
+.mk2-equipment-ergonomics .ec-section-heading {
+  padding: 10px 2px 11px;
+  gap: 8px 12px;
+  flex-wrap: wrap;
+}
+.mk2-equipment-ergonomics .ec-section-heading small,
+.mk2-equipment-ergonomics .ec-frame-heading small,
+.mk2-equipment-ergonomics .ec-shelf-card-heading small {
+  margin-bottom: 4px;
+}
+.mk2-equipment-ergonomics .ec-chassis-shelves {
+  gap: 9px;
+}
+.mk2-equipment-ergonomics .ec-shelf-card {
+  min-width: 0;
+  padding: 11px 12px;
+}
+.mk2-equipment-ergonomics .ec-shelf-card-heading {
+  flex-wrap: wrap;
+  gap: 7px 12px;
+  margin-bottom: 8px;
+}
+.mk2-equipment-ergonomics .ec-chassis-frame-strip,
+.mk2-equipment-ergonomics .ec-frames-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+  gap: 8px;
+}
+.mk2-equipment-ergonomics .ec-chassis-frame {
+  min-width: 0;
+  min-height: 63px;
+  padding: 10px 12px;
+  gap: 4px;
+  justify-content: space-between;
+  box-shadow: none;
+}
+.mk2-equipment-ergonomics .ec-chassis-frame strong {
+  font-size: 12px;
+  line-height: 1.45;
+}
+.mk2-equipment-ergonomics .ec-frame-card {
+  min-width: 0;
+  padding: 11px;
+}
+.mk2-equipment-ergonomics .ec-frame-heading {
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 7px 10px;
+  margin-bottom: 9px;
+}
+.mk2-equipment-ergonomics .ec-frame-heading-status {
+  justify-content: flex-end;
+}
+.mk2-equipment-ergonomics .ec-frame-panels,
+.mk2-equipment-ergonomics .ec-frame-rows {
+  gap: 6px;
+}
+.mk2-equipment-ergonomics .ec-panel-line {
+  padding: 9px 11px;
+  min-height: 51px;
+  gap: 4px 9px;
+}
+.mk2-equipment-ergonomics .ec-panel-meta {
+  gap: 4px 10px;
+  line-height: 1.45;
+}
+.mk2-equipment-ergonomics .ec-frame-row {
+  min-height: 50px;
+  padding: 9px 11px;
+  gap: 10px;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+}
+.mk2-equipment-ergonomics .ec-frame-row > div {
+  gap: 7px 12px;
+}
+.mk2-equipment-ergonomics .ec-frame-row-status {
+  max-width: 100%;
+}
+.mk2-equipment-ergonomics .ec-panel-composition .ec-table-scroll {
+  max-width: 100%;
+  min-width: 0;
+  max-height: min(64vh, 670px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.mk2-equipment-ergonomics .ec-breaker-columns {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.mk2-equipment-ergonomics .ec-breaker-columns,
+.mk2-equipment-ergonomics .ec-breaker-row,
+.mk2-equipment-ergonomics .ec-empty-breaker-row {
+  gap: 7px;
+  padding: 8px 10px;
+  min-height: 33px;
+}
+.mk2-equipment-ergonomics .ec-breaker-columns,
+.mk2-equipment-ergonomics .ec-breaker-row,
+.mk2-equipment-ergonomics .ec-empty-breaker-row {
+  grid-template-columns:
+    42px minmax(155px, 2.25fr)
+    repeat(4, minmax(62px, 0.8fr))
+    minmax(85px, 1fr)
+    minmax(78px, 0.8fr);
+}
+.mk2-equipment-ergonomics .ec-breaker-table {
+  min-width: 760px;
+}
+.mk2-equipment-ergonomics .ec-empty-breaker-row button {
+  min-height: 30px;
+}
+.mk2-equipment-ergonomics .ec-breaker-detail {
+  margin: 0 14px 13px;
+  padding: 12px 14px;
+}
+.mk2-equipment-ergonomics .ec-breaker-detail .ec-section-heading {
+  padding-top: 2px;
+}
+.mk2-equipment-ergonomics .ec-breaker-metrics {
+  gap: 8px;
+}
+.mk2-equipment-ergonomics .ec-breaker-metrics .ec-reading {
+  padding: 11px 13px;
+}
+.mk2-equipment-ergonomics .ec-breaker-metrics .ec-reading strong {
+  font-size: 21px;
+}
+.mk2-equipment-ergonomics .ec-breaker-source {
+  margin: 10px 0;
+  line-height: 1.5;
+}
+.mk2-equipment-ergonomics .ec-legend {
+  padding: 9px 14px;
+  gap: 6px 15px;
+}
+.mk2-equipment-ergonomics .ec-snmp-capacity {
+  margin: 7px 14px 12px;
+  padding: 12px;
+}
+.mk2-equipment-ergonomics .ec-snmp-capacity header {
+  margin-bottom: 8px;
+}
+.mk2-equipment-ergonomics .ec-snmp-capacity-metrics {
+  gap: 7px;
+}
+.mk2-equipment-ergonomics .ec-snmp-capacity-metrics > div {
+  padding: 9px 10px;
+  gap: 4px;
+}
+.mk2-equipment-ergonomics .ec-snmp-feed-tags {
+  margin-top: 8px;
+  gap: 5px;
+}
+.mk2-equipment-ergonomics .ec-snmp-feed-tags span {
+  padding: 6px 8px;
+}
+.mk2-equipment-ergonomics .equipment-contract-canvas > .equipment-faceplate {
+  padding: 12px 14px;
+}
+.mk2-equipment-ergonomics .equipment-contract-canvas .equipment-faceplate-surface {
+  min-height: 118px;
+}
+.mk2-equipment-ergonomics .equipment-composition-workbench-actions {
+  margin-top: 9px;
+}
+.mk2-equipment-ergonomics .front01-equipment-technical-config {
+  margin-top: 9px;
+}
+.mk2-equipment-ergonomics .front01-equipment-technical-config > summary {
+  padding: 9px 12px;
+}
+/* Width awareness follows the resizable Canvas, not the outer viewport.
+   Never hide a panel, equipment slot, terminal, telemetry row or action. */
+@container (max-width: 670px) {
+  .mk2-equipment-ergonomics .ec-chassis-frame-strip,
+  .mk2-equipment-ergonomics .ec-frames-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .mk2-equipment-ergonomics .equipment-composition-policy {
+    justify-content: flex-start;
+  }
+  .mk2-equipment-ergonomics .equipment-composition-policy p {
+    text-align: left;
+  }
+  .mk2-equipment-ergonomics .ec-frame-row {
+    grid-template-columns: 28px minmax(0, 1fr);
+  }
+  .mk2-equipment-ergonomics .ec-frame-row-status {
+    grid-column: 2;
+    justify-content: flex-start;
+  }
+}
+@media (max-width: 899px) {
+  .mk2-equipment-ergonomics .equipment-composition {
+    padding: 10px;
+  }
+  .mk2-equipment-ergonomics .ec-main-section,
+  .mk2-equipment-ergonomics .ec-panel-composition {
+    padding-inline: 10px;
+  }
+  .mk2-equipment-ergonomics .ec-snmp-capacity {
+    margin-inline: 10px;
+  }
+}

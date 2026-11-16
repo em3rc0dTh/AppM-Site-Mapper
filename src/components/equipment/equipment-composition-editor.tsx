@@ -410,19 +410,14 @@ export function EquipmentCompositionEditor({
           <span>{t('physical')}</span>
           <h2>{equipment.name}</h2>
           <small>
-            {label(equipment.equipmentType)} · {equipment.lifecycle} · {equipment.childMode}
+            {label(equipment.equipmentType)} ·{' '}
+            {equipment.lifecycle === 'ACTIVE' ? t('statusActive') : t('statusArchived')} ·{' '}
             {equipment.childMode === 'POSITIONAL'
-              ? ' · ' + t('slotsCount', { count: equipment.children.length })
-              : ' · ' + t('childrenCount', { count: equipment.children.length })}
-            {equipment.telemetryPointPrefix ? ' · MQTT ' + equipment.telemetryPointPrefix : ''}
+              ? t('slotsCount', { count: equipment.children.length })
+              : t('childrenCount', { count: equipment.children.length })}
           </small>
         </div>
         <div className="equipment-composition-policy">
-          {allowed.length ? (
-            <p>{t('allowed', { types: allowed.map(label).join(', ') })}</p>
-          ) : (
-            <p>{t('anyType')}</p>
-          )}
           {canWrite ? (
             <div className="equipment-lifecycle-actions">
               {isActive ? (
@@ -448,9 +443,21 @@ export function EquipmentCompositionEditor({
           ) : null}
         </div>
       </header>
+      <details className="equipment-composition-technical-note">
+        <summary>{t('technicalInfo')}</summary>
+        <p>{t('childMode')}: {equipment.childMode}</p>
+        {equipment.telemetryPointPrefix ? (
+          <p>{t('telemetryPrefix')}: {equipment.telemetryPointPrefix}</p>
+        ) : null}
+      </details>
 
       {isActive && configurationOpen ? (
         <form className="equipment-configuration-form" onSubmit={configureEquipment}>
+          <p className="equipment-configuration-allowed">
+            {allowed.length
+              ? t('allowed', { types: allowed.map(label).join(', ') })
+              : t('anyType')}
+          </p>
           <label>
             {t('equipmentType')}
             <select name="equipmentType" defaultValue={equipment.equipmentType}>

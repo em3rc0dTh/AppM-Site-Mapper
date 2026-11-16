@@ -24,41 +24,41 @@
 
 ## 3. Cobertura y trazabilidad
 
-| ID | Origen | Entorno | Escenario | Estado inicial |
-| --- | --- | --- | --- | --- |
-| UAT-001 | Control | LAB/FIELD | Identidad de release | NOT_RUN |
-| UAT-002 | Control | LAB/FIELD | Aislamiento de pruebas y procedencia | NOT_RUN |
-| UAT-101 | PR223 Seguridad | LAB / FIELD controlado | Sesión idle y absoluta | NOT_RUN |
-| UAT-102 | PR223 Seguridad | LAB / FIELD controlado | TOTP y recuperación | NOT_RUN |
-| UAT-103 | PR223 Seguridad | LAB / FIELD controlado | Política de contraseñas offline | NOT_RUN |
-| UAT-104 | PR223 Seguridad | LAB / FIELD controlado | RBAC, objeto y CSRF | NOT_RUN |
-| UAT-105 | PR223 Seguridad | FIELD / LAN aislada | Cookies, HTTPS, HSTS y activos locales | NOT_RUN |
-| UAT-106 | PR223 Seguridad | LAB / FIELD controlado | Reautenticación para credenciales OT | NOT_RUN |
-| UAT-107 | PR223 Seguridad | LAB / FIELD controlado | Persistencia de clave MFA y reloj | NOT_RUN |
-| UAT-201 | PR224 Alarmas | LAB / PRE-PROD | DRAFT, PUBLISH y revision CAS | NOT_RUN |
-| UAT-202 | PR224 Alarmas | LAB / PRE-PROD | Herencia de políticas y legado | NOT_RUN |
-| UAT-203 | PR224 Alarmas | FIELD con ingeniería / LAB | DC-48V y umbrales de commissioning | NOT_RUN |
-| UAT-204 | PR224 Alarmas | LAB / PRE-PROD | V/A/P/E independientes y correlación | NOT_RUN |
-| UAT-205 | PR224 Alarmas | LAB / PRE-PROD | Stale, replay, pérdida y LOAD_LOSS | NOT_RUN |
-| UAT-206 | PR224 Alarmas | LAB / PRE-PROD | DISABLE y rollback auditado | NOT_RUN |
-| UAT-207 | PR224 Alarmas | LAB / PRE-PROD | Control de permisos y concurrencia | NOT_RUN |
-| UAT-301 | PR225 Retiro consola | LAB / appliance clonada | Servicio eliminado de Compose | NOT_RUN |
-| UAT-302 | PR225 Retiro consola | FIELD inspección sin cambios | Contenedor residual y puerto | NOT_RUN |
-| UAT-303 | PR225 Retiro consola | LAB / FIELD controlado | No regresión / conservación de datos | NOT_RUN |
-| UAT-401 | PR226 Rastreo | LAB / FIELD lectura | Ventana independiente y permisos | NOT_RUN |
-| UAT-402 | PR226 Rastreo | FIELD con datos reales | Rutas A/B y terminales de A3 | NOT_RUN |
-| UAT-403 | PR226 Rastreo | LAB / FIELD lectura | Rutas ausentes y múltiples | NOT_RUN |
-| UAT-404 | PR226 Rastreo | LAB / FIELD lectura | Frescura por breaker | NOT_RUN |
-| UAT-405 | PR226 Rastreo | LAB / FIELD lectura | Responsive, impresión y PDF | NOT_RUN |
-| UAT-406 | PR226 Rastreo | LAB / FIELD lectura | Conciliación Excel no vinculada | NOT_RUN |
-| UAT-501 | Regresión | LAB / FIELD controlado | Golden path de topología | NOT_RUN |
-| UAT-502 | Regresión | LAB / FIELD lectura | MQTT/SNMP/Timescale/Modbus | NOT_RUN |
-| UAT-503 | Regresión | LAB / FIELD lectura | Aislamiento y calidad QDF | NOT_RUN |
-| UAT-504 | Regresión | LAB / appliance clonada | Reboot/auto-recovery | NOT_RUN |
-| UAT-505 | Regresión | LAB / restore aislado | Backup y restore seguro | NOT_RUN |
-| UAT-601 | FIELD / SAT | FIELD autorizado | Verificación eléctrica A/B | NOT_RUN |
-| UAT-602 | FIELD / SAT | FIELD autorizado | Metasys, ACL OT y firewall | NOT_RUN |
-| UAT-603 | FIELD / SAT | FIELD autorizado | Operación LAN totalmente offline | NOT_RUN |
+| ID      | Origen               | Entorno                      | Escenario                              | Estado inicial |
+| ------- | -------------------- | ---------------------------- | -------------------------------------- | -------------- |
+| UAT-001 | Control              | LAB/FIELD                    | Identidad de release                   | NOT_RUN        |
+| UAT-002 | Control              | LAB/FIELD                    | Aislamiento de pruebas y procedencia   | NOT_RUN        |
+| UAT-101 | PR223 Seguridad      | LAB / FIELD controlado       | Sesión idle y absoluta                 | NOT_RUN        |
+| UAT-102 | PR223 Seguridad      | LAB / FIELD controlado       | TOTP y recuperación                    | NOT_RUN        |
+| UAT-103 | PR223 Seguridad      | LAB / FIELD controlado       | Política de contraseñas offline        | NOT_RUN        |
+| UAT-104 | PR223 Seguridad      | LAB / FIELD controlado       | RBAC, objeto y CSRF                    | NOT_RUN        |
+| UAT-105 | PR223 Seguridad      | FIELD / LAN aislada          | Cookies, HTTPS, HSTS y activos locales | NOT_RUN        |
+| UAT-106 | PR223 Seguridad      | LAB / FIELD controlado       | Reautenticación para credenciales OT   | NOT_RUN        |
+| UAT-107 | PR223 Seguridad      | LAB / FIELD controlado       | Persistencia de clave MFA y reloj      | NOT_RUN        |
+| UAT-201 | PR224 Alarmas        | LAB / PRE-PROD               | DRAFT, PUBLISH y revision CAS          | NOT_RUN        |
+| UAT-202 | PR224 Alarmas        | LAB / PRE-PROD               | Herencia de políticas y legado         | NOT_RUN        |
+| UAT-203 | PR224 Alarmas        | FIELD con ingeniería / LAB   | DC-48V y umbrales de commissioning     | NOT_RUN        |
+| UAT-204 | PR224 Alarmas        | LAB / PRE-PROD               | V/A/P/E independientes y correlación   | NOT_RUN        |
+| UAT-205 | PR224 Alarmas        | LAB / PRE-PROD               | Stale, replay, pérdida y LOAD_LOSS     | NOT_RUN        |
+| UAT-206 | PR224 Alarmas        | LAB / PRE-PROD               | DISABLE y rollback auditado            | NOT_RUN        |
+| UAT-207 | PR224 Alarmas        | LAB / PRE-PROD               | Control de permisos y concurrencia     | NOT_RUN        |
+| UAT-301 | PR225 Retiro consola | LAB / appliance clonada      | Servicio eliminado de Compose          | NOT_RUN        |
+| UAT-302 | PR225 Retiro consola | FIELD inspección sin cambios | Contenedor residual y puerto           | NOT_RUN        |
+| UAT-303 | PR225 Retiro consola | LAB / FIELD controlado       | No regresión / conservación de datos   | NOT_RUN        |
+| UAT-401 | PR226 Rastreo        | LAB / FIELD lectura          | Ventana independiente y permisos       | NOT_RUN        |
+| UAT-402 | PR226 Rastreo        | FIELD con datos reales       | Rutas A/B y terminales de A3           | NOT_RUN        |
+| UAT-403 | PR226 Rastreo        | LAB / FIELD lectura          | Rutas ausentes y múltiples             | NOT_RUN        |
+| UAT-404 | PR226 Rastreo        | LAB / FIELD lectura          | Frescura por breaker                   | NOT_RUN        |
+| UAT-405 | PR226 Rastreo        | LAB / FIELD lectura          | Responsive, impresión y PDF            | NOT_RUN        |
+| UAT-406 | PR226 Rastreo        | LAB / FIELD lectura          | Conciliación Excel no vinculada        | NOT_RUN        |
+| UAT-501 | Regresión            | LAB / FIELD controlado       | Golden path de topología               | NOT_RUN        |
+| UAT-502 | Regresión            | LAB / FIELD lectura          | MQTT/SNMP/Timescale/Modbus             | NOT_RUN        |
+| UAT-503 | Regresión            | LAB / FIELD lectura          | Aislamiento y calidad QDF              | NOT_RUN        |
+| UAT-504 | Regresión            | LAB / appliance clonada      | Reboot/auto-recovery                   | NOT_RUN        |
+| UAT-505 | Regresión            | LAB / restore aislado        | Backup y restore seguro                | NOT_RUN        |
+| UAT-601 | FIELD / SAT          | FIELD autorizado             | Verificación eléctrica A/B             | NOT_RUN        |
+| UAT-602 | FIELD / SAT          | FIELD autorizado             | Metasys, ACL OT y firewall             | NOT_RUN        |
+| UAT-603 | FIELD / SAT          | FIELD autorizado             | Operación LAN totalmente offline       | NOT_RUN        |
 
 **Total:** 33 casos adicionales, inicialmente **33 NOT_RUN**, 0 PASS, 0 FAIL, 0 BLOCKED, 0 N/A. Se suman a los 18 ACC del paquete contractual, **sin alterar sus resultados históricos**.
 

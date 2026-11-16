@@ -244,7 +244,8 @@ export class AuthService {
       return failure('BOOTSTRAP_CLOSED');
     }
 
-    if (!displayName.trim()) return failure('INVALID_INPUT');
+    if (!email.trim() || email.length > 254 || !displayName.trim() || displayName.length > 120)
+      return failure('INVALID_INPUT');
     const policy = await assessNewPassword(password);
     if (policy !== 'ACCEPTED') return failure(policy);
 
@@ -282,7 +283,8 @@ export class AuthService {
     const email = normalizeEmail(input.email);
     const displayName = input.displayName.trim();
 
-    if (!email || !displayName) return failure('INVALID_INPUT');
+    if (!email || email.length > 254 || !displayName || displayName.length > 120)
+      return failure('INVALID_INPUT');
     const policy = await assessNewPassword(input.temporaryPassword);
     if (policy !== 'ACCEPTED') return failure(policy);
 

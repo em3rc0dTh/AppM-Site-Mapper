@@ -109,6 +109,20 @@ Presentation adjustments are scoped to `mk-explorer-page` and `mk2-room-ergonomi
 
 **Manual acceptance still required**: 1440×900 and 1920×1080; narrow/resized panes; 125%, 150%, 200% zoom; select/open each Network → Site → Structure → Level → Room item; geometry labels and polygons aligned; inspect site polygon with real measured area; unsurveyed branches do not claim a position; Room editor still saves real draft and can open Telemetry; no overlaps with Reset Layout. Verify keyboard link navigation and contrast before approval.
 
+## Room reading hierarchy — screenshot correction (Nov 16, 2026)
+
+The supplied 1749×863 screenshot showed three distinct typography scales competing: oversized room title; undersized surveyed SVG coordinates, cluster names and QDF labels; cramped Inspector and Topology; two repeated "Plano de sala" headings; and Reset Layout floating over the plotted room.
+
+Applied presentation-only changes on the same Mk2 light styling:
+- Maintain one ~21–24px page heading and one ~18px physical plan heading; remove the extra view/title line. Technical subtitle ~15px.
+- Main HTML UI, actions, tree and Inspector use ~14–17px text with natural wrapping rather than smaller fonts for narrow widths. Registered clusters form a **vertical list**, not a compressed two-column flex.
+- The SVG continues to use persisted room/cluster/rack points. Its font sizes are specified in *SVG survey units*, separately from CSS pixels, for larger cluster names, grid coordinates and QDF identifiers; no coordinates, racks or positions are moved. The physical identifiers are never truncated when five characters or shorter.
+- Move Reset Layout into the footer region with reserved clearance; keep the interactive zoom/pan/select toolbar, actual 600×600mm grid, physical/telemetry mode, room editor, statuses and recorded object names.
+- Responsive test at **100%, 125%, 150%, and 200% browser zoom**. Check 1440×900 and 1920×1080, resize both side panes, and verify the label sizes on cluster strips and QDF footprints independently. Some dense axes may still need canvas zoom for accessibility.
+- Manually confirm the exact rendered typography and edit mode. Static CSS/code inspection cannot prove real 80-year-old readability, WCAG contrast or lack of text collision.
+
+No persisted topology, geometry, API, telemetry data, layout draft, capability or RBAC changes. No test/build/deployment performed in this typography pass.
+
 ## Manual local acceptance (after checkout)
 
 Review the feature branch using the existing local environment and seeded/connected data. Compare against the approved MK2 screenshot.

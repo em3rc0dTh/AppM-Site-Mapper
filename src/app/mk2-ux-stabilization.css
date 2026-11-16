@@ -710,6 +710,11 @@
   flex: 1 1 auto;
   min-height: 0;
 }
+/* Read-only operators have no creation dock. Keep a clear reset area
+   without moving or hiding the only existing layout-reset action. */
+.zip-bdfb-page[data-mk2-ux-physical='true'] .telxius-operational-stage:not(:has(> .operational-edit-dock)) > .operational-stage-body {
+  padding-bottom: 48px !important;
+}
 @media (max-width: 899px) {
   .zip-bdfb-page[data-mk2-ux-physical='true'] .telxius-operational-stage > .operational-edit-dock {
     padding-right: 12px;

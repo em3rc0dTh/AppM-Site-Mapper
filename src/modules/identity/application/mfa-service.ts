@@ -104,7 +104,8 @@ export class MfaService {
       return failure('RATE_LIMITED');
     const secret = decryptMfaSecret(user.id, user.mfaPendingSecretCiphertext);
     if (!secret) return failure('MFA_KEY_NOT_CONFIGURED');
-    if (matchTotpStep(secret, code, now.getTime()) === null) return failure('MFA_CODE_INVALID');
+    const enrollmentStep = matchTotpStep(secret, code, now.getTime());
+    if (enrollmentStep === null) return failure('MFA_CODE_INVALID');
 
     const { mfaPendingSecretCiphertext, mfaPendingStartedAt, ...rest } = user;
     void mfaPendingStartedAt;
@@ -114,6 +115,8 @@ export class MfaService {
       {
         ...rest,
         mfaSecretCiphertext: mfaPendingSecretCiphertext,
+        // Prevent reusing the enrollment confirmation code for the first login.
+        mfaLastUsedStep: enrollmentStep,
         mfaRecoveryHashes: recoveryHashes,
         updatedAt: nowIso(),
       },

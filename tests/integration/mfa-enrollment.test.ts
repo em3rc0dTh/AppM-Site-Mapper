@@ -83,22 +83,38 @@ describe('Site Mapper TOTP MFA', () => {
       ok: false,
       error: 'MFA_REQUIRED',
     });
+    expect(
+      await auth.authenticate(
+        'admin@example.com',
+        'a strong initial password',
+        'mfa-confirm-replay',
+        code,
+      ),
+    ).toEqual({ ok: false, error: 'MFA_INVALID' });
+
+    now = new Date('2026-11-16T08:00:31.000Z');
+    const loginCode = codeFor(started.value.secret, now);
     const valid = await auth.authenticate(
       'admin@example.com',
       'a strong initial password',
       'mfa-3',
-      code,
+      loginCode,
     );
     expect(valid.ok).toBe(true);
     expect(
-      await auth.authenticate('admin@example.com', 'a strong initial password', 'mfa-4', code),
+      await auth.authenticate(
+        'admin@example.com',
+        'a strong initial password',
+        'mfa-4',
+        loginCode,
+      ),
     ).toEqual({
       ok: false,
       error: 'MFA_INVALID',
     });
 
     if (!valid.ok) throw new Error('expected TOTP login');
-    now = new Date('2026-11-16T08:00:31.000Z');
+    now = new Date('2026-11-16T08:01:01.000Z');
     const next = codeFor(started.value.secret, now);
     expect((await mfa.disable(valid.value.token, 'a strong initial password', next)).ok).toBe(true);
     expect(await auth.resolveSession(valid.value.token)).toBeNull();

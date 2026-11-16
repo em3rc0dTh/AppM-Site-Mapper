@@ -2233,3 +2233,22 @@
     padding: 10px 12px 56px !important;
   }
 }
+
+
+/* Room topology header: keep TODOS clear of the collapse control. */
+/* The collapse button is absolutely positioned at the heading's right edge
+   (34px wide, 7px inset). Reserve its full hit area plus breathing room so
+   the TODOS badge cannot be painted underneath it. */
+.zip-app-shell.app-shell--blueprint
+  .telxius-topology-tree[data-collapsed='false']
+  .telxius-tree-heading {
+  box-sizing: border-box;
+  min-width: 0;
+  padding-right: 54px !important;
+  gap: 8px;
+}
+.zip-app-shell.app-shell--blueprint
+  .telxius-topology-tree[data-collapsed='false']
+  .telxius-tree-heading b {
+  flex: 0 0 auto;
+}

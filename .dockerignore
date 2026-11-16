@@ -8,3 +8,6 @@ node_modules
 coverage
 .vscode
 .DS_Store
+
+# Retired independent console: never include it in Site Mapper Docker build contexts.
+infra/operational-console/

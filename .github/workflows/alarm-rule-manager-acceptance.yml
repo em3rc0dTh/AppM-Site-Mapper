@@ -1,0 +1,160 @@
+name: Alarm Rule Manager MK1 acceptance
+
+on:
+  push:
+    branches:
+      - feat/alarm-rule-manager-dc48v-mk1
+    paths:
+      - '.github/workflows/alarm-rule-manager-acceptance.yml'
+      - 'src/modules/alarm/**'
+      - 'src/components/alarm/**'
+      - 'src/components/power/breaker-limit-editor.tsx'
+      - 'src/app/alarms/**'
+      - 'src/app/api/alarms/**'
+      - 'src/app/alarm-rules.css'
+      - 'src/messages/**'
+      - 'tests/unit/alarm-rule-manager.test.ts'
+      - 'tests/integration/alarm-rule-manager-mongo.test.ts'
+      - 'scripts/ci/alarm-rule-manager-*.mjs'
+      - 'scripts/ci/alarm-rule-manager-*.cjs'
+      - 'docs/operations/alarm-rule-manager-actions-acceptance.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alarm-rule-manager-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  focused-contracts:
+    name: Contracts, lint, types and alarm regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install exact dependencies
+        run: npm ci --no-audit --no-fund
+      - name: TypeScript contracts
+        run: npm run typecheck
+      - name: ESLint rules
+        run: npm run lint
+      - name: Formatting baseline
+        run: npm run format:check
+      - name: Targeted V/A/P/E alarms, breaker protection and bilingual UI
+        run: |
+          npx vitest run \
+            tests/unit/alarm-rule-manager.test.ts \
+            tests/unit/telemetry-alarm-evaluator.test.ts \
+            tests/unit/automatic-telemetry-watch-alarm.test.ts \
+            tests/unit/breaker-protection.test.ts \
+            tests/unit/i18n-static-ui.test.ts
+
+  mongo-acceptance:
+    name: Real Mongo publish, concurrency and legacy alarm regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    env:
+      APP_ENV: test
+      CI_ALARM_RULE_MANAGER: 'true'
+      CI_ALARM_ACCEPTANCE: 'true'
+      MONGODB_URI: mongodb://127.0.0.1:27017/?replicaSet=rs0
+      ALARM_REDTEAM_MONGO_URI: mongodb://127.0.0.1:27017/?replicaSet=rs0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install exact dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Start disposable loopback MongoDB 7 replica set
+        run: |
+          set -euo pipefail
+          docker run -d --name alarm-rule-manager-test-mongo \
+            -p 127.0.0.1:27017:27017 mongo:7 --replSet rs0 --bind_ip_all
+          for attempt in $(seq 1 45); do
+            if docker exec alarm-rule-manager-test-mongo mongosh --quiet \
+              --eval 'db.adminCommand({ping:1}).ok' >/dev/null 2>&1; then break; fi
+            sleep 2
+          done
+          docker exec alarm-rule-manager-test-mongo mongosh --quiet \
+            --eval 'rs.initiate({_id:"rs0",members:[{_id:0,host:"127.0.0.1:27017"}]})'
+          for attempt in $(seq 1 45); do
+            if docker exec alarm-rule-manager-test-mongo mongosh --quiet \
+              --eval 'db.hello().isWritablePrimary' | grep -q true; then exit 0; fi
+            sleep 2
+          done
+          echo 'Mongo replica set did not become PRIMARY' >&2
+          exit 1
+      - name: Managed Rule Manager Mongo acceptance
+        run: npx vitest run tests/integration/alarm-rule-manager-mongo.test.ts
+      - name: Legacy alarms, operational commissioning and concurrent Mongo regression
+        run: |
+          npx vitest run \
+            tests/integration/s02-alarm-acceptance-mongo.test.ts \
+            tests/integration/automatic-operational-commissioning-mongo.test.ts \
+            tests/integration/alarm-redteam-mongo.test.ts
+      - name: Remove only disposable runner Mongo container
+        if: always()
+        run: docker rm -f alarm-rule-manager-test-mongo || true
+
+  http-browser:
+    name: Authenticated HTTP and Chromium visual acceptance
+    runs-on: ubuntu-24.04
+    timeout-minutes: 24
+    env:
+      APP_ENV: development
+      APP_PERSISTENCE: memory
+      PORT: '3000'
+      HOST: 127.0.0.1
+      LOCAL_ADMIN_EMAIL: alarm-ci@local.test
+      LOCAL_ADMIN_PASSWORD: Alarm-CI-Local-Only!2026
+      LOCAL_ADMIN_NAME: Alarm Acceptance Operator
+      ALARM_RULE_TEST_BASE_URL: http://127.0.0.1:3000
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install exact dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Install isolated headless browser
+        run: |
+          npm install --global playwright@1.55.0
+          playwright install --with-deps chromium
+      - name: Start isolated seeded in-memory Site Mapper
+        run: |
+          npm run local:dev -- --no-open > /tmp/alarm-rule-manager-next.log 2>&1 &
+          echo $! > /tmp/alarm-rule-manager-next.pid
+      - name: Authenticated HTTP/RBAC/draft/publish/disable acceptance
+        run: node scripts/ci/alarm-rule-manager-http-smoke.mjs
+      - name: Chromium catalog/profile/history/alarm-center screenshots
+        env:
+          NODE_PATH: /usr/local/lib/node_modules
+        run: NODE_PATH="$(npm root --global)" node scripts/ci/alarm-rule-manager-browser.cjs
+      - name: Capture concise server diagnostics on failure
+        if: failure()
+        run: tail -n 100 /tmp/alarm-rule-manager-next.log | sed -E 's/(Password:).*/\1 [REDACTED]/g' || true
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: alarm-rule-manager-acceptance-${{ github.sha }}
+          path: artifacts/alarm-rule-manager/
+          retention-days: 14
+          if-no-files-found: error
+      - name: Stop isolated development server
+        if: always()
+        run: |
+          if test -f /tmp/alarm-rule-manager-next.pid; then
+            pkill -P "$(cat /tmp/alarm-rule-manager-next.pid)" || true
+            kill "$(cat /tmp/alarm-rule-manager-next.pid)" || true
+          fi

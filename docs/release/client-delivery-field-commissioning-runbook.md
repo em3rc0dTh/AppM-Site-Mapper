@@ -168,7 +168,7 @@ flowchart TD
     G --> H[Bundle offline]
 ```
 
-El release debe congelar Site Mapper/Next.js, Telemetry Store, Modbus sidecar, collectors SNMP, Operational Console si aplica, Mosquitto, MongoDB y TimescaleDB.
+El release debe congelar Site Mapper/Next.js, Telemetry Store, Modbus sidecar, collectors SNMP, Mosquitto, MongoDB y TimescaleDB.
 
 Las imágenes de terceros deben quedar **versionadas/pinneadas**, no con `latest`. El `compose.client.yml` final debe usar `image:` y **no `build:`**.
 

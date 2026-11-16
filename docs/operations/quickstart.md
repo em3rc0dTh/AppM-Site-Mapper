@@ -64,7 +64,7 @@ docker compose -f docker-compose.telemetry.yml up -d --build
 docker compose -f docker-compose.telemetry.yml ps
 ```
 
-Puertos de host (loopback): Site Mapper 3000, Operational Console 3100, MongoDB 27017, TimescaleDB 55432, Telemetry Store 18081 y Modbus FC03 1503. Consultar http://127.0.0.1:3000/api/health solo confirma que la API HTTP responde, **no la conectividad de todas las dependencias**.
+Puertos de host (loopback): Site Mapper 3000, MongoDB 27017, TimescaleDB 55432, Telemetry Store 18081 y Modbus FC03 1503. Consultar http://127.0.0.1:3000/api/health solo confirma que la API HTTP responde, **no la conectividad de todas las dependencias**.
 
 Para una instalación ya creada, **reconstruye solo los servicios necesarios** y conserva los volúmenes de datos:
 

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type {
@@ -48,6 +49,7 @@ export function BreakerLimitEditor({
   onClose: () => void;
 }>) {
   const t = useTranslations('breakerLimits');
+  const tr = useTranslations('alarmRules');
   const [data, setData] = useState<LimitsView | null>(null);
   const [history, setHistory] = useState<readonly Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -197,9 +199,17 @@ export function BreakerLimitEditor({
             </h2>
             <small>{data ? `${data.panelName} · ${data.breakerName}` : breakerId}</small>
           </div>
-          <button type="button" onClick={onClose} aria-label={t('close')}>
-            ✕
-          </button>
+          <div className="sm-breaker-limit-actions">
+            <Link
+              href={'/alarms/rules?breakerId=' + encodeURIComponent(breakerId)}
+              title={tr('configureBreakerAlarmRules')}
+            >
+              {tr('alarmRules')}
+            </Link>
+            <button type="button" onClick={onClose} aria-label={t('close')}>
+              ✕
+            </button>
+          </div>
         </header>
         {loading ? (
           <p>{t('loading')}</p>

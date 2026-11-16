@@ -101,7 +101,18 @@ export interface AlarmRollup {
   }[];
 }
 
+/** Co-occurring conditions on one target, not proof of a common root cause. */
+export interface AlarmCorrelationGroup {
+  readonly id: string;
+  readonly targetId: string;
+  readonly occurrenceIds: readonly string[];
+  readonly primaryCode: string;
+  readonly highestSeverity: AlarmSeverity;
+  readonly firstObservedAt: string;
+}
+
 export interface AlarmSnapshot {
+  readonly correlationGroups?: readonly AlarmCorrelationGroup[];
   readonly occurrences: readonly AlarmOccurrenceView[];
   readonly rollups: Readonly<Record<string, AlarmRollup>>;
   readonly global: AlarmRollup;

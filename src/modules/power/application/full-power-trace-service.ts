@@ -30,6 +30,8 @@ export interface FullPowerTraceLeg {
   readonly source: {
     readonly entityId: string;
     readonly entityName: string;
+    readonly deviceType?: string;
+    readonly accessPort?: PowerTraceAccessPortView;
     readonly deviceSerialNumber?: string;
     readonly breakerSerialNumber?: string;
     readonly shelf?: string;
@@ -276,6 +278,16 @@ export class FullPowerTraceService {
       source: {
         entityId: sourceEquipment?.deviceId ?? path.sourceAccessPortId,
         entityName: sourceDevice?.name ?? sourceEquipment?.name ?? path.sourceAccessPortId,
+        ...(sourceDevice?.kind === 'DEVICE' ? { deviceType: sourceDevice.deviceType } : {}),
+        ...(source?.port
+          ? {
+              accessPort: {
+                id: source.port.id,
+                label: source.port.name,
+                ...(sourceFeed ? { feed: sourceFeed } : {}),
+              },
+            }
+          : {}),
         ...(sourceDevice?.kind === 'DEVICE' && sourceDevice.serialNumber
           ? { deviceSerialNumber: sourceDevice.serialNumber }
           : {}),

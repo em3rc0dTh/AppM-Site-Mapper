@@ -285,6 +285,11 @@ describe('FullPowerTraceService', () => {
     expect(trace?.feedA).toHaveLength(1);
     expect(trace?.feedB).toHaveLength(1);
     expect(trace?.feedA[0]?.source.entityId).toBe(sourceA.device.id);
+    expect(trace?.feedA[0]?.source.deviceType).toBe('BDFB');
+    expect(trace?.feedA[0]?.source.accessPort).toMatchObject({
+      id: sourceA.port.id,
+      label: sourceA.port.name,
+    });
     expect(trace?.feedB[0]?.source.entityId).toBe(sourceB.device.id);
     expect(trace?.feedA[0]?.target.hierarchy).toEqual([
       'RACK-LOAD',

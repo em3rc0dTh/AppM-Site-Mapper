@@ -1583,3 +1583,426 @@
   outline-offset: 3px;
   border-radius: 3px;
 }
+
+
+/* MK2 physical infrastructure — source-grounded ergonomics for Network/Site/Structure/Level/Room. */
+/* Deliberately scoped: no QDF, Equipment, telemetry, RBAC or geometry changes. */
+.mk-explorer-page .zip-canvas-title {
+  min-height: 58px;
+  height: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  padding: 11px 20px !important;
+}
+.mk-explorer-page .zip-canvas-title strong {
+  min-width: 0;
+  font-size: clamp(19px, 1.35vw, 24px) !important;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.mk-explorer-page .zip-canvas-title small {
+  margin-left: auto;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #475d72;
+}
+.mk-explorer-page .zip-map-canvas {
+  padding: 10px 18px 0;
+  min-height: calc(100dvh - 205px) !important;
+}
+.mk-explorer-page .zip-network-graph {
+  display: grid;
+  place-items: center;
+  min-height: min(670px, calc(100dvh - 213px));
+  height: 100%;
+}
+.mk-explorer-page .mk2-network-cards {
+  width: 100%;
+  min-height: 460px;
+  padding: 28px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-content: center;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+.mk-explorer-page .mk2-network-cards .zip-graph-card {
+  position: relative !important;
+  inset: auto !important;
+  transform: none !important;
+  display: flex;
+  flex: 0 1 270px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  min-width: min(100%, 220px);
+  width: 270px;
+  height: auto;
+  min-height: 175px;
+  padding: 20px 18px;
+  text-align: center;
+  text-decoration: none;
+  border: 2px solid #3d7fdb;
+  border-radius: 9px;
+  box-shadow: 0 5px 16px #19395214;
+  background: #fff !important;
+  color: #142d42 !important;
+}
+.mk-explorer-page .mk2-network-cards .zip-graph-card:hover,
+.mk-explorer-page .mk2-network-cards .zip-graph-card:focus-visible {
+  border-color: #136cc9;
+  box-shadow: 0 0 0 4px #2d7ff922;
+  outline: 2px solid #247bb7;
+  outline-offset: 2px;
+}
+.mk-explorer-page .mk2-network-cards .zip-graph-glyph {
+  font-size: 45px;
+  line-height: 1;
+  color: #314d64;
+}
+.mk-explorer-page .mk2-network-cards .zip-graph-card > strong {
+  font-size: 17px;
+  line-height: 1.4;
+  font-weight: 750;
+  overflow-wrap: anywhere;
+}
+.mk-explorer-page .mk2-network-cards .zip-graph-card > small {
+  font-size: 14px;
+  line-height: 1.4;
+  color: #405b72;
+}
+.mk-explorer-page .mk2-network-empty {
+  font-size: 16px;
+  color: #435c72;
+}
+/* Structure is a clearly labeled schematic. A real building photo/model
+   must be supplied by an authorized source before any true photo overlay. */
+.mk-explorer-page .mk2-building-stage {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 15px;
+  min-height: min(640px, calc(100dvh - 214px));
+  height: 100%;
+  padding: 22px 16px;
+}
+.mk-explorer-page .mk2-building-illustration {
+  width: min(94%, 760px);
+  min-height: 340px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #b7c9d8;
+  border-radius: 9px;
+  background: linear-gradient(180deg, #eaf5ff 0 40%, #f9fbfc 40% 100%);
+}
+.mk-explorer-page .mk2-building-shell {
+  position: absolute;
+  inset: 12% 7% 11%;
+  overflow: hidden;
+  border: 2px solid #778fa4;
+  border-radius: 5px;
+  background: linear-gradient(150deg, #f8fbff, #e3eaf1);
+  box-shadow: 14px 13px 0 #afc1d0;
+}
+.mk-explorer-page .mk2-building-roof {
+  height: 18%;
+  border-bottom: 2px solid #6d8298;
+  background: #c7d7e5;
+}
+.mk-explorer-page .mk2-building-windows {
+  position: absolute;
+  top: 27%;
+  left: 5%;
+  right: 5%;
+  bottom: 18%;
+  opacity: 0.36;
+  background: repeating-linear-gradient(
+      90deg,
+      #7997b3 0 24px,
+      #e9f1f9 24px 35px
+    );
+  border-block: 4px solid #a8bbce;
+}
+.mk-explorer-page .mk2-building-floor-list {
+  position: relative;
+  z-index: 1;
+  min-height: 340px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+  padding: 42px 32px;
+}
+.mk-explorer-page .mk2-building-floor {
+  width: min(100%, 480px);
+  min-height: 74px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 18px;
+  text-decoration: none;
+  border: 2px solid #247cda;
+  border-radius: 8px;
+  background: #f7fbffed;
+  color: #173550;
+  box-shadow: 0 8px 25px #173b6033;
+}
+.mk-explorer-page .mk2-building-floor strong {
+  display: block;
+  font-size: 19px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.mk-explorer-page .mk2-building-floor small {
+  display: block;
+  margin-top: 3px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #466178;
+}
+.mk-explorer-page .mk2-building-floor b {
+  flex: 0 0 auto;
+  border-radius: 5px;
+  padding: 11px 12px;
+  background: #1168b4;
+  color: #fff;
+  font-size: 14px;
+}
+.mk-explorer-page .mk2-building-floor:focus-visible,
+.mk-explorer-page .mk2-building-floor:hover {
+  outline: 2px solid #165ca2;
+  outline-offset: 3px;
+  background: #eff7ff;
+}
+.mk-explorer-page .mk2-building-no-floors {
+  font-size: 16px;
+  color: #30485e;
+  background: #ffffffed;
+  padding: 13px 16px;
+}
+.mk-explorer-page .mk2-building-caption {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #465d72;
+  text-align: center;
+  margin: 0;
+}
+.mk-explorer-page .zip-level-stage svg .mk2-map-element {
+  cursor: pointer;
+}
+.mk-explorer-page .zip-level-stage svg .mk2-map-element polygon:hover,
+.mk-explorer-page .zip-level-stage svg .mk2-map-element:focus-visible polygon {
+  fill: #eaf4ff;
+  stroke: #1b77c5;
+  stroke-width: 3;
+}
+.mk-explorer-page .zip-level-stage svg .mk2-map-nameplate {
+  fill: #f5faff;
+  stroke: #2d7ff9;
+  stroke-width: 2px;
+  vector-effect: non-scaling-stroke;
+}
+.mk-explorer-page .zip-level-stage svg .mk2-map-element text {
+  fill: #153957;
+  font-weight: 750;
+  stroke: none;
+  pointer-events: none;
+}
+.mk-explorer-page .zip-level-stage svg .mk2-map-element:focus-visible {
+  outline: none;
+}
+.mk-explorer-page .topology-unlocated-list a,
+.mk-explorer-page .topology-unlocated-inline a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 42px;
+  max-width: 100%;
+  padding: 9px 12px;
+  text-decoration: none;
+  border: 1px solid #cbdbea;
+  border-radius: 5px;
+  background: #f7fbff;
+  color: #18558d;
+  font-size: 15px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.mk-explorer-page .topology-unlocated-list a:focus-visible,
+.mk-explorer-page .topology-unlocated-inline a:focus-visible {
+  outline: 2px solid #247bb7;
+  outline-offset: 3px;
+}
+.mk-explorer-page .zip-inspector-identity h2 {
+  font-size: 19px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.mk-explorer-page .zip-inspector-identity small {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.mk-explorer-page .zip-inspector h3 {
+  font-size: 16px;
+  line-height: 1.4;
+}
+.mk-explorer-page .zip-inspector dl {
+  font-size: 14px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 0 10px;
+}
+.mk-explorer-page .zip-inspector dt,
+.mk-explorer-page .zip-inspector dd {
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.mk-explorer-page .zip-inspector section {
+  padding: 13px;
+}
+.mk-explorer-page .zip-open-action {
+  margin: 12px 16px 0;
+  min-height: 42px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.mk-explorer-page .zip-canvas-footer {
+  min-height: 58px;
+  height: auto !important;
+  flex-wrap: wrap;
+  gap: 8px 16px !important;
+  padding: 9px 160px 9px 16px !important;
+  font-size: 14px !important;
+}
+.mk-explorer-page .zip-canvas-footer > span:first-child {
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mk-explorer-page .zip-canvas-footer :is(button, b, span) {
+  font-size: 14px;
+}
+.mk-explorer-page .s03-reset {
+  bottom: 75px;
+  opacity: 0.95;
+}
+.mk2-room-ergonomics .s03-reset {
+  bottom: 75px;
+  opacity: 0.95;
+}
+.mk2-room-ergonomics .operational-stage > .section-header {
+  gap: 10px;
+  padding-bottom: 5px;
+  margin-bottom: 8px !important;
+}
+.mk2-room-ergonomics .section-header h1 {
+  font-size: clamp(23px, 1.5vw, 28px) !important;
+  line-height: 1.3 !important;
+}
+.mk2-room-ergonomics .section-description {
+  font-size: 14px !important;
+  line-height: 1.5;
+}
+.mk2-room-ergonomics .mk2-room-management {
+  position: relative;
+  font-size: 14px;
+}
+.mk2-room-ergonomics .mk2-room-management summary {
+  cursor: pointer;
+  padding: 9px 11px;
+  border: 1px solid #cbd8e5;
+  border-radius: 5px;
+  color: #345673;
+  font-size: 14px;
+  font-weight: 650;
+}
+.mk2-room-ergonomics .mk2-room-management > :not(summary) {
+  margin-top: 8px;
+}
+.mk2-room-ergonomics .mk-room-editor .mk-draft-toolbar,
+.mk2-room-ergonomics .mk-room-editor .zip-blueprint-toolbar {
+  padding-block: 10px;
+}
+.mk2-room-ergonomics .mk-draft-toolbar strong,
+.mk2-room-ergonomics .zip-blueprint-toolbar strong {
+  font-size: 17px;
+  line-height: 1.4;
+}
+.mk2-room-ergonomics .zip-blueprint-toolbar :is(span,small),
+.mk2-room-ergonomics .mk-draft-toolbar button,
+.mk2-room-ergonomics .mk-lens-switch button {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.mk2-room-ergonomics .mk-lens-switch button,
+.mk2-room-ergonomics .mk-draft-toolbar button {
+  min-height: 40px;
+}
+.mk2-room-ergonomics .zip-room-properties > header {
+  font-size: 16px;
+  line-height: 1.4;
+}
+.mk2-room-ergonomics .room-general-info h3,
+.mk2-room-ergonomics .mk2-room-cluster-list h3 {
+  font-size: 16px;
+  line-height: 1.4;
+}
+.mk2-room-ergonomics .room-general-info :is(dt,dd),
+.mk2-room-ergonomics .mk2-room-cluster-list li {
+  font-size: 14px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.mk2-room-ergonomics .mk2-room-cluster-list ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.mk2-room-ergonomics .mk2-room-cluster-list li {
+  padding: 9px 0;
+  border-bottom: 1px solid #dce5ed;
+}
+.mk2-room-ergonomics .mk2-room-cluster-list li:last-child {
+  border-bottom: 0;
+}
+@media (max-width: 1180px) {
+  .mk-explorer-page .zip-canvas-title {
+    gap: 6px;
+  }
+  .mk-explorer-page .mk2-building-illustration {
+    min-height: 290px;
+  }
+  .mk-explorer-page .mk2-building-floor-list {
+    min-height: 290px;
+  }
+  .mk-explorer-page .zip-canvas-footer {
+    padding-right: 16px !important;
+  }
+  .mk-explorer-page .s03-reset,
+  .mk2-room-ergonomics .s03-reset {
+    top: 60px;
+    bottom: auto;
+  }
+}
+@media (max-width: 899px) {
+  .mk-explorer-page .zip-map-canvas {
+    min-height: 450px !important;
+  }
+  .mk-explorer-page .mk2-network-cards {
+    min-height: 400px;
+    padding: 20px 10px;
+  }
+  .mk-explorer-page .mk2-building-stage {
+    min-height: 450px;
+  }
+  .mk2-room-ergonomics .mk2-room-management {
+    margin-top: 8px;
+  }
+}

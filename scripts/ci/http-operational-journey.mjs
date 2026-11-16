@@ -32,6 +32,7 @@ async function request(method, path, payload, expected = 200, headers = {}) {
     headers: {
       ...(payload === undefined ? {} : { 'content-type': 'application/json' }),
       ...(cookie ? { cookie } : {}),
+      ...(cookie && !['GET', 'HEAD'].includes(method) ? { origin: new URL(base).origin } : {}),
       ...headers,
     },
     ...(payload === undefined ? {} : { body: JSON.stringify(payload) }),
@@ -491,7 +492,7 @@ async function main() {
     Array.from({ length: 16 }, async () => {
       const response = await fetch(base + '/api/telemetry/panel-commissioning', {
         method: 'POST',
-        headers: { 'content-type': 'application/json', cookie },
+        headers: { 'content-type': 'application/json', cookie, origin: new URL(base).origin },
         body: JSON.stringify(racePayload),
         signal: AbortSignal.timeout(30000),
       });

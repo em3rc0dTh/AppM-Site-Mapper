@@ -196,7 +196,10 @@
       "submitting": "Establishing secure session…",
       "connectionError": "Connection unavailable. Please try again.",
       "credentialsError": "Invalid email or password.",
-      "loginError": "Unable to sign in. Please try again."
+      "loginError": "Unable to sign in. Please try again.",
+      "mfaCode": "Authenticator code or recovery code",
+      "mfaNeeded": "Enter a six-digit authenticator code or a saved recovery code.",
+      "mfaEnrollmentRequired": "MFA enrollment is required. Contact the administrator."
     },
     "changePassword": {
       "eyebrow": "Identity / credential policy",
@@ -204,6 +207,27 @@
       "forcedDescription": "Replace the temporary credential before operational access is enabled.",
       "description": "Update your credential and revoke every existing session.",
       "signedInAs": "Signed in as"
+    },
+    "mfa": {
+      "title": "Multifactor authentication (TOTP)",
+      "loading": "Checking security configuration...",
+      "unavailable": "The administrator must configure an MFA encryption key on the server.",
+      "enabled": "Enabled. An authenticator code is required to sign in.",
+      "disabled": "Disabled. Configure your authenticator to protect this account.",
+      "currentPassword": "Current Site Mapper password",
+      "start": "Configure authenticator",
+      "secretIntro": "Setup secret (only shown during enrollment):",
+      "uri": "Authenticator import URI:",
+      "code": "Six-digit authenticator code",
+      "confirm": "Enable MFA",
+      "disableIntro": "Disabling MFA requires your password and a current code.",
+      "disable": "Disable MFA",
+      "startInstructions": "Add the secret to your authenticator and confirm the six-digit code.",
+      "failed": "Could not complete the MFA operation.",
+      "connectionError": "Could not connect to the server.",
+      "recoveryTitle": "Save your recovery codes",
+      "recoveryInstructions": "These one-time codes are shown only now. Store them offline in a safe location. Do not share them.",
+      "finish": "I have saved the codes — sign in"
     }
   },
   "workspace": {
@@ -2262,7 +2286,8 @@
     "s05_target": "Target",
     "s05_commissioning": "Commissioning",
     "s05_unavailable": "Unavailable",
-    "s05_generated_at": "Generated"
+    "s05_generated_at": "Generated",
+    "mk1_site_mapper_password_reveal_confirmation": "Current Site Mapper password (required to reveal)"
   },
   "industrialSignalExplorer": {
     "show": "Open universal SNMP / Industrial inspector",

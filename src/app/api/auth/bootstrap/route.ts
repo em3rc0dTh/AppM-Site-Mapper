@@ -64,7 +64,8 @@ async function handlePOST(request: Request) {
   );
 
   if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: 409 });
+    const status = result.error === 'PASSWORD_CHECK_UNAVAILABLE' ? 503 : 409;
+    return NextResponse.json({ error: result.error }, { status });
   }
 
   return NextResponse.json({ user: result.value }, { status: 201 });

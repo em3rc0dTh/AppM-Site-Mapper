@@ -2,6 +2,15 @@
 
 **Status:** Implemented software baseline; environment-specific production validation still required.
 
+**Customer FIELD LAN is air-gapped:** the governing architectural contract is
+[Site Mapper Offline-first Security Baseline v1.0](site-mapper-offline-security-baseline-v1.md).
+OWASP is an evidence-informed reference for selecting applicable controls,
+**not** a promise of complete ASVS L2 certification or a requirement to introduce
+public-network dependencies. Any online security service is excluded from the
+customer runtime unless a separate, explicitly approved architectural change is made.
+Development CI may use public package/security services; the installed product may not
+depend on them to start, authenticate, operate, display telemetry or recover.
+
 ## Trust model
 
 - browser-controlled state is untrusted;

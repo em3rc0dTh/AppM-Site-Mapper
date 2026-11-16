@@ -196,7 +196,10 @@
       "submitting": "Estableciendo sesión segura…",
       "connectionError": "No hay conexión disponible. Inténtalo nuevamente.",
       "credentialsError": "Correo electrónico o contraseña incorrectos.",
-      "loginError": "No se pudo iniciar sesión. Inténtalo nuevamente."
+      "loginError": "No se pudo iniciar sesión. Inténtalo nuevamente.",
+      "mfaCode": "Código del autenticador o de recuperación",
+      "mfaNeeded": "Introduce el código de seis dígitos o un código de recuperación guardado.",
+      "mfaEnrollmentRequired": "Se requiere activar MFA. Contacta al administrador."
     },
     "changePassword": {
       "eyebrow": "Identidad / política de credenciales",
@@ -204,6 +207,27 @@
       "forcedDescription": "Reemplaza la contraseña temporal antes de habilitar el acceso operativo.",
       "description": "Actualiza tu contraseña y revoca las sesiones existentes.",
       "signedInAs": "Sesión iniciada como"
+    },
+    "mfa": {
+      "title": "Autenticación multifactor (TOTP)",
+      "loading": "Consultando configuración de seguridad...",
+      "unavailable": "El administrador debe configurar la clave de cifrado MFA en el servidor.",
+      "enabled": "Activada. Se solicitará un código al iniciar sesión.",
+      "disabled": "Desactivada. Configura tu autenticador para proteger esta cuenta.",
+      "currentPassword": "Contraseña actual de Site Mapper",
+      "start": "Configurar autenticador",
+      "secretIntro": "Clave de configuración (solo se muestra durante este paso):",
+      "uri": "URI para importar en el autenticador:",
+      "code": "Código de seis dígitos",
+      "confirm": "Activar MFA",
+      "disableIntro": "Para desactivar MFA se requieren tu contraseña y un código vigente.",
+      "disable": "Desactivar MFA",
+      "startInstructions": "Agrega la clave a tu autenticador y confirma el código de seis dígitos.",
+      "failed": "No fue posible completar la operación de MFA.",
+      "connectionError": "No fue posible comunicarse con el servidor.",
+      "recoveryTitle": "Guarda tus códigos de recuperación",
+      "recoveryInstructions": "Estos códigos de un solo uso se muestran únicamente ahora. Guárdalos fuera de línea en un lugar seguro y no los compartas.",
+      "finish": "Ya guardé los códigos — iniciar sesión"
     }
   },
   "workspace": {
@@ -2262,7 +2286,8 @@
     "s05_target": "Destino",
     "s05_commissioning": "Commissioning",
     "s05_unavailable": "No disponible",
-    "s05_generated_at": "Generado"
+    "s05_generated_at": "Generado",
+    "mk1_site_mapper_password_reveal_confirmation": "Contraseña actual de Site Mapper (obligatoria para revelar)"
   },
   "industrialSignalExplorer": {
     "show": "Abrir inspector universal SNMP / Industrial",

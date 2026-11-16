@@ -29,6 +29,7 @@ async function request(method, path, payload, opts = {}) {
     headers: {
       ...(payload === undefined ? {} : { 'content-type': 'application/json' }),
       ...(opts.cookie ? { cookie: opts.cookie } : {}),
+      ...(opts.cookie && !['GET', 'HEAD'].includes(method) ? { origin: new URL(base).origin } : {}),
       ...(opts.headers ?? {}),
     },
     ...(payload === undefined

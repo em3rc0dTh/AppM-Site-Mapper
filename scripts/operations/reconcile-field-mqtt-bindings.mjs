@@ -121,7 +121,7 @@ try {
       lifecycle: 'ACTIVE', protocol: 'MQTT', sourceIdentity: spec.gateway.serial
     }).toArray();
     const all = await collection.find({
-      lifecycle: 'ACTIVE', protocol: 'MQTT',
+      lifecycle: 'ACTIVE',
       targetType: 'EQUIPMENT', targetId: { $in: equipment.map((e) => e.id) }
     }).toArray();
     const sourceOwners = active.filter((b) => !b.sourcePointId && b.metric === 'SOURCE');

@@ -147,6 +147,20 @@ Presentation-only corrections:
 
 Acceptance to check manually at desktop 100%, 125% and 150% browser zoom: no label overlap with surveyed borders, QDF names stay fully inside recorded rack rectangles, grid tick size remains stable, header text does not clip, view mode gains vertical space with no blank Edit Room row, read-only users cannot enter edit mode, and empty-room editing still works. **Static review passed; no production build/tests/deployment executed.**
 
+## Room micro-polish — final screenshot review
+
+The reviewed live Room screenshot (Nov 16) confirms the 13px grid axes, cluster/QDF label geometry, canvas controls and Inspector text no longer need further resizing. This pass changes **only** presentation/navigation details:
+
+- Keep the **topbar Home** action. Hide the duplicate `Inicio` link **only in Room** via the optional `showHomeLink={false}` prop on the existing TopologyContextTree. Other routes keep their original home link. Tree collapse, selected item and contextual navigation remain intact.
+- Order the Inspector's registered cluster names from the **real persisted polygon bounds** (ascending Y / then X). Put clusters with no surveyed polygon at the end; when geometry is unavailable or tied, preserve original order. Do not rename or mutate cluster data. Verify that the Inspector order matches the physical top-to-bottom layout, not the repository insertion order.
+- The BlueprintCanvas footer shows an assignable-cell count only when there is at least one real cell; keep every nonzero count and the other existing clusters/racks badges.
+- Give the floating Reset Layout action an additional bottom/right margin and reserve footer space for it, without overlaying surveyed geometry or clipping the footer's help text.
+- Give the full SiteMapper Mk2 brand + cube/Home a few additional horizontal pixels without changing fonts, icon sizes, page title, SVG axes, actual rack/cluster geometry or the three-column layout.
+
+Manual acceptance: verify Room at 100%, 125%, 150%, and with user-resized tree/Inspector widths; Home works; no duplicate Inicio in Room; selection and expand/collapse still work; Inspector cluster order aligns with the canvas; 0-cell badge is absent but counts appear when cells exist; Restore Layout is reachable without covering footer text or room geometry. Check read-only permissions still apply.
+
+**Static review only.** No build, tests, merge or deployment in this pass.
+
 ## Manual local acceptance (after checkout)
 
 Review the feature branch using the existing local environment and seeded/connected data. Compare against the approved MK2 screenshot.

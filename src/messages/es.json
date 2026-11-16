@@ -2702,6 +2702,8 @@
     "savedRuleOptional": "Editar regla guardada (opcional)",
     "newRule": "Nueva regla",
     "appliesTo": "Aplica a",
+    "targetSearchPlaceholder": "Buscar QDF, panel o breaker...",
+    "noTargetMatches": "Sin resultados",
     "chooseTarget": "Selecciona un objetivo válido.",
     "wholeQdf": "Todo el QDF",
     "wholePanel": "Todo el panel",

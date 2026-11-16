@@ -2614,6 +2614,41 @@
     "draft": "Borrador",
     "draftPending": "Borrador / Pendiente",
     "loadLossCandidate": "Candidata: LOAD_LOSS",
-    "noLoadLossCandidate": "Sin candidato de pérdida de carga"
+    "noLoadLossCandidate": "Sin candidato de pérdida de carga",
+    "ruleNames": {
+      "LOW_VOLTAGE": "Bajo voltaje",
+      "HIGH_VOLTAGE": "Alto voltaje",
+      "VOLTAGE_LOSS": "Pérdida de tensión",
+      "LOW_CURRENT": "Corriente baja",
+      "LOAD_LOSS": "Pérdida de carga",
+      "SUDDEN_CURRENT_DROP": "Caída brusca de corriente",
+      "LOW_POWER": "Baja potencia",
+      "HIGH_POWER": "Alta potencia",
+      "NO_ENERGY_INCREMENT": "Sin incremento de energía",
+      "ENERGY_COUNTER_RESET": "Reinicio del contador de energía",
+      "ENERGY_CONSUMPTION_ANOMALY": "Anomalía de consumo energético"
+    },
+    "parameterLabels": {
+      "assertBelowV": "Activa ≤",
+      "clearAboveV": "Recupera ≥",
+      "assertAboveV": "Activa ≥",
+      "clearBelowV": "Recupera ≤",
+      "zeroToleranceV": "Tolerancia a cero",
+      "assertBelowA": "Activa ≤",
+      "clearAboveA": "Recupera ≥",
+      "zeroToleranceA": "Tolerancia a cero",
+      "referenceMinA": "Mínimo esperado",
+      "referenceCurrentA": "Corriente de referencia",
+      "dropPercent": "Caída de activación",
+      "clearDropPercent": "Caída de recuperación",
+      "assertBelowW": "Activa ≤",
+      "clearAboveW": "Recupera ≥",
+      "assertAboveW": "Activa ≥",
+      "clearBelowW": "Recupera ≤",
+      "maxDeltaKwh": "Máximo incremento nulo",
+      "windowMs": "Ventana de observación",
+      "minDecrementKwh": "Decremento mínimo",
+      "minDeltaKwh": "Incremento mínimo"
+    }
   }
 }

@@ -122,9 +122,15 @@ export function RuleManager({
 
   const targetLabel = (target: AlarmTarget): string => {
     if (target.scope === 'GLOBAL') return t('allBreakers');
-    if (target.scope === 'QDF') return `${target.deviceName ?? scopeLabel('QDF')} · ${t('wholeQdf')}`;
+    if (target.scope === 'QDF') {
+      return `${target.deviceName ?? scopeLabel('QDF')} · ${t('wholeQdf')}`;
+    }
     if (target.scope === 'PANEL') {
-      return `${target.deviceName ?? scopeLabel('QDF')} · ${target.panelName ?? scopeLabel('PANEL')} · ${t('wholePanel')}`;
+      return [
+        target.deviceName ?? scopeLabel('QDF'),
+        target.panelName ?? scopeLabel('PANEL'),
+        t('wholePanel'),
+      ].join(' · ');
     }
     return [target.deviceName, target.panelName, target.breakerName].filter(Boolean).join(' · ');
   };
@@ -255,7 +261,8 @@ export function RuleManager({
     const match = targets.find(
       (target) => target.scope === record.draft.scope && target.id === record.draft.scopeId,
     );
-    return `${ruleTitle(record.draft.code)} · ${match ? targetLabel(match) : scopeLabel(record.draft.scope)}`;
+    const where = match ? targetLabel(match) : scopeLabel(record.draft.scope);
+    return `${ruleTitle(record.draft.code)} · ${where}`;
   };
 
   return (
@@ -316,7 +323,10 @@ export function RuleManager({
               }}
             >
               {targets.map((target) => (
-                <option key={targetKey(target.scope, target.id)} value={targetKey(target.scope, target.id)}>
+                <option
+                  key={targetKey(target.scope, target.id)}
+                  value={targetKey(target.scope, target.id)}
+                >
                   {targetLabel(target)}
                 </option>
               ))}
@@ -325,7 +335,10 @@ export function RuleManager({
 
           <label>
             {t('rule')}
-            <select value={code} onChange={(event) => showCode(event.target.value as ManagedRuleCode)}>
+            <select
+              value={code}
+              onChange={(event) => showCode(event.target.value as ManagedRuleCode)}
+            >
               {MANAGED_RULE_CODES.map((item) => (
                 <option key={item} value={item}>
                   {ruleTitle(item)}
@@ -403,16 +416,31 @@ export function RuleManager({
         </details>
 
         <div className="sm-rule-actions sm-rule-simple-actions">
-          <button className="sm-rule-primary" type="button" onClick={save} disabled={!canEdit || busy || loading}>
+          <button
+            className="sm-rule-primary"
+            type="button"
+            onClick={save}
+            disabled={!canEdit || busy || loading}
+          >
             {t('saveDraft')}
           </button>
           {selected ? (
-            <button className="sm-rule-publish" type="button" onClick={() => change('PUBLISH')} disabled={!canEdit || busy}>
+            <button
+              className="sm-rule-publish"
+              type="button"
+              onClick={() => change('PUBLISH')}
+              disabled={!canEdit || busy}
+            >
               {t('publish')}
             </button>
           ) : null}
           {selected?.published ? (
-            <button className="sm-rule-disable" type="button" onClick={() => change('DISABLE')} disabled={!canEdit || busy}>
+            <button
+              className="sm-rule-disable"
+              type="button"
+              onClick={() => change('DISABLE')}
+              disabled={!canEdit || busy}
+            >
               {t('disable')}
             </button>
           ) : null}

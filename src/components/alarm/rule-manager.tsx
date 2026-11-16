@@ -92,8 +92,8 @@ export function RuleManager({
   initialBreakerId?: string;
 }) {
   const t = useTranslations('alarmRules');
-  const ruleTitle = (value: ManagedRuleCode) => String(t.raw('ruleNames.' + value));
-  const parameterLabel = (key: string) => String(t.raw('parameterLabels.' + key));
+  const ruleTitle = (value: ManagedRuleCode) => String(t.raw(('ruleNames.' + value) as Parameters<typeof t.raw>[0]));
+  const parameterLabel = (key: string) => String(t.raw(('parameterLabels.' + key) as Parameters<typeof t.raw>[0]));
   const [view, setView] = useState<View>(initialBreakerId ? 'ASSIGNMENTS' : 'RULES');
   const [metric, setMetric] = useState<Metric>('ALL');
   const [records, setRecords] = useState<readonly ManagedRuleRecord[]>([]);

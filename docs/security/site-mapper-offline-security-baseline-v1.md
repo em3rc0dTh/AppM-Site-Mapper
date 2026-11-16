@@ -2,7 +2,7 @@
 
 **Status:** architectural delivery constraint, not a claim of OWASP certification or full ASVS conformance.
 **Environment:** customer FIELD LAN has **zero outbound Internet access**.
-**Scope:** Next.js Site Mapper :3000 and the infrastructure required to operate it. Operational Console is outside this scope.
+**Scope:** Next.js Site Mapper :3000 and the infrastructure required to operate it. PR #225 separately retired Operational Console from the standard Compose; a previously running client container still requires controlled removal. This baseline does not certify its removal in FIELD.
 
 ## Decision
 
@@ -62,4 +62,4 @@ Before customer approval, verify under **physically disabled WAN and no public D
 
 This baseline does **not** certify OWASP, imply full ASVS L2 coverage, guarantee absence of vulnerabilities, or replace customer deployment review and penetration testing. The initial offline password list is limited. Expand it only with a controlled local dataset and explicit acceptance of update ownership, size and provenance. Document deviations based on operational threats and residual risk instead of inventing controls that rely on services the customer cannot reach.
 
-**Change discipline:** no changes to Operational Console, the BDFB breaker model, alarm rule semantics or customer running deployment solely to satisfy this document.
+**Change discipline:** this security baseline does not itself authorize changes to Operational Console, the BDFB breaker model, alarm rule semantics or customer running deployment. The independently merged PRs #224 (rules) and #225 (Compose removal) need their own UAT; see [MK1 v2.0](../certification/rfp-acceptance/10-UAT-MK1-V2-PLAN.md).

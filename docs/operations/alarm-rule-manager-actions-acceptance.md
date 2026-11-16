@@ -1,6 +1,6 @@
 # Site Mapper MK1 — GitHub Actions acceptance for Alarm Rule Manager
 
-**Status:** repeatable acceptance plan for feature branch `feat/alarm-rule-manager-dc48v-mk1`; no production or client-field certification.
+**Status (2026-11-16):** PR #224 is already merged into `main`; this file describes automated acceptance design and historic feature-branch execution, **not production/field certification**. The current integrated code baseline must be accepted via [UAT MK1 v2.0](../certification/rfp-acceptance/10-UAT-MK1-V2-PLAN.md), UAT-201..207.
 
 **GitHub Actions:** `.github/workflows/alarm-rule-manager-acceptance.yml`  
 **Pull request:** [#224](https://github.com/em3rc0dTh/AppM-Site-Mapper/pull/224)  
@@ -13,7 +13,7 @@
 3. The Mongo test uses a new random database in an **isolated runner** and drops **only that database** as test teardown.
 4. HTTP and browser acceptance use `APP_PERSISTENCE=memory` and synthetic admin credentials. API mutations only write temporary in-memory data.
 5. Capture success/failure in Actions logs; save HTTP/browser receipts and screenshots as an artifact.
-6. CI general `.github/workflows/ci.yml` must also be green at the **same feature-branch SHA**. It runs the full unit/integration suite, linter, typecheck, formatter, security/dependency audit and Next.js build.
+6. CI general `.github/workflows/ci.yml` must also be green at the **same tested application SHA**; feature-branch CI does not substitute for integrated-main validation. It runs the full unit/integration suite, linter, typecheck, formatter, security/dependency audit and Next.js build.
 7. A CI pass **does not** establish electrical commissioning, persistence of evaluator's runtime counters across restart, hardware accuracy, Metasys interoperability, or OWASP certification.
 
 ## Matrix and explicit acceptance criteria
@@ -42,9 +42,9 @@
 
 ## How to run
 
-On the feature branch, every push touching this workflow, the acceptance scripts/tests, alarms modules or documentation automatically triggers the run.
+The following commands describe the original feature-branch acceptance workflow. For a new integrated-baseline run, confirm the workflow's current triggers and select the tested SHA; do not equate old PR evidence with a new UAT execution.
 
-To manually trigger when available: **GitHub → Actions → Alarm Rule Manager MK1 acceptance → Run workflow → choose `feat/alarm-rule-manager-dc48v-mk1`**.
+To manually trigger when available: **GitHub → Actions → Alarm Rule Manager MK1 acceptance → Run workflow → select the target ref**. Capture workflow run ID and exact SHA. Do not claim a manual run happened without its execution record.
 
 Read **Actions → Run summary** for pass/fail of the `focused-contracts`, `mongo-acceptance` and `http-browser` jobs. Download the `alarm-rule-manager-acceptance-...` artifact to inspect:
 
@@ -58,7 +58,7 @@ Check the existing `CI` run **for the same commit SHA** as well.
 
 ## Failure rules
 
-- Any red test means **NO GO**: leave PR #224 as Draft, read failing logs, correct the defect on the feature branch, rerun and record SHA + evidence.
+- Any red test means **NO GO**: PR #224 is already merged; open a separate defect/fix PR, retest affected cases on the resulting SHA and record evidence.
 - A skipped acceptance due to absent environment flags is **NOT PASS**. The dedicated workflow sets flags explicitly and requires enabled tests.
 - An API response 200 without the expected JSON state is **NOT PASS**.
 - A browser screenshot without DOM/assertion success is **NOT PASS**.

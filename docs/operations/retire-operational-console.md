@@ -1,6 +1,6 @@
 # Retiro seguro de Operational Console — Site Mapper MK1
 
-**Estado:** cambio de configuración versionado. No se ha ejecutado en el servidor del cliente.
+**Estado (2026-11-16):** PR #225 fusionado en `main` como cambio de configuración. **No se ha ejecutado la retirada del servicio en el servidor del cliente.** UAT-301..303 pendiente en [UAT MK1 v2.0](../certification/rfp-acceptance/10-UAT-MK1-V2-PLAN.md).
 **Alcance:** quitar el servicio independiente `operational-console` del Compose base, manteniendo intactos Site Mapper :3000 y su plano industrial.
 **Motivo:** reducir superficie de ataque eliminando un proceso con lecturas directas de MongoDB/TimescaleDB y caché de sesión independiente.
 

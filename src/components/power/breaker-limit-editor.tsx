@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type {
@@ -197,9 +198,15 @@ export function BreakerLimitEditor({
             </h2>
             <small>{data ? `${data.panelName} · ${data.breakerName}` : breakerId}</small>
           </div>
-          <button type="button" onClick={onClose} aria-label={t('close')}>
-            ✕
-          </button>
+          <div className="sm-breaker-limit-actions">
+            <Link href={'/alarms/rules?breakerId=' + encodeURIComponent(breakerId)}
+              title="Inspect and configure breaker alarm policies">
+              Alarm Rules
+            </Link>
+            <button type="button" onClick={onClose} aria-label={t('close')}>
+              ✕
+            </button>
+          </div>
         </header>
         {loading ? (
           <p>{t('loading')}</p>

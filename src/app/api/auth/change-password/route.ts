@@ -50,7 +50,9 @@ async function handlePOST(request: Request) {
     const status =
       result.error === 'PASSWORD_CHECK_UNAVAILABLE'
         ? 503
-        : result.error === 'PASSWORD_COMPROMISED'
+        : result.error === 'RATE_LIMITED'
+          ? 429
+          : result.error === 'PASSWORD_COMPROMISED'
           ? 422
           : 400;
     return NextResponse.json({ error: result.error }, { status });

@@ -405,7 +405,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
       : null;
   const tBreaker = await getTranslations('breakerLimits');
   return (
-    <main className="operational-page mk-device-page">
+    <main className={`operational-page mk-device-page${node.kind === 'EQUIPMENT' ? ' mk2-equipment-ergonomics' : ''}`}>
       <nav className="breadcrumbs zip-device-breadcrumbs" aria-label={t('breadcrumbs')}>
         {breadcrumbLinks.map((item, index) => (
           <span className="zip-device-breadcrumb-item" key={item.id}>

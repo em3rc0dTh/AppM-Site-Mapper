@@ -71,8 +71,5 @@ export async function GET() {
     }
   }
 
-  return NextResponse.json(
-    { targets },
-    { headers: { 'Cache-Control': 'private, no-store' } },
-  );
+  return NextResponse.json({ targets }, { headers: { 'Cache-Control': 'private, no-store' } });
 }

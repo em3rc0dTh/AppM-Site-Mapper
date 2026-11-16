@@ -255,7 +255,10 @@
       "clusters": "TOTAL CLUSTERS",
       "racks": "RACKS IN THIS ROOM · {count}",
       "inspect": "INSPECT ↗",
-      "instruction": "CLICK A CLUSTER OR CABINET TO INSPECT PROPERTIES"
+      "instruction": "CLICK A CLUSTER OR CABINET TO INSPECT PROPERTIES",
+      "manageRoom": "Manage room",
+      "racksRegistered": "Registered racks",
+      "clustersList": "Registered clusters"
     },
     "settings": {
       "title": "SETTINGS",

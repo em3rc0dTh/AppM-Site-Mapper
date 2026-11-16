@@ -19,61 +19,61 @@ type Metric = 'ALL' | 'V' | 'A' | 'P' | 'E';
 type InputField = Readonly<{ key: string; label: string; unit: string; defaultValue: number }>;
 const PARAMS: Readonly<Record<ManagedRuleCode, readonly InputField[]>> = {
   LOW_VOLTAGE: [
-    { key: 'assertBelowV', label: 'Assert ≤', unit: 'V', defaultValue: 0 },
-    { key: 'clearAboveV', label: 'Recover ≥', unit: 'V', defaultValue: 0 },
+    { key: 'assertBelowV', label: 'Assert ≤', unit: 'V', defaultValue: 45.5 },
+    { key: 'clearAboveV', label: 'Recover ≥', unit: 'V', defaultValue: 48 },
   ],
   HIGH_VOLTAGE: [
-    { key: 'assertAboveV', label: 'Assert ≥', unit: 'V', defaultValue: 0 },
-    { key: 'clearBelowV', label: 'Recover ≤', unit: 'V', defaultValue: 0 },
+    { key: 'assertAboveV', label: 'Assert ≥', unit: 'V', defaultValue: 56.5 },
+    { key: 'clearBelowV', label: 'Recover ≤', unit: 'V', defaultValue: 54.5 },
   ],
   VOLTAGE_LOSS: [
-    { key: 'zeroToleranceV', label: 'Zero tolerance', unit: 'V', defaultValue: 0 },
-    { key: 'clearAboveV', label: 'Recover above', unit: 'V', defaultValue: 0 },
+    { key: 'zeroToleranceV', label: 'Zero tolerance', unit: 'V', defaultValue: 1 },
+    { key: 'clearAboveV', label: 'Recover above', unit: 'V', defaultValue: 43 },
   ],
   LOW_CURRENT: [
-    { key: 'assertBelowA', label: 'Assert ≤', unit: 'A', defaultValue: 0 },
-    { key: 'clearAboveA', label: 'Recover ≥', unit: 'A', defaultValue: 0 },
+    { key: 'assertBelowA', label: 'Assert ≤', unit: 'A', defaultValue: 0.5 },
+    { key: 'clearAboveA', label: 'Recover ≥', unit: 'A', defaultValue: 1 },
   ],
   LOAD_LOSS: [
-    { key: 'zeroToleranceA', label: 'Zero tolerance', unit: 'A', defaultValue: 0 },
-    { key: 'referenceMinA', label: 'Expected minimum', unit: 'A', defaultValue: 0 },
+    { key: 'zeroToleranceA', label: 'Zero tolerance', unit: 'A', defaultValue: 0.2 },
+    { key: 'referenceMinA', label: 'Expected minimum', unit: 'A', defaultValue: 1 },
   ],
   SUDDEN_CURRENT_DROP: [
-    { key: 'referenceCurrentA', label: 'Reference current', unit: 'A', defaultValue: 0 },
-    { key: 'dropPercent', label: 'Assert drop', unit: '%', defaultValue: 0 },
-    { key: 'clearDropPercent', label: 'Recover below', unit: '%', defaultValue: 0 },
+    { key: 'referenceCurrentA', label: 'Reference current', unit: 'A', defaultValue: 8.4 },
+    { key: 'dropPercent', label: 'Assert drop', unit: '%', defaultValue: 50 },
+    { key: 'clearDropPercent', label: 'Recover below', unit: '%', defaultValue: 25 },
   ],
   LOW_POWER: [
-    { key: 'assertBelowW', label: 'Assert ≤', unit: 'W', defaultValue: 0 },
-    { key: 'clearAboveW', label: 'Recover ≥', unit: 'W', defaultValue: 0 },
+    { key: 'assertBelowW', label: 'Assert ≤', unit: 'W', defaultValue: 25 },
+    { key: 'clearAboveW', label: 'Recover ≥', unit: 'W', defaultValue: 50 },
   ],
   HIGH_POWER: [
-    { key: 'assertAboveW', label: 'Assert ≥', unit: 'W', defaultValue: 0 },
-    { key: 'clearBelowW', label: 'Recover ≤', unit: 'W', defaultValue: 0 },
+    { key: 'assertAboveW', label: 'Assert ≥', unit: 'W', defaultValue: 2500 },
+    { key: 'clearBelowW', label: 'Recover ≤', unit: 'W', defaultValue: 2000 },
   ],
   NO_ENERGY_INCREMENT: [
-    { key: 'maxDeltaKwh', label: 'Max non-increment', unit: 'kWh', defaultValue: 0 },
+    { key: 'maxDeltaKwh', label: 'Max non-increment', unit: 'kWh', defaultValue: 0.001 },
     { key: 'windowMs', label: 'Observation window', unit: 'ms', defaultValue: 300000 },
   ],
   ENERGY_COUNTER_RESET: [
-    { key: 'minDecrementKwh', label: 'Minimum decrement', unit: 'kWh', defaultValue: 0 },
+    { key: 'minDecrementKwh', label: 'Minimum decrement', unit: 'kWh', defaultValue: 0.001 },
   ],
   ENERGY_CONSUMPTION_ANOMALY: [
-    { key: 'minDeltaKwh', label: 'Minimum increment', unit: 'kWh', defaultValue: 0 },
-    { key: 'maxDeltaKwh', label: 'Maximum increment', unit: 'kWh', defaultValue: 0 },
+    { key: 'minDeltaKwh', label: 'Minimum increment', unit: 'kWh', defaultValue: 0.001 },
+    { key: 'maxDeltaKwh', label: 'Maximum increment', unit: 'kWh', defaultValue: 5 },
     { key: 'windowMs', label: 'Observation window', unit: 'ms', defaultValue: 300000 },
   ],
 };
 const profileItems = [
-  ['Nominal voltage', 'nominalVoltageV', 'V'],
-  ['Battery cells', 'batteryCells', 'cells'],
-  ['Rectifier OVS', 'rectifierOvsV', 'V'],
-  ['Reference voltage', 'referenceVoltageV', 'V'],
-  ['Boost voltage', 'boostVoltageV', 'V'],
-  ['Rectifier standby', 'rectifierStandbyVoltageV', 'V'],
-  ['Battery disconnect', 'batteryDisconnectVoltageV', 'V'],
-  ['Battery reconnect', 'batteryReconnectVoltageV', 'V'],
-  ['Battery test end', 'batteryTestEndVoltageV', 'V'],
+  ['profileNominalVoltage', 'nominalVoltageV', 'V'],
+  ['profileBatteryCells', 'batteryCells', 'cells'],
+  ['profileRectifierOvs', 'rectifierOvsV', 'V'],
+  ['profileReferenceVoltage', 'referenceVoltageV', 'V'],
+  ['profileBoostVoltage', 'boostVoltageV', 'V'],
+  ['profileRectifierStandby', 'rectifierStandbyVoltageV', 'V'],
+  ['profileBatteryDisconnect', 'batteryDisconnectVoltageV', 'V'],
+  ['profileBatteryReconnect', 'batteryReconnectVoltageV', 'V'],
+  ['profileBatteryTestEnd', 'batteryTestEndVoltageV', 'V'],
 ] as const;
 
 function defaults(code: ManagedRuleCode): Record<string, number | boolean> {
@@ -96,6 +96,32 @@ export function RuleManager({
     String(t.raw(('ruleNames.' + value) as Parameters<typeof t.raw>[0]));
   const parameterLabel = (key: string) =>
     String(t.raw(('parameterLabels.' + key) as Parameters<typeof t.raw>[0]));
+  const profileLabel = (key: string) => String(t.raw(key as Parameters<typeof t.raw>[0]));
+  const viewLabel = (value: View) =>
+    ({
+      RULES: t('ruleCatalogTab'),
+      PROFILES: t('electricalProfilesTab'),
+      ASSIGNMENTS: t('assignmentsTab'),
+      HISTORY: t('policyHistoryTab'),
+    })[value];
+  const scopeLabel = (value: string) =>
+    ({
+      GLOBAL: t('global'),
+      QDF: t('qdfDevice'),
+      PANEL: t('panel'),
+      BREAKER: t('breaker'),
+    })[value] ?? value;
+  const actionLabel = (value: string) =>
+    ({
+      CREATED: t('actionCreated'),
+      DRAFT_UPDATED: t('actionDraftUpdated'),
+      PUBLISHED: t('actionPublished'),
+      DISABLED: t('actionDisabled'),
+    })[value] ?? value;
+  const displayRule = (value: string) =>
+    MANAGED_RULE_CODES.includes(value as ManagedRuleCode)
+      ? ruleTitle(value as ManagedRuleCode)
+      : value;
   const [view, setView] = useState<View>(initialBreakerId ? 'ASSIGNMENTS' : 'RULES');
   const [metric, setMetric] = useState<Metric>('ALL');
   const [records, setRecords] = useState<readonly ManagedRuleRecord[]>([]);
@@ -122,16 +148,16 @@ export function RuleManager({
 
   const reload = useCallback(async () => {
     const response = await fetch('/api/alarms/rules', { cache: 'no-store' });
-    if (!response.ok) throw new Error('Cannot load Rule Manager');
+    if (!response.ok) throw new Error(t('loadManagerError'));
     const body = (await response.json()) as { records: ManagedRuleRecord[] };
     setRecords(body.records);
-  }, []);
+  }, [t]);
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
     void fetch('/api/alarms/rules', { cache: 'no-store', signal: controller.signal })
       .then(async (response) => {
-        if (!response.ok) throw new Error('Cannot load Rule Manager');
+        if (!response.ok) throw new Error(t('loadManagerError'));
         const body = (await response.json()) as { records: ManagedRuleRecord[] };
         if (active) setRecords(body.records);
       })
@@ -145,7 +171,7 @@ export function RuleManager({
       active = false;
       controller.abort();
     };
-  }, []);
+  }, [t]);
   useEffect(() => {
     if (!initialBreakerId) return;
     const controller = new AbortController();
@@ -154,7 +180,7 @@ export function RuleManager({
       signal: controller.signal,
     })
       .then(async (response) => {
-        if (!response.ok) throw new Error('Breaker policy unavailable');
+        if (!response.ok) throw new Error(t('breakerPolicyUnavailable'));
         setPreview(
           (await response.json()) as {
             rules: readonly { code: string; source: string; scope: string }[];
@@ -165,7 +191,7 @@ export function RuleManager({
         if (!controller.signal.aborted) setError(String(error));
       });
     return () => controller.abort();
-  }, [initialBreakerId]);
+  }, [initialBreakerId, t]);
 
   const selected = records.find((r) => r.id === selectedId) || null;
   const filtered = MANAGED_RULE_CODES.filter((c) => metric === 'ALL' || ruleMetric(c) === metric);
@@ -218,12 +244,12 @@ export function RuleManager({
         body: JSON.stringify(payload),
       });
       const body = (await response.json()) as { error?: string; record?: ManagedRuleRecord };
-      if (!response.ok) throw new Error(body.error || 'Rule change rejected');
+      if (!response.ok) throw new Error(body.error || t('ruleChangeRejected'));
       await reload();
       if (body.record) setSelectedId(body.record.id);
-      setMessage('Change saved on the working branch database. Policy history updated.');
+      setMessage(t('saveSuccess'));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unexpected error');
+      setError(err instanceof Error ? err.message : t('unexpectedError'));
     } finally {
       setBusy(false);
     }
@@ -247,9 +273,7 @@ export function RuleManager({
     if (!selected) return;
     if (
       action === 'PUBLISH' &&
-      !window.confirm(
-        'Publish this electrical rule? All matching commissioned breakers may be affected.',
-      )
+      !window.confirm(t('publishConfirm'))
     )
       return;
     void post({
@@ -266,7 +290,7 @@ export function RuleManager({
         '/api/alarms/rules/effective?breakerId=' + encodeURIComponent(previewId),
         { cache: 'no-store' },
       );
-      if (!resp.ok) throw new Error('Unable to inspect breaker policy');
+      if (!resp.ok) throw new Error(t('inspectPolicyError'));
       setPreview(
         (await resp.json()) as {
           rules: readonly { code: string; source: string; scope: string }[];
@@ -313,14 +337,7 @@ export function RuleManager({
       <nav className="sm-rule-tabs" aria-label={t('viewsLabel')}>
         {(['RULES', 'PROFILES', 'ASSIGNMENTS', 'HISTORY'] as const).map((tab) => (
           <button key={tab} type="button" onClick={() => setView(tab)} aria-pressed={view === tab}>
-            {
-              {
-                RULES: 'Rule Catalog',
-                PROFILES: 'Electrical Profiles',
-                ASSIGNMENTS: 'Assignments',
-                HISTORY: 'Policy History',
-              }[tab]
-            }
+            {viewLabel(tab)}
           </button>
         ))}
       </nav>
@@ -347,7 +364,7 @@ export function RuleManager({
           <div className="sm-rule-profile-grid">
             {profileItems.map(([title, key, unit]) => (
               <article key={key}>
-                <small>{title}</small>
+                <small>{profileLabel(title)}</small>
                 <strong>
                   {DEFAULT_DC_PROFILE[key]} {unit}
                 </strong>
@@ -411,7 +428,7 @@ export function RuleManager({
                     <span>
                       <b>{ruleTitle(r.draft.code)}</b>
                       <small>
-                        {r.draft.scope} · {r.draft.scopeId ?? t('allBreakers')}
+                        {scopeLabel(r.draft.scope)} · {r.draft.scopeId ?? t('allBreakers')}
                       </small>
                     </span>
                     <em>{r.published ? t('published') : t('draft')}</em>
@@ -451,7 +468,7 @@ export function RuleManager({
               </label>
               {scope !== 'GLOBAL' ? (
                 <label>
-                  {t('canonical')} {scope.toLowerCase()} {t('idLabel')}
+                  {t('canonical')} {scopeLabel(scope)} {t('idLabel')}
                   <input
                     value={scopeId}
                     onChange={(e) => {
@@ -583,9 +600,9 @@ export function RuleManager({
               <tbody>
                 {published.map((r) => (
                   <tr key={r.id}>
-                    <td>{r.published?.code}</td>
-                    <td>{r.published?.scope}</td>
-                    <td>{r.published?.scopeId ?? 'Global'}</td>
+                    <td>{r.published ? displayRule(r.published.code) : ''}</td>
+                    <td>{r.published ? scopeLabel(r.published.scope) : ''}</td>
+                    <td>{r.published?.scopeId ?? t('global')}</td>
                     <td>{r.published?.revision}</td>
                   </tr>
                 ))}
@@ -617,9 +634,9 @@ export function RuleManager({
                 <tbody>
                   {preview.rules.map((r, i) => (
                     <tr key={r.code + '-' + i}>
-                      <td>{r.code}</td>
+                      <td>{displayRule(r.code)}</td>
                       <td>{r.source}</td>
-                      <td>{r.scope}</td>
+                      <td>{scopeLabel(r.scope)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -646,8 +663,8 @@ export function RuleManager({
                 {audits.map((a) => (
                   <tr key={a.id}>
                     <td>{new Date(a.occurredAt).toLocaleString()}</td>
-                    <td>{a.snapshot.code}</td>
-                    <td>{a.action}</td>
+                    <td>{displayRule(a.snapshot.code)}</td>
+                    <td>{actionLabel(a.action)}</td>
                     <td>{a.revision}</td>
                     <td>{a.actorId}</td>
                   </tr>

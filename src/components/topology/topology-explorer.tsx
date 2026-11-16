@@ -7,7 +7,7 @@ import {
   polygonArea,
   polygonsOverlapArea,
 } from '@/modules/spatial/domain/geometry';
-import { useState, type CSSProperties } from 'react';
+import { useState } from 'react';
 
 import type { PhysicalPoint, TopologyNode } from '@/modules/topology/domain/entities';
 import { ThradexAttribution } from '@/shared/ui/thradex-attribution';
@@ -101,7 +101,9 @@ export function TopologyExplorer({
                   ? node.name.toUpperCase()
                   : node.name.toUpperCase()}
           </strong>
-          <small>{hasGeometry ? t('surveyed') : t('schematicNoCoordinates')}</small>
+          {node.kind !== 'NETWORK' && (
+            <small>{hasGeometry ? t('surveyed') : t('schematicNoCoordinates')}</small>
+          )}
         </header>
 
         {roomPairs.length > 0 && (
@@ -115,22 +117,35 @@ export function TopologyExplorer({
         <div className="mk-map-canvas zip-map-canvas">
           <div className="mk-map-zoom" style={{ transform: `scale(${zoom})` }}>
             {node.kind === 'STRUCTURE' ? (
-              <div className="zip-building-stack">
-                {[...items].reverse().map((entry, index) => (
-                  <button
-                    key={entry.node.id}
-                    className={`zip-floor-slab ${selected === entry.node.id ? 'is-selected' : ''}`}
-                    onClick={() => setSelected(entry.node.id)}
-                    onDoubleClick={() => window.location.assign(entry.href)}
-                    style={{ '--floor-order': index } as CSSProperties}
-                  >
-                    <span className="zip-floor-shape" />
-                    <span>
-                      <strong>{entry.node.name.toUpperCase()}</strong>
-                      <small>{entry.node.kind.replaceAll('_', ' ')}</small>
-                    </span>
-                  </button>
-                ))}
+              <div className="mk2-building-stage" aria-label={t('structureLevels')}>
+                <div className="mk2-building-illustration">
+                  <div className="mk2-building-shell" aria-hidden="true">
+                    <div className="mk2-building-roof" />
+                    <div className="mk2-building-windows" />
+                  </div>
+                  <div className="mk2-building-floor-list">
+                    {items.map((entry) => (
+                      <Link
+                        key={entry.node.id}
+                        href={entry.href}
+                        className="mk2-building-floor"
+                        onMouseEnter={() => setSelected(entry.node.id)}
+                        onFocus={() => setSelected(entry.node.id)}
+                        aria-label={t('openNamed', { name: entry.node.name })}
+                      >
+                        <span>
+                          <strong>{entry.node.name}</strong>
+                          <small>{t('levelItem')}</small>
+                        </span>
+                        <b>{t('enter')}</b>
+                      </Link>
+                    ))}
+                    {items.length === 0 && (
+                      <span className="mk2-building-no-floors">{t('noItems')}</span>
+                    )}
+                  </div>
+                </div>
+                <p className="mk2-building-caption">{t('illustrativeBuilding')}</p>
               </div>
             ) : hasGeometry ? (
               <div className="zip-level-stage">

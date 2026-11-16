@@ -337,7 +337,7 @@ export function RuleManager({
 
         <div className="sm-rule-simple-explanation">
           <strong>{ruleTitle(code)}</strong>
-          <span>{t(('ruleHelp.' + code) as Parameters<typeof t>[0])}</span>
+          <span>{String(t.raw(('ruleHelp.' + code) as Parameters<typeof t.raw>[0]))}</span>
         </div>
 
         <div className="sm-rule-form-grid">
@@ -403,16 +403,16 @@ export function RuleManager({
         </details>
 
         <div className="sm-rule-actions sm-rule-simple-actions">
-          <button type="button" onClick={save} disabled={!canEdit || busy || loading}>
+          <button className="sm-rule-primary" type="button" onClick={save} disabled={!canEdit || busy || loading}>
             {t('saveDraft')}
           </button>
           {selected ? (
-            <button type="button" onClick={() => change('PUBLISH')} disabled={!canEdit || busy}>
+            <button className="sm-rule-publish" type="button" onClick={() => change('PUBLISH')} disabled={!canEdit || busy}>
               {t('publish')}
             </button>
           ) : null}
           {selected?.published ? (
-            <button type="button" onClick={() => change('DISABLE')} disabled={!canEdit || busy}>
+            <button className="sm-rule-disable" type="button" onClick={() => change('DISABLE')} disabled={!canEdit || busy}>
               {t('disable')}
             </button>
           ) : null}

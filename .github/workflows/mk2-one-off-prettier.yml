@@ -1,0 +1,60 @@
+name: Temporary MK2 Prettier correction
+on:
+  push:
+    branches:
+      - fix/mk2-ux-stabilization
+    paths:
+      - .github/workflows/mk2-one-off-prettier.yml
+permissions:
+  contents: write
+jobs:
+  format-mk2-only:
+    if: ${{ github.event.head_commit.message == 'chore(mk2): launch one-off Prettier correction' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked Prettier
+        run: npm ci --no-audit --no-fund
+      - name: Format the exact ten files flagged by CI
+        run: |
+          npx prettier --write \
+            docs/ux/MK2-UX-STABILIZATION-ACCEPTANCE.md \
+            'src/app/device/[deviceId]/page.tsx' \
+            src/app/mk2-ux-stabilization.css \
+            src/components/blueprint/blueprint-canvas.tsx \
+            src/components/blueprint/room-layout-editor.tsx \
+            src/components/equipment/equipment-composition-editor.tsx \
+            src/components/equipment/equipment-contract-views.tsx \
+            src/components/equipment/equipment-reading-time.ts \
+            src/components/equipment/physical-equipment-diagram.tsx \
+            src/components/topology/topology-explorer.tsx
+      - name: Verify formatting is correct without mutating other files
+        run: npm run format:check
+      - name: Commit only the ten formatted files
+        run: |
+          git config user.name "site-mapper-automation"
+          git config user.email "site-mapper-automation@users.noreply.github.com"
+          git add -- \
+            docs/ux/MK2-UX-STABILIZATION-ACCEPTANCE.md \
+            'src/app/device/[deviceId]/page.tsx' \
+            src/app/mk2-ux-stabilization.css \
+            src/components/blueprint/blueprint-canvas.tsx \
+            src/components/blueprint/room-layout-editor.tsx \
+            src/components/equipment/equipment-composition-editor.tsx \
+            src/components/equipment/equipment-contract-views.tsx \
+            src/components/equipment/equipment-reading-time.ts \
+            src/components/equipment/physical-equipment-diagram.tsx \
+            src/components/topology/topology-explorer.tsx
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo 'No formatting changes required'
+            exit 0
+          fi
+          git commit -m "style(mk2): apply locked Prettier to ten CI-flagged files"
+          git push origin HEAD:fix/mk2-ux-stabilization

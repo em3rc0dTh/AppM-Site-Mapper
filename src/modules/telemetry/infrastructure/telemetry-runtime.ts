@@ -1,0 +1,568 @@
+import { join } from 'node:path';
+import { recordIndustrialFault } from '@/modules/telemetry/infrastructure/industrial/diagnostics';
+import type { SourceProfile } from '@/modules/telemetry/domain/industrial/observations';
+import { MqttObservationOutbox } from '@/modules/telemetry/infrastructure/industrial/mqtt-outbox';
+import { normalizeObservations } from '@/modules/telemetry/domain/industrial/observations';
+import { isProductionDeployment, requireRuntimeSecret } from '@/config/env';
+import {
+  captureIndustrial,
+  industrialProfiles,
+} from '@/modules/telemetry/infrastructure/industrial/runtime';
+import { normalizeTelemetry } from '@/modules/telemetry/domain/normalizer';
+import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
+import { TelemetryService } from '@/modules/telemetry/application/telemetry-service';
+import type { TelemetryHistoryWriterDiagnostics } from '@/modules/telemetry/application/telemetry-history-writer';
+import type { TelemetryBinding } from '@/modules/telemetry/domain/entities';
+import {
+  BFDB_LIVE_MAX_AGE_MS,
+  BFDB_OFFLINE_AFTER_MS,
+} from '@/modules/telemetry/domain/telemetry-freshness';
+import {
+  detectBfdbWireProfile,
+  findBfdbWirePointByBindingId,
+} from '@/modules/telemetry/domain/bfdb-wire-layout';
+import { createTelemetryBindingRepository } from '@/modules/telemetry/infrastructure/telemetry-binding-repository-factory';
+import { createTelemetryWatchRepository } from '@/modules/telemetry/infrastructure/telemetry-watch-repository-factory';
+import { createTelemetryStoreClient } from '@/modules/telemetry/infrastructure/http-telemetry-store';
+import { NativeMqttSource } from '@/modules/telemetry/infrastructure/native-mqtt-source';
+import { TelemetryRejectionLogThrottle } from '@/modules/telemetry/infrastructure/telemetry-rejection-log-throttle';
+import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
+import { logger } from '@/shared/infrastructure/logger';
+import { getProcessSingleton } from '@/shared/infrastructure/process-singleton';
+import { TelemetryAlarmEvaluator } from '@/modules/alarm/application/telemetry-alarm-evaluator';
+import { createAlarmRepository } from '@/modules/alarm/infrastructure/alarm-repository-factory';
+import { createAlarmPolicyRepository } from '@/modules/alarm/infrastructure/alarm-policy-repository-factory';
+
+export interface TelemetrySourceDiagnostic {
+  readonly serial: string;
+  readonly rawMessages: number;
+  readonly lastRawAt: string | null;
+  readonly mappedDeviceId: string | null;
+  readonly mappedTargetId: string | null;
+  readonly mappedTargetType: string | null;
+  readonly pointCount: number;
+  readonly mappedBreakerCount: number;
+  readonly unmappedPointCount: number;
+  readonly freshness: 'LIVE' | 'STALE' | 'OFFLINE';
+}
+
+export interface TelemetryDiagnostics {
+  readonly enabled: boolean;
+  readonly connection:
+    'disabled' | 'idle' | 'connecting' | 'subscribing' | 'subscribed' | 'reconnecting' | 'stopped';
+  readonly topicFilter: string;
+  readonly lastSubscribedAt: string | null;
+  readonly lastConnectionError: string | null;
+  readonly capture: {
+    readonly state: 'DURABLE_SPOOL' | 'DEGRADED' | 'NOT_CONFIGURED';
+    readonly failures: number;
+    readonly lastFailureAt: string | null;
+    readonly guarantee: string;
+  };
+  readonly rawMessages: number;
+  readonly acceptedMessages: number;
+  readonly rejectedMessages: number;
+  readonly lastRawAt: string | null;
+  readonly lastAcceptedAt: string | null;
+  readonly rejectionReasons: Readonly<Record<string, number>>;
+  readonly sources: readonly TelemetrySourceDiagnostic[];
+  readonly history: TelemetryHistoryWriterDiagnostics;
+}
+
+export interface TelemetryRuntime {
+  readonly hub: TelemetryHub;
+  readonly service: TelemetryService;
+  readonly diagnostics: () => TelemetryDiagnostics;
+  readonly stop: () => void | Promise<void>;
+}
+
+/** Disallow unauthenticated or unencrypted MQTT in production. */
+export function assertMqttProductionSecurity(
+  brokerUrl: string,
+  username: string | undefined,
+  password: string | undefined,
+  production: boolean,
+): void {
+  if (!production) return;
+  let url: URL;
+  try {
+    url = new URL(brokerUrl);
+  } catch {
+    throw new Error('Invalid MQTT_BROKER_URL');
+  }
+  if (url.protocol !== 'mqtts:') {
+    throw new Error('Production MQTT requires mqtts:// with certificate validation.');
+  }
+  if (!username?.trim() || !password?.trim()) {
+    throw new Error('Production MQTT requires an authenticated broker account.');
+  }
+}
+
+function positiveInt(value: string | undefined, fallback: number): number {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function telemetryWatchMode(value: string | undefined): 'SHADOW' | 'ACTIVE' {
+  const normalized = (value ?? 'shadow').trim().toLowerCase();
+  if (normalized === 'shadow') return 'SHADOW';
+  if (normalized === 'active') return 'ACTIVE';
+  throw new Error('TELEMETRY_WATCH_MODE must be shadow or active.');
+}
+
+function configuredBindings(value: string | undefined): readonly TelemetryBinding[] {
+  if (!value?.trim()) return [];
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(value);
+  } catch {
+    throw new Error('MQTT_SOURCE_DEVICE_MAP must be valid JSON.');
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error('MQTT_SOURCE_DEVICE_MAP must be a JSON object.');
+  }
+
+  const timestamp = new Date().toISOString();
+  return Object.entries(parsed).map(([source, target]) => {
+    if (!source.trim() || typeof target !== 'string' || !target.trim()) {
+      throw new Error('MQTT_SOURCE_DEVICE_MAP values must map source identities to device IDs.');
+    }
+    return {
+      id: `env:mqtt:${source.trim()}`,
+      protocol: 'MQTT' as const,
+      sourceIdentity: source.trim(),
+      metric: 'SOURCE',
+      targetType: 'DEVICE' as const,
+      targetId: target.trim(),
+      lifecycle: 'ACTIVE' as const,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+  });
+}
+
+function expectedSources(value: string | undefined): readonly string[] {
+  return [
+    ...new Set(
+      (value ?? '')
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean),
+    ),
+  ];
+}
+
+export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
+  return getProcessSingleton<Promise<TelemetryRuntime>>('telemetry-runtime', async () => {
+    const maxStreams = positiveInt(process.env.TELEMETRY_MAX_STREAMS, 100);
+    const maxPayloadBytes = positiveInt(process.env.TELEMETRY_MAX_PAYLOAD_BYTES, 262_144);
+    const topicPrefix = process.env.MQTT_TOPIC_PREFIX?.trim() || 'data/dev/';
+    const topicFilter = process.env.MQTT_TOPIC_FILTER?.trim() || `${topicPrefix}#`;
+    const enabled = process.env.TELEMETRY_ENABLED === 'true';
+    const expected = expectedSources(process.env.MQTT_EXPECTED_SOURCES);
+    const historyEnabled =
+      process.env.TELEMETRY_HISTORY_ENABLED === 'true' &&
+      (enabled || Boolean(process.env.SNMP_INGEST_TOKEN));
+    const historyStore = historyEnabled ? createTelemetryStoreClient() : null;
+    const rejectionLogIntervalMs = positiveInt(
+      process.env.TELEMETRY_REJECTION_LOG_INTERVAL_MS,
+      60_000,
+    );
+    const rejectionLogThrottle = new TelemetryRejectionLogThrottle(rejectionLogIntervalMs);
+
+    let captureProfiles: SourceProfile[] = [];
+    try {
+      captureProfiles = industrialProfiles();
+    } catch {
+      recordIndustrialFault('INDUSTRIAL_PROFILES_INVALID');
+      logger.warn('industrial.profiles.invalid', {});
+    }
+    let industrialOutbox: MqttObservationOutbox | null = null;
+    if (captureProfiles.some((p) => p.protocol === 'MQTT')) {
+      try {
+        if (isProductionDeployment() && !process.env.INDUSTRIAL_MQTT_SPOOL)
+          throw new Error('Production MQTT capture requires a persistent outbox directory');
+        industrialOutbox = new MqttObservationOutbox(
+          process.env.INDUSTRIAL_MQTT_SPOOL ?? join(process.cwd(), '.runtime', 'industrial-mqtt'),
+          captureIndustrial,
+          (error) =>
+            logger.warn('industrial.mqtt.delivery_retry', {
+              reason:
+                error instanceof Error
+                  ? (error.name + ': ' + error.message).slice(0, 240)
+                  : 'unknown delivery error',
+            }),
+          Number(process.env.INDUSTRIAL_MQTT_MAX_PENDING ?? 1000),
+        );
+        await industrialOutbox.start();
+      } catch {
+        await industrialOutbox?.close();
+        industrialOutbox = null;
+        recordIndustrialFault('MQTT_CAPTURE_UNAVAILABLE');
+        logger.warn('industrial.mqtt.initialization_failed', {});
+      }
+    }
+    if (enabled && isProductionDeployment() && !industrialOutbox)
+      throw new Error('PRODUCTION_MQTT_DURABLE_CAPTURE_REQUIRED');
+    const hub = new TelemetryHub(maxStreams);
+    const topologyRepository = await createTopologyRepository();
+    const bindingRepository = await createTelemetryBindingRepository();
+    const alarmRepository = await createAlarmRepository();
+    const alarmPolicyRepository = await createAlarmPolicyRepository();
+    const telemetryWatchRepository = await createTelemetryWatchRepository();
+    const alarmEvaluator = new TelemetryAlarmEvaluator(
+      alarmRepository,
+      alarmPolicyRepository,
+      topologyRepository,
+      bindingRepository,
+      telemetryWatchRepository,
+      {
+        mode: telemetryWatchMode(process.env.TELEMETRY_WATCH_MODE),
+        lossAfterMs: positiveInt(process.env.TELEMETRY_WATCH_LOSS_AFTER_MS, 900_000),
+        recoverySamples: positiveInt(process.env.TELEMETRY_WATCH_RECOVERY_SAMPLES, 2),
+        reportedOfflineSamples: positiveInt(
+          process.env.TELEMETRY_WATCH_REPORTED_OFFLINE_SAMPLES,
+          2,
+        ),
+        coverageAlarmsEnabled: true,
+        criticalCoverageRatio: 0.8,
+        onWatchdogError: (error) =>
+          logger.warn('alarm.telemetry_watchdog_failed', {
+            reason: error instanceof Error ? error.message : 'unknown',
+          }),
+        onShadowSignal: (signal) => logger.info('alarm.telemetry_shadow_transition', signal),
+      },
+    );
+    const unsubscribeAlarmEvaluator = hub.subscribe((sample) => {
+      void alarmEvaluator.observe(sample).catch((error) =>
+        logger.warn('alarm.telemetry_evaluation_failed', {
+          reason: error instanceof Error ? error.message : 'unknown',
+          targetId: sample.targetId,
+        }),
+      );
+    });
+    alarmEvaluator.start();
+    const service = new TelemetryService(
+      topologyRepository,
+      hub,
+      { topicPrefix, maxPayloadBytes },
+      { configuredBindings: configuredBindings(process.env.MQTT_SOURCE_DEVICE_MAP) },
+      bindingRepository,
+      historyStore ?? undefined,
+    );
+
+    const counts = new Map<string, { messages: number; lastRawAt: string }>();
+    const rejectionReasons: Record<string, number> = {};
+    let rawMessages = 0;
+    let acceptedMessages = 0;
+    let captureFailures = 0;
+    let captureLastFailureAt: string | null = null;
+    let rejectedMessages = 0;
+    let lastRawAt: string | null = null;
+    let lastAcceptedAt: string | null = null;
+    let source: NativeMqttSource | null = null;
+
+    if (enabled) {
+      const brokerUrl = requireRuntimeSecret('MQTT_BROKER_URL', process.env.MQTT_BROKER_URL);
+      assertMqttProductionSecurity(
+        brokerUrl,
+        process.env.MQTT_USERNAME,
+        process.env.MQTT_PASSWORD,
+        isProductionDeployment(),
+      );
+      if (isProductionDeployment())
+        requireRuntimeSecret('MQTT_CLIENT_ID', process.env.MQTT_CLIENT_ID);
+      source = new NativeMqttSource(
+        {
+          brokerUrl,
+          topicFilter,
+          ...(process.env.MQTT_CLIENT_ID?.trim()
+            ? { clientId: process.env.MQTT_CLIENT_ID.trim() }
+            : {}),
+          ...(process.env.MQTT_USERNAME?.trim()
+            ? { username: process.env.MQTT_USERNAME.trim() }
+            : {}),
+          ...(process.env.MQTT_PASSWORD?.trim() ? { password: process.env.MQTT_PASSWORD } : {}),
+        },
+        async (topic, payload) => {
+          const now = new Date().toISOString();
+          const serial = topic.startsWith(topicPrefix)
+            ? (topic.slice(topicPrefix.length).split('/')[0] ?? '')
+            : '';
+          rawMessages += 1;
+          lastRawAt = now;
+          if (serial) {
+            const old = counts.get(serial);
+            if (old || counts.size < 100) {
+              counts.set(serial, { messages: (old?.messages ?? 0) + 1, lastRawAt: now });
+            }
+          }
+
+          if (
+            isProductionDeployment() &&
+            !captureProfiles.some((p) => p.protocol === 'MQTT' && p.sourceIdentity === serial)
+          ) {
+            captureFailures++;
+            captureLastFailureAt = now;
+            recordIndustrialFault('MQTT_UNPROFILED_SOURCE_BLOCKED');
+            throw new Error('MQTT_SOURCE_DURABLE_PROFILE_REQUIRED');
+          }
+
+          // Additive capture: a commissioned source may expose unknown fields even
+          // when the legacy electrical normalizer cannot interpret this packet.
+          if (
+            payload.byteLength <= maxPayloadBytes &&
+            captureProfiles.some((p) => p.protocol === 'MQTT' && p.sourceIdentity === serial)
+          ) {
+            let preparedForCapture = false;
+            try {
+              const raw: unknown = JSON.parse(
+                new TextDecoder('utf-8', { fatal: true }).decode(payload),
+              );
+              const record =
+                raw && typeof raw === 'object' && !Array.isArray(raw)
+                  ? (raw as Record<string, unknown>)
+                  : {};
+              if (record.sn !== undefined && record.sn !== serial)
+                throw new Error('SOURCE_IDENTITY_MISMATCH');
+              const legacy = normalizeTelemetry(
+                topic,
+                payload,
+                { topicPrefix, maxPayloadBytes },
+                now,
+              );
+              const envelope = {
+                protocol: 'MQTT',
+                sourceIdentity: serial,
+                transport: 'publish',
+                topic,
+                receivedAt: now,
+                raw,
+                ...(legacy.ok && legacy.value.messageId
+                  ? { messageId: legacy.value.messageId }
+                  : typeof record.messageId === 'string'
+                    ? { messageId: record.messageId }
+                    : {}),
+                ...(legacy.ok && legacy.value.sourceObservedAt
+                  ? { observedAt: legacy.value.sourceObservedAt }
+                  : {}),
+              } as const;
+              const profile = captureProfiles.find(
+                (p) => p.protocol === 'MQTT' && p.sourceIdentity === serial,
+              )!;
+              normalizeObservations(envelope, profile);
+              preparedForCapture = true;
+              await industrialOutbox!.enqueue(envelope);
+            } catch {
+              if (!preparedForCapture) industrialOutbox?.recordCaptureRejection();
+              captureFailures++;
+              captureLastFailureAt = now;
+              recordIndustrialFault('MQTT_CAPTURE_FAILED_POTENTIAL_LOSS');
+              logger.warn('industrial.mqtt.capture_failed', { sourceIdentity: serial });
+              // Do not publish LIVE or ACK this packet when its durable capture failed.
+              throw new Error('MQTT_DURABLE_CAPTURE_FAILED');
+            }
+          }
+
+          const result = await service.ingest(topic, payload);
+          if (!result.ok) {
+            rejectedMessages += 1;
+            rejectionReasons[result.error] = (rejectionReasons[result.error] ?? 0) + 1;
+            const decision = rejectionLogThrottle.record(`${topic}\u0000${result.error}`);
+            if (decision.shouldLog) {
+              logger.warn('telemetry.message.rejected', {
+                topic,
+                reason: result.error,
+                ...(decision.suppressedSinceLastLog > 0
+                  ? { suppressedSinceLastLog: decision.suppressedSinceLastLog }
+                  : {}),
+              });
+            }
+          } else {
+            acceptedMessages += 1;
+            lastAcceptedAt = now;
+            const bridgeUrl = process.env.MODBUS_BRIDGE_URL?.trim();
+            const bridgeToken = process.env.MODBUS_BRIDGE_TOKEN?.trim();
+            if (bridgeUrl && bridgeToken && result.value.protocol === 'BFDB') {
+              // The Modbus service is an optional downstream consumer of accepted,
+              // explicitly commissioned breaker metrics. History remains independent.
+              const mappedReadings: Array<{
+                sourceIdentity: string;
+                rawPointId: string;
+                receivedAt: string;
+                metrics: unknown;
+              }> = [...(result.value.breakerReadings ?? [])].map((reading) => ({
+                sourceIdentity: reading.sourceIdentity,
+                rawPointId: reading.modbusPointId ?? reading.rawPointId,
+                receivedAt: reading.receivedAt,
+                metrics: reading.metrics,
+              }));
+              // A physically configured breaker may have point-level Equipment
+              // bindings without a legacy BDFB shelf/frame projection.
+              // Read only accepted exact-target patches, never raw unbound points.
+              const directSamples = service
+                .snapshot()
+                .filter(
+                  (item) =>
+                    item.targetType === 'EQUIPMENT' &&
+                    Boolean(item.sourcePointId) &&
+                    item.sourceIdentity === result.value.sourceIdentity &&
+                    item.receivedAt === result.value.receivedAt &&
+                    Boolean(item.metricBindingIds?.length),
+                );
+              const rawPacket: unknown = JSON.parse(new TextDecoder().decode(payload));
+              const rawReported =
+                rawPacket && typeof rawPacket === 'object' && 'reported' in rawPacket
+                  ? rawPacket.reported
+                  : null;
+              const freshPoints =
+                rawReported && typeof rawReported === 'object' && !Array.isArray(rawReported)
+                  ? (rawReported as Record<string, unknown>)
+                  : {};
+              const wireProfile = detectBfdbWireProfile(freshPoints);
+              for (const item of directSamples) {
+                const sourcePointId = item.sourcePointId!;
+                const point = findBfdbWirePointByBindingId(sourcePointId, freshPoints, wireProfile);
+                if (!point) continue;
+                const raw = freshPoints[point.rawPointId];
+                if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
+                const source = raw as Record<string, unknown>;
+                const fields = [
+                  [point.fields.voltage, 'voltageV'],
+                  [point.fields.current, 'currentA'],
+                  [point.fields.power, 'powerW'],
+                  [point.fields.energy, 'energyKwh'],
+                ] as const;
+                const metrics: Record<string, { value: number }> = {};
+                for (const [wire, normalized] of fields) {
+                  // Direct Equipment sample contains only commissioned metric
+                  // fields; require it before forwarding fresh raw values.
+                  if (!(normalized in item.reported)) continue;
+                  const rawValue = source[wire];
+                  const numeric =
+                    typeof rawValue === 'number'
+                      ? rawValue
+                      : typeof rawValue === 'string' && rawValue.trim()
+                        ? Number(rawValue)
+                        : Number.NaN;
+                  if (Number.isFinite(numeric)) metrics[normalized] = { value: numeric };
+                }
+                if (Object.keys(metrics).length) {
+                  mappedReadings.push({
+                    sourceIdentity: item.sourceIdentity,
+                    rawPointId: point.modbusPointId,
+                    receivedAt: item.receivedAt,
+                    metrics,
+                  });
+                }
+              }
+              for (const reading of mappedReadings) {
+                if (!reading.rawPointId) continue;
+                try {
+                  const response = await fetch(bridgeUrl + '/internal/accepted-breaker', {
+                    method: 'POST',
+                    headers: {
+                      authorization: 'Bearer ' + bridgeToken,
+                      'content-type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      sourceIdentity: reading.sourceIdentity,
+                      rawPointId: reading.rawPointId,
+                      receivedAt: reading.receivedAt,
+                      metrics: reading.metrics,
+                    }),
+                    signal: AbortSignal.timeout(1500),
+                  });
+                  if (!response.ok) {
+                    logger.warn('modbus.bridge.write_rejected', { status: response.status });
+                  }
+                } catch (error) {
+                  logger.warn('modbus.bridge.unavailable', {
+                    reason: error instanceof Error ? error.message : 'unknown',
+                  });
+                }
+              }
+            }
+          }
+        },
+      );
+      source.start();
+    }
+
+    return {
+      hub,
+      service,
+      stop: async () => {
+        source?.stop();
+        unsubscribeAlarmEvaluator?.();
+        alarmEvaluator.stop();
+        await industrialOutbox?.close();
+      },
+      diagnostics: () => {
+        const allSamples = service.snapshot();
+        const identities = [
+          ...new Set([...expected, ...counts.keys(), ...allSamples.map((s) => s.sourceIdentity)]),
+        ];
+        const now = Date.now();
+        const state = source?.diagnostics();
+
+        return {
+          enabled,
+          connection: state?.state ?? 'disabled',
+          topicFilter,
+          lastSubscribedAt: state?.lastSubscribedAt ?? null,
+          lastConnectionError: state?.lastError ?? null,
+          capture: {
+            state: !captureProfiles.some((p) => p.protocol === 'MQTT')
+              ? 'NOT_CONFIGURED'
+              : !industrialOutbox || captureFailures > 0
+                ? 'DEGRADED'
+                : 'DURABLE_SPOOL',
+            failures: captureFailures,
+            lastFailureAt: captureLastFailureAt,
+            guarantee:
+              'Profiled sources: fsynced spool before PUBACK. LIVE denotes freshness only. Publisher QoS 0, broker persistence, spool volume survival and sources without profiles are not end-to-end durable guarantees. Stable deduplication requires publisher messageId; spool retries preserve captureId.',
+          },
+          rawMessages,
+          acceptedMessages,
+          rejectedMessages,
+          lastRawAt,
+          lastAcceptedAt,
+          rejectionReasons: { ...rejectionReasons },
+          history: historyStore?.diagnostics() ?? {
+            enabled: false,
+            writes: 0,
+            rowsAccepted: 0,
+            failures: 0,
+            lastWriteAt: null,
+            lastError: null,
+          },
+          sources: identities.map((serial) => {
+            const incoming = counts.get(serial);
+            const sample = allSamples.find(
+              (item) => item.sourceIdentity === serial && !item.sourcePointId,
+            );
+            const age = sample ? now - Date.parse(sample.receivedAt) : Number.POSITIVE_INFINITY;
+            return {
+              serial,
+              rawMessages: incoming?.messages ?? 0,
+              lastRawAt: incoming?.lastRawAt ?? null,
+              mappedDeviceId: sample?.targetType === 'DEVICE' ? sample.targetId : null,
+              mappedTargetId: sample?.targetId ?? null,
+              mappedTargetType: sample?.targetType ?? null,
+              pointCount: sample ? Object.keys(sample.reported).length : 0,
+              mappedBreakerCount: sample?.breakerReadings?.length ?? 0,
+              unmappedPointCount: sample?.unmappedPointIds?.length ?? 0,
+              freshness:
+                !sample || age > BFDB_OFFLINE_AFTER_MS
+                  ? 'OFFLINE'
+                  : age > BFDB_LIVE_MAX_AGE_MS
+                    ? 'STALE'
+                    : 'LIVE',
+            };
+          }),
+        };
+      },
+    };
+  });
+}

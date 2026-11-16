@@ -1,0 +1,58 @@
+# STRICTLY ADDITIVE original-stack local SNMPv3 laboratory for BDFB-01 only.
+# No modifications to existing services, volumes, networks, MQTT or Modbus.
+# The BFDB emulator checkout MUST be a separate approved local repository.
+# SNMPv3 synthetic agent has no public or host UDP port; private default network only.
+x-snmp-lab-config2-points: &points >-
+  [{"oid":"1.3.6.1.4.1.8072.9999.2026.48.1.1.0","metric":"CURRENT","scale":0.1},
+   {"oid":"1.3.6.1.4.1.8072.9999.2026.48.1.2.0","metric":"CURRENT","scale":0.1},
+   {"oid":"1.3.6.1.4.1.8072.9999.2026.48.2.1.0","metric":"VOLTAGE","scale":0.1},
+   {"oid":"1.3.6.1.4.1.8072.9999.2026.48.2.2.0","metric":"VOLTAGE","scale":0.1}]
+services:
+  snmp-lab-agent-01:
+    profiles: [snmp-lab-additive]
+    build:
+      context: ${BFDB_SNMP_LAB_CONTEXT:?Use approved BFDB checkout}
+      dockerfile: apps/snmp-emulator/Dockerfile
+    environment:
+      SNMP_AGENT_HOST: 0.0.0.0
+      SNMP_AGENT_PORT: '1161'
+      SNMP_AGENT_UPDATE_MS: '1000'
+      SNMP_EMULATOR_SCENARIO: NORMAL
+      SNMP_EMULATOR_PROFILE: ELTEK_BDCBB_CONFIG_2
+      SNMP_EMULATOR_BFDB_ID: BFDB-01
+      SNMP_EMULATOR_SOURCE_ID: EMU-DELTA-BFDB-01
+      SNMP_VERSION: '3'
+      SNMP_V3_USERNAME: ${SNMP_V3_USERNAME:?Private SNMPv3 username needed}
+      SNMP_V3_AUTH_KEY: ${SNMP_V3_AUTH_KEY:?Private SNMPv3 auth key needed}
+      SNMP_V3_PRIV_KEY: ${SNMP_V3_PRIV_KEY:?Private SNMPv3 privacy key needed}
+    networks: [default]
+    restart: unless-stopped
+    labels:
+      site-mapper.scope: snmp-synthetic-lab-only
+      site-mapper.certified-field: 'false'
+  snmp-lab-collector-01:
+    profiles: [snmp-lab-additive]
+    build:
+      context: .
+      dockerfile: infra/snmp-collector/Dockerfile
+    depends_on:
+      snmp-lab-agent-01:
+        condition: service_started
+    environment:
+      APP_ENV: development
+      SNMP_CONTROLLER_HOST: snmp-lab-agent-01
+      SNMP_CONTROLLER_PORT: '1161'
+      SNMP_CONTROLLER_ID: EMU-DELTA-BFDB-01
+      SNMP_VERSION: '3'
+      SNMP_V3_USERNAME: ${SNMP_V3_USERNAME:?Private SNMPv3 username needed}
+      SNMP_V3_AUTH_KEY: ${SNMP_V3_AUTH_KEY:?Private SNMPv3 auth key needed}
+      SNMP_V3_PRIV_KEY: ${SNMP_V3_PRIV_KEY:?Private SNMPv3 privacy key needed}
+      SNMP_FEED_POINTS_JSON: *points
+      SNMP_POLL_INTERVAL_MS: '30000'
+      SNMP_INGEST_TOKEN: ${SNMP_INGEST_TOKEN:?Original Site Mapper collector token needed}
+      SNMP_INGEST_URL: http://site-mapper:3000/api/telemetry/snmp/ingest
+    networks: [default]
+    restart: unless-stopped
+    labels:
+      site-mapper.scope: snmp-synthetic-lab-only
+      site-mapper.certified-field: 'false'

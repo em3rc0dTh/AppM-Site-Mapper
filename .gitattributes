@@ -1,0 +1,8 @@
+# Repository may be checked out by Git for Windows and executed under WSL2.
+# Always use Unix line endings for Bash/Unix scripts, regardless of core.autocrlf.
+*.sh text eol=lf
+
+# Keep Docker and CI configuration consistent across platforms.
+*.yml text eol=lf
+*.yaml text eol=lf
+*.mjs text eol=lf

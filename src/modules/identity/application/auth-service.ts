@@ -1,0 +1,406 @@
+import type {
+  AuthThrottle,
+  IdentityRepository,
+} from '@/modules/identity/application/identity-repository';
+import type { SafeUser, SessionRecord, User } from '@/modules/identity/domain/entities';
+import { toSafeUser } from '@/modules/identity/domain/entities';
+import { hashPassword, verifyPassword } from '@/modules/identity/domain/password';
+import {
+  decryptMfaSecret,
+  hashMfaRecoveryCode,
+  matchTotpStep,
+} from '@/modules/identity/application/mfa-totp';
+import { assessNewPassword } from '@/modules/identity/application/password-policy';
+import { createSessionToken, hashSessionToken } from '@/modules/identity/domain/session-token';
+import type { Permission, Role } from '@/modules/identity/domain/roles';
+import { canManageRole, hasPermission } from '@/modules/identity/domain/roles';
+import type { LifecycleState } from '@/shared/domain/entity';
+import { createDomainId, nowIso } from '@/shared/domain/entity';
+import { failure, success, type Result } from '@/shared/domain/result';
+
+const LOGIN_LIMIT = 5;
+const LOGIN_WINDOW_MS = 15 * 60 * 1_000;
+const SESSION_TTL_MS = 8 * 60 * 60 * 1_000;
+const SESSION_IDLE_TTL_MS = 30 * 60 * 1_000;
+const ACTIVITY_WRITE_INTERVAL_MS = 5 * 60 * 1_000;
+
+export type AuthError =
+  | 'INVALID_CREDENTIALS'
+  | 'INVALID_INPUT'
+  | 'PASSWORD_COMPROMISED'
+  | 'PASSWORD_CHECK_UNAVAILABLE'
+  | 'MFA_REQUIRED'
+  | 'MFA_INVALID'
+  | 'MFA_KEY_NOT_CONFIGURED'
+  | 'MFA_ENROLLMENT_REQUIRED'
+  | 'RATE_LIMITED'
+  | 'SESSION_INVALID'
+  | 'FORBIDDEN'
+  | 'PASSWORD_CHANGE_REQUIRED'
+  | 'USER_EXISTS'
+  | 'USER_NOT_FOUND'
+  | 'SELF_MANAGEMENT_RESTRICTED'
+  | 'LAST_SUPERADMIN'
+  | 'BOOTSTRAP_CLOSED';
+
+export interface AuthenticatedSession {
+  readonly token: string;
+  readonly user: SafeUser;
+}
+
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+export class AuthService {
+  constructor(
+    private readonly repository: IdentityRepository,
+    private readonly throttle: AuthThrottle,
+    private readonly clock: () => Date = () => new Date(),
+  ) {}
+
+  async authenticate(
+    email: string,
+    password: string,
+    throttleKey: string,
+    mfaCode?: string,
+  ): Promise<Result<AuthenticatedSession, AuthError>> {
+    if (
+      !email.trim() ||
+      email.length > 254 ||
+      !password ||
+      password.length > 1024 ||
+      (mfaCode !== undefined && mfaCode.length > 35)
+    ) {
+      return failure('INVALID_INPUT');
+    }
+    const now = this.clock();
+
+    if (!(await this.throttle.consume(throttleKey, now, LOGIN_LIMIT, LOGIN_WINDOW_MS))) {
+      return failure('RATE_LIMITED');
+    }
+
+    const user = await this.repository.getUserByEmail(normalizeEmail(email));
+
+    if (
+      !user ||
+      user.lifecycle !== 'ACTIVE' ||
+      !(await verifyPassword(password, user.passwordHash))
+    ) {
+      return failure('INVALID_CREDENTIALS');
+    }
+
+    if (user.mfaSecretCiphertext) {
+      if (!mfaCode) return failure('MFA_REQUIRED');
+      const secret = decryptMfaSecret(user.id, user.mfaSecretCiphertext);
+      if (!secret) return failure('MFA_KEY_NOT_CONFIGURED');
+      if (/^[0-9]{6}$/.test(mfaCode)) {
+        const step = matchTotpStep(secret, mfaCode, now.getTime());
+        if (
+          step === null ||
+          !(await this.repository.consumeMfaStep(user.id, user.mfaSecretCiphertext, step))
+        ) {
+          return failure('MFA_INVALID');
+        }
+      } else {
+        const recoveryHash = hashMfaRecoveryCode(user.id, mfaCode);
+        if (
+          !recoveryHash ||
+          !(await this.repository.consumeMfaRecoveryCode(user.id, recoveryHash))
+        ) {
+          return failure('MFA_INVALID');
+        }
+      }
+    } else if (process.env.SITE_MAPPER_MFA_REQUIRED === 'true') {
+      // Roll out only after account enrollment and recovery provisioning.
+      return failure('MFA_ENROLLMENT_REQUIRED');
+    }
+
+    await this.throttle.reset(throttleKey);
+
+    const token = createSessionToken();
+    const session: SessionRecord = {
+      id: createDomainId(),
+      userId: user.id,
+      tokenHash: hashSessionToken(token),
+      createdAt: now,
+      lastActivityAt: now,
+      expiresAt: new Date(now.getTime() + SESSION_TTL_MS),
+      revokedAt: null,
+    };
+
+    await this.repository.insertSession(session, user);
+
+    return success({ token, user: toSafeUser(user) });
+  }
+
+  async resolveSession(token: string): Promise<SafeUser | null> {
+    const session = await this.repository.getSessionByTokenHash(hashSessionToken(token));
+    const now = this.clock();
+    if (!session || session.revokedAt || session.expiresAt.getTime() <= now.getTime()) {
+      return null;
+    }
+
+    // Legacy records are compatible without a migration. An older session
+    // that has already been idle for 30 minutes must authenticate again.
+    const lastActivity = session.lastActivityAt ?? session.createdAt;
+    const idleCutoff = new Date(now.getTime() - SESSION_IDLE_TTL_MS);
+    if (!(lastActivity instanceof Date) || lastActivity.getTime() <= idleCutoff.getTime()) {
+      return null;
+    }
+
+    const user = await this.repository.getUserById(session.userId);
+    if (!user || user.lifecycle !== 'ACTIVE') return null;
+
+    // Avoid a write per HTTP request / SSE delivery. The periodic renewal
+    // checks session revocation and both deadlines atomically in storage.
+    if (now.getTime() - lastActivity.getTime() >= ACTIVITY_WRITE_INTERVAL_MS) {
+      if (!(await this.repository.touchSession(session.id, now, idleCutoff))) return null;
+    }
+    return toSafeUser(user);
+  }
+
+  async authorize(token: string, permission: Permission): Promise<Result<SafeUser, AuthError>> {
+    const user = await this.resolveSession(token);
+
+    if (!user) {
+      return failure('SESSION_INVALID');
+    }
+
+    if (user.mustChangePassword) {
+      return failure('PASSWORD_CHANGE_REQUIRED');
+    }
+
+    if (!hasPermission(user.role, permission)) {
+      return failure('FORBIDDEN');
+    }
+
+    return success(user);
+  }
+
+  async logout(token: string): Promise<void> {
+    const session = await this.repository.getSessionByTokenHash(hashSessionToken(token));
+
+    if (session && !session.revokedAt) {
+      await this.repository.revokeSession(session.id, this.clock());
+    }
+  }
+
+  async changeOwnPassword(
+    token: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<Result<SafeUser, AuthError>> {
+    const sessionUser = await this.resolveSession(token);
+    if (!sessionUser) return failure('SESSION_INVALID');
+    const user = await this.repository.getUserById(sessionUser.id);
+
+    if (
+      !user ||
+      !(await this.throttle.consume('password-change:' + user.id, this.clock(), 5, 15 * 60_000))
+    ) {
+      return failure(user ? 'RATE_LIMITED' : 'INVALID_CREDENTIALS');
+    }
+
+    if (!(await verifyPassword(currentPassword, user.passwordHash))) {
+      return failure('INVALID_CREDENTIALS');
+    }
+
+    const policy = await assessNewPassword(newPassword);
+    if (policy !== 'ACCEPTED') return failure(policy);
+
+    const updated: User = {
+      ...user,
+      passwordHash: await hashPassword(newPassword),
+      mustChangePassword: false,
+      updatedAt: nowIso(),
+    };
+
+    await this.repository.replaceUser(updated, user, user.id);
+    await this.repository.revokeUserSessions(user.id, this.clock());
+
+    return success(toSafeUser(updated));
+  }
+
+  async updateOwnProfile(token: string, displayName: string): Promise<Result<SafeUser, AuthError>> {
+    const sessionUser = await this.resolveSession(token);
+    if (!sessionUser) return failure('SESSION_INVALID');
+    const user = await this.repository.getUserById(sessionUser.id);
+    const normalizedDisplayName = displayName.trim();
+
+    if (!user) {
+      return failure('USER_NOT_FOUND');
+    }
+
+    if (!normalizedDisplayName || normalizedDisplayName.length > 120) {
+      return failure('INVALID_INPUT');
+    }
+
+    const updated: User = {
+      ...user,
+      displayName: normalizedDisplayName,
+      updatedAt: nowIso(),
+    };
+
+    await this.repository.replaceUser(updated, user, user.id);
+    return success(toSafeUser(updated));
+  }
+
+  async bootstrapSuperadmin(
+    email: string,
+    password: string,
+    displayName: string,
+  ): Promise<Result<SafeUser, AuthError>> {
+    if ((await this.repository.countUsers()) !== 0) {
+      return failure('BOOTSTRAP_CLOSED');
+    }
+
+    if (!email.trim() || email.length > 254 || !displayName.trim() || displayName.length > 120)
+      return failure('INVALID_INPUT');
+    const policy = await assessNewPassword(password);
+    if (policy !== 'ACCEPTED') return failure(policy);
+
+    const timestamp = nowIso();
+    const user: User = {
+      id: createDomainId(),
+      email: normalizeEmail(email),
+      displayName: displayName.trim(),
+      role: 'SUPERADMIN',
+      passwordHash: await hashPassword(password),
+      mustChangePassword: false,
+      lifecycle: 'ACTIVE',
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+
+    if (!this.repository.bootstrapUser || !(await this.repository.bootstrapUser(user)))
+      return failure('BOOTSTRAP_CLOSED');
+    return success(toSafeUser(user));
+  }
+
+  async createUser(
+    actor: SafeUser,
+    input: Readonly<{
+      email: string;
+      displayName: string;
+      role: Role;
+      temporaryPassword: string;
+    }>,
+  ): Promise<Result<SafeUser, AuthError>> {
+    if (!hasPermission(actor.role, 'users:manage') || !canManageRole(actor.role, input.role)) {
+      return failure('FORBIDDEN');
+    }
+
+    const email = normalizeEmail(input.email);
+    const displayName = input.displayName.trim();
+
+    if (!email || email.length > 254 || !displayName || displayName.length > 120)
+      return failure('INVALID_INPUT');
+    const policy = await assessNewPassword(input.temporaryPassword);
+    if (policy !== 'ACCEPTED') return failure(policy);
+
+    if (await this.repository.getUserByEmail(email)) {
+      return failure('USER_EXISTS');
+    }
+
+    const timestamp = nowIso();
+    const user: User = {
+      id: createDomainId(),
+      email,
+      displayName,
+      role: input.role,
+      passwordHash: await hashPassword(input.temporaryPassword),
+      mustChangePassword: true,
+      lifecycle: 'ACTIVE',
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+
+    await this.repository.insertUser(user, actor.id);
+    return success(toSafeUser(user));
+  }
+
+  async listUsers(actor: SafeUser): Promise<Result<readonly SafeUser[], AuthError>> {
+    if (!hasPermission(actor.role, 'users:manage')) {
+      return failure('FORBIDDEN');
+    }
+
+    const users = await this.repository.listUsers();
+    return success(users.map(toSafeUser));
+  }
+
+  async updateManagedUser(
+    actor: SafeUser,
+    targetId: string,
+    input: Readonly<{
+      displayName?: string;
+      role?: Role;
+      lifecycle?: LifecycleState;
+    }>,
+  ): Promise<Result<SafeUser, AuthError>> {
+    if (!hasPermission(actor.role, 'users:manage')) {
+      return failure('FORBIDDEN');
+    }
+
+    const target = await this.repository.getUserById(targetId);
+
+    if (!target) {
+      return failure('USER_NOT_FOUND');
+    }
+
+    if (!canManageRole(actor.role, target.role)) {
+      return failure('FORBIDDEN');
+    }
+
+    if (input.role && !canManageRole(actor.role, input.role)) {
+      return failure('FORBIDDEN');
+    }
+
+    if (
+      actor.id === target.id &&
+      ((input.role && input.role !== target.role) ||
+        (input.lifecycle && input.lifecycle !== target.lifecycle))
+    ) {
+      return failure('SELF_MANAGEMENT_RESTRICTED');
+    }
+
+    const nextRole = input.role ?? target.role;
+    const nextLifecycle = input.lifecycle ?? target.lifecycle;
+    const nextDisplayName = input.displayName?.trim() ?? target.displayName;
+
+    if (!nextDisplayName || nextDisplayName.length > 120) {
+      return failure('INVALID_INPUT');
+    }
+
+    if (
+      target.role === 'SUPERADMIN' &&
+      target.lifecycle === 'ACTIVE' &&
+      (nextRole !== 'SUPERADMIN' || nextLifecycle !== 'ACTIVE')
+    ) {
+      const users = await this.repository.listUsers();
+      const activeSuperadmins = users.filter(
+        (user) => user.role === 'SUPERADMIN' && user.lifecycle === 'ACTIVE',
+      ).length;
+
+      if (activeSuperadmins <= 1) {
+        return failure('LAST_SUPERADMIN');
+      }
+    }
+
+    const updated: User = {
+      ...target,
+      displayName: nextDisplayName,
+      role: nextRole,
+      lifecycle: nextLifecycle,
+      updatedAt: nowIso(),
+    };
+
+    await this.repository.replaceUser(updated, target, actor.id);
+
+    if (nextLifecycle === 'ARCHIVED' || nextRole !== target.role) {
+      await this.repository.revokeUserSessions(target.id, this.clock());
+    }
+
+    return success(toSafeUser(updated));
+  }
+}

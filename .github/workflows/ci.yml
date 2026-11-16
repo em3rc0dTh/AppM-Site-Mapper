@@ -1,0 +1,125 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - 'feat/modbus-tcp-site-mapper-sidecar'
+      - 'feat/**'
+      - 'release/**'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Install industrial SNMP wire-test dependency
+        run: npm ci --prefix infra/snmp-collector --no-audit --no-fund
+
+      - name: Industrial wire contracts and stable Modbus extensions
+        run: npm run test:industrial
+
+      - name: SNMP FIELD customer-reference Compose contract
+        run: |
+          node --check infra/snmp-collector/integration-trap-sender.mjs
+          sed 's/CHANGE_ME/ci-only-placeholder/g' infra/field/office-test.env.example > /tmp/site-mapper-snmp-field.env
+          cat >> /tmp/site-mapper-snmp-field.env <<'EOF'
+          INDUSTRIAL_INGEST_SOURCES_JSON={"EMU-TRAP-LAB-01":"ci-only-source-token-123456789012345678901234567890"}
+          INDUSTRIAL_PROFILES_JSON=[{"sourceIdentity":"EMU-TRAP-LAB-01","protocol":"SNMP","version":"lab-raw-v1","staleMs":30000,"rules":[]}]
+          SNMP_TRAP_SOURCES_JSON=[{"sourceIdentity":"EMU-TRAP-LAB-01","address":"127.0.0.1","version":"2c","community":"ci-only-trap-principal","token":"ci-only-source-token-123456789012345678901234567890"}]
+          SNMP_TRAP_TEST_COMMUNITY=ci-only-trap-principal
+          EOF
+          docker compose --env-file /tmp/site-mapper-snmp-field.env \
+            -f docker-compose.telemetry.yml \
+            -f docker-compose.office-test.yml \
+            -f docker-compose.snmp-field.yml \
+            --profile snmp --profile trap-test config --quiet
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format check
+        run: npm run format:check
+
+      - name: MVP documentation links
+        run: npm run docs:check
+
+      - name: Unit tests
+        run: npm run test:unit
+
+      - name: Mongo audit regression tests
+        run: npm run test:audit-mongo
+
+      - name: Integration tests
+        run: npm run test:integration
+
+      - name: Modbus TCP register contract and real MBAP regression
+        run: node --test infra/modbus-tcp/server.test.mjs
+
+      - name: Read-only Modbus certification script syntax
+        run: node --check scripts/operations/certify-modbus-cb01.mjs
+
+      - name: Full local golden path shell syntax
+        run: sh -n scripts/operations/full-local-golden-path.sh
+
+      - name: FIELD read-only gate syntax and config smoke
+        run: |
+          bash -n scripts/release/client-vm-preflight.sh
+          bash -n scripts/release/field-check.sh
+          cat > /tmp/site-mapper-field-check.env <<'EOF'
+          APP_ENV=production
+          APP_PERSISTENCE=mongodb
+          TELEMETRY_ENABLED=true
+          MQTT_BROKER_URL=mqtt://mosquitto:1883
+          MQTT_TOPIC_PREFIX=data/dev/
+          MQTT_TOPIC_FILTER=data/dev/#
+          SNMP_CONTROLLER_HOST=192.0.2.10
+          SNMP_CONTROLLER_PORT=161
+          SNMP_VERSION=2c
+          SNMP_COMMUNITY=ci-readonly-placeholder
+          SNMP_V2C_ACKNOWLEDGE_PLAINTEXT=true
+          MODBUS_SOURCE_UNITS_JSON={"26092403950003":1,"26092403950004":2,"26092403950002":3}
+          MODBUS_MISSING_POLICY=zero
+          TIMESCALE_DB_PASSWORD=ci-placeholder
+          TELEMETRY_STORE_TOKEN=ci-placeholder-token
+          MODBUS_BRIDGE_TOKEN=ci-placeholder-token
+          SITE_MAPPER_CREDENTIAL_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          EOF
+          bash scripts/release/field-check.sh config \
+            --env-file /tmp/site-mapper-field-check.env | tee /tmp/site-mapper-field-check.out
+          grep -q 'RESULT: READY_FOR_COMMISSIONING' /tmp/site-mapper-field-check.out
+
+      - name: Telxius consolidated launcher syntax
+        run: python3 -m py_compile scripts/telemetry/seed-01-telxius-lab.py
+
+      - name: Telemetry history SQL regression
+        run: python3 -m unittest discover -s infra/telemetry-store -p 'test_*.py'
+
+      - name: System certification
+        run: npm run test:certification
+
+      - name: Build
+        run: npm run build
+
+      - name: Production dependency audit
+        run: npm audit --omit=dev --audit-level=high

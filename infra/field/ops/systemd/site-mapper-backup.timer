@@ -1,0 +1,11 @@
+[Unit]
+Description=Site Mapper S06 daily encrypted backup (candidate schedule)
+
+[Timer]
+OnCalendar=*-*-* 02:00:00
+Persistent=true
+RandomizedDelaySec=300
+Unit=site-mapper-backup.service
+
+[Install]
+WantedBy=timers.target

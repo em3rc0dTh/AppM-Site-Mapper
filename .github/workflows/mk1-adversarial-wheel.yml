@@ -1,0 +1,63 @@
+name: MK1 adversarial wheel (isolated)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/mk1-adversarial-wheel.yml'
+      - '.github/workflows/operational-http-e2e.yml'
+      - 'scripts/ci/mk1-adversarial-http.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mk1-adversarial-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  adversarial-lanes:
+    name: ${{ matrix.lane }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        lane: [topology-cas, auth-http, industrial-replay, persistence]
+    steps:
+      - name: Checkout isolated PR tree
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install exact dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Attack surfaces under test
+        env:
+          LANE: ${{ matrix.lane }}
+        run: |
+          set -euo pipefail
+          case "$LANE" in
+            topology-cas)
+              npx vitest run tests/integration/cas-concurrency.test.ts tests/integration/cas-service.test.ts tests/integration/topology-service.test.ts tests/integration/topology-repository.test.ts tests/integration/room-boundaries.test.ts tests/integration/power-contract-integrity.test.ts
+              ;;
+            auth-http)
+              npx vitest run tests/unit/request-security.test.ts tests/unit/api-mutation-guard.test.ts tests/unit/rbac.test.ts tests/unit/password.test.ts tests/integration/auth-service.test.ts tests/integration/settings-admin.test.ts
+              ;;
+            industrial-replay)
+              npx vitest run tests/unit/snmp-adversarial-security.test.ts tests/unit/snmp-chaos-stress.test.ts tests/unit/industrial-ingress-security.test.ts tests/unit/snmp-ingest-security.test.ts tests/unit/snmp-ingest-rate-limit.test.ts tests/unit/mqtt-protocol.test.ts tests/unit/industrial-mqtt-outbox.test.ts
+              ;;
+            persistence)
+              npx vitest run tests/integration/industrial-mongo.test.ts tests/integration/legacy-migration.test.ts tests/integration/legacy-promotion.test.ts tests/unit/mongodb-production-security.test.ts tests/unit/telemetry-history-store.test.ts tests/integration/telemetry-service.test.ts
+              ;;
+            *)
+              echo "Unsupported lane" >&2; exit 2;;
+          esac
+      - name: Industrial transport fuzz and register contract
+        if: matrix.lane == 'industrial-replay'
+        run: |
+          npm ci --prefix infra/snmp-collector --no-audit --no-fund
+          node --test infra/snmp-collector/chaos.test.mjs infra/snmp-collector/adversarial-wire.test.mjs infra/modbus-tcp/server.test.mjs
+      - name: Check for high-severity production dependencies
+        run: npm audit --omit=dev --audit-level=high

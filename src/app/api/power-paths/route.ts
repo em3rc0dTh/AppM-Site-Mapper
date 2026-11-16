@@ -1,0 +1,88 @@
+import { integrityErrorResponse } from '@/shared/http/integrity-error';
+import { NextResponse } from 'next/server';
+
+import { requirePermission } from '@/modules/identity/application/current-session';
+import { PowerService } from '@/modules/power/application/power-service';
+import type { PowerFeed } from '@/modules/power/domain/entities';
+import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
+import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
+import {
+  hasOnlyKeys,
+  isBoundedString,
+  isSafeMutationRequest,
+  jsonBodyErrorStatus,
+  readBoundedJson,
+} from '@/shared/http/request-security';
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value));
+}
+
+export async function GET() {
+  const auth = await requirePermission('power:read');
+
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: 401 });
+  }
+
+  const service = new PowerService(await createTopologyRepository(), await createPowerRepository());
+  return NextResponse.json({ paths: await service.listActive() });
+}
+
+async function handlePOST(request: Request) {
+  const auth = await requirePermission('power:write');
+
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: 403 });
+  }
+
+  if (!isSafeMutationRequest(request)) {
+    return NextResponse.json({ error: 'INVALID_ORIGIN' }, { status: 403 });
+  }
+  const parsed = await readBoundedJson(request, { maxBytes: 4096, maxDepth: 3, maxNodes: 32 });
+  if (!parsed.ok) {
+    return NextResponse.json(
+      { error: parsed.error },
+      { status: jsonBodyErrorStatus(parsed.error) },
+    );
+  }
+  const body = parsed.value;
+  if (
+    !isRecord(body) ||
+    !hasOnlyKeys(body, ['sourceAccessPortId', 'targetAccessPortId', 'feed', 'label']) ||
+    !isBoundedString(body.sourceAccessPortId, 128) ||
+    !isBoundedString(body.targetAccessPortId, 128) ||
+    (body.label !== undefined && !isBoundedString(body.label, 120, { allowEmpty: true }))
+  ) {
+    return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
+  }
+
+  const feed = body.feed === 'A' || body.feed === 'B' ? (body.feed as PowerFeed) : undefined;
+
+  if (body.feed !== undefined && !feed) {
+    return NextResponse.json({ error: 'INVALID_FEED' }, { status: 400 });
+  }
+
+  const label = typeof body.label === 'string' ? body.label : undefined;
+  const service = new PowerService(await createTopologyRepository(), await createPowerRepository());
+  const result = await service.create({
+    sourceAccessPortId: body.sourceAccessPortId,
+    targetAccessPortId: body.targetAccessPortId,
+    ...(feed ? { feed } : {}),
+    ...(label ? { label } : {}),
+  });
+
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: 422 });
+  }
+
+  return NextResponse.json({ path: result.value }, { status: 201 });
+}
+
+export async function POST(request: Request) {
+  try {
+    return await handlePOST(request);
+  } catch (error) {
+    return integrityErrorResponse(error);
+  }
+}

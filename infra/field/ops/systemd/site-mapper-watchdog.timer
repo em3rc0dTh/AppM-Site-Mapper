@@ -1,0 +1,12 @@
+[Unit]
+Description=Site Mapper S06 watchdog every 60 seconds
+
+[Timer]
+OnBootSec=120s
+OnUnitInactiveSec=60s
+AccuracySec=10s
+Persistent=false
+Unit=site-mapper-watchdog.service
+
+[Install]
+WantedBy=timers.target

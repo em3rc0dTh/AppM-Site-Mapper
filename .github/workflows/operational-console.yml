@@ -1,0 +1,32 @@
+name: Operational Console acceptance
+on:
+  push:
+    branches: [main, 'feat/operational-console-mk0-mk1']
+    paths:
+      - 'infra/operational-console/**'
+      - '.github/workflows/operational-console.yml'
+      - 'docker-compose.telemetry.yml'
+  pull_request:
+    paths:
+      - 'infra/operational-console/**'
+      - '.github/workflows/operational-console.yml'
+      - 'docker-compose.telemetry.yml'
+permissions:
+  contents: read
+jobs:
+  console:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install console dependencies
+        working-directory: infra/operational-console
+        run: npm install --omit=dev --ignore-scripts --no-audit --no-fund
+      - name: Unit and HTTP acceptance
+        working-directory: infra/operational-console
+        run: npm test
+      - name: Docker image build
+        run: docker build -f infra/operational-console/Dockerfile -t site-mapper-operational-console .

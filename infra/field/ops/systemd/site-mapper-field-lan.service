@@ -1,0 +1,19 @@
+[Unit]
+Description=Site Mapper S06 FIELD LAN HTTPS proxy (Caddy only)
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+ConditionPathExists=/etc/site-mapper/s06.env
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+EnvironmentFile=/etc/site-mapper/s06.env
+WorkingDirectory=/opt/site-mapper
+ExecStart=/bin/sh /opt/site-mapper/infra/field/ops/field-lan-service.sh start
+ExecStop=/bin/sh /opt/site-mapper/infra/field/ops/field-lan-service.sh stop
+TimeoutStartSec=90
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

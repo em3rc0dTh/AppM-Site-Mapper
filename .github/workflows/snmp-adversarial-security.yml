@@ -1,0 +1,62 @@
+name: SNMP adversarial security certification
+on:
+  pull_request:
+    paths:
+      - 'src/app/api/telemetry/snmp/**'
+      - 'src/modules/telemetry/**'
+      - 'infra/snmp-collector/**'
+      - 'tests/unit/snmp-adversarial-security.test.ts'
+      - '.github/workflows/snmp-adversarial-security.yml'
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  snmp-attack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Attempt replay, identity spoofing and concurrent ingest attacks
+        run: npx vitest run tests/unit/snmp-adversarial-security.test.ts
+      - name: Collector packet normalization attack checks
+        run: node --test infra/snmp-collector/server.test.mjs
+      - name: Install real SNMPv3 transport dependency in isolated collector
+        run: npm ci --prefix infra/snmp-collector --omit=dev --no-audit --no-fund
+      - name: Probe local UDP SNMPv3 wrong credentials, OID access and SET denial
+        run: node --test infra/snmp-collector/adversarial-wire.test.mjs
+      - name: Verify no TypeScript regression
+        run: npm run typecheck
+      - name: Validate credential-protected Timescale Compose and local-only ports
+        env:
+          TIMESCALE_DB_PASSWORD: test-only-private-db-password
+          TELEMETRY_STORE_TOKEN: test-only-private-store-credential-2026
+          BOOTSTRAP_ADMIN_TOKEN: test-only-admin-bootstrap
+          MODBUS_BRIDGE_TOKEN: test-only-modbus-token
+          MODBUS_SOURCE_UNITS_JSON: '{"CI-BFDB-01":1}'
+        run: |
+          docker compose -f docker-compose.telemetry.yml --profile snmp config --quiet
+          docker compose -f docker-compose.telemetry.yml --profile snmp config --format json > /tmp/sm-compose-security.json
+          python3 - <<'PY'
+          import json
+          with open('/tmp/sm-compose-security.json', encoding='utf-8') as handle:
+              data = json.load(handle)
+          db = data['services']['timescaledb']['environment']
+          store = data['services']['telemetry-store']['environment']
+          assert db.get('POSTGRES_PASSWORD')
+          assert 'POSTGRES_HOST_AUTH_METHOD' not in db
+          assert store.get('TELEMETRY_STORE_TOKEN')
+          for name, service in data['services'].items():
+              for port in service.get('ports', []):
+                  assert port.get('host_ip') == '127.0.0.1', f'{name} publishes outside loopback'
+          print('Local Compose isolated: database password, store bearer, loopback-only')
+          PY
+      - name: Production dependency vulnerability check
+        run: npm audit --omit=dev --audit-level=high

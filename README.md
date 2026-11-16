@@ -215,3 +215,8 @@ Laboratorio MQTT/SNMP unificado: [procedimiento para principiantes](docs/operati
 
 [Critical hardening delivery, migration prerequisites and pending operator acceptance](docs/operations/mk1-critical-hardening-2026-10-26.md).
 **Estado posterior al hardening:** las PR #108 y #109 se fusionaron en `main` y sus verificaciones de GitHub Actions aprobaron las pruebas de integridad, seguridad, resiliencia y aceptación HTTP/MongoDB en entornos desechables. La nota de «sin tests» describe exclusivamente la entrega inicial de la rama de hardening, no el `main` actual. **No existe certificación de producción:** una base MongoDB anterior exige preflight/migración versionada tras backup y autorización del operador; el paquete de imágenes Docker para clientes aún no se ha construido ni ensayado.
+
+
+### UAT MK1 v2.0 — post-merge acceptance (2026-11-16)
+
+The consolidated application code baseline after PRs #223–#226 is `7a43be8161ef938dbd2da7b1586fefcd329fbd79`. [UAT v2.0 plan](docs/certification/rfp-acceptance/10-UAT-MK1-V2-PLAN.md) adds 33 post-merge scenarios; the [execution register](docs/certification/rfp-acceptance/11-UAT-MK1-V2-RESULTS.md) starts with all 33 `NOT_RUN`. The existing 18 contractual ACC cases remain separately `NOT_RUN`. CI does **not** constitute field acceptance, OWASP certification or customer-approved deployment.

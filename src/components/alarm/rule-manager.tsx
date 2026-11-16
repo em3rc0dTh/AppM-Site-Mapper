@@ -366,7 +366,7 @@ export function RuleManager({
               <article key={key}>
                 <small>{profileLabel(title)}</small>
                 <strong>
-                  {DEFAULT_DC_PROFILE[key]} {unit}
+                  {DEFAULT_DC_PROFILE[key]} {unit === 'cells' ? t('cellsUnit') : unit}
                 </strong>
               </article>
             ))}
@@ -526,6 +526,7 @@ export function RuleManager({
                   />
                 </label>
               </div>
+              <p className="sm-rule-note">{t('draftDefaultsNote')}</p>
               {code === 'LOAD_LOSS' || code === 'NO_ENERGY_INCREMENT' ? (
                 <p className="sm-rule-note">{t('expectedLoadWarning')}</p>
               ) : null}

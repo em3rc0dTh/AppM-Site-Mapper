@@ -49,6 +49,24 @@ Only the existing equipment composition route is styled. The accepted BDFB/QDF p
 
 Do not merge this presentation pass until the operator confirms the local screenshots and checks the final-scroll regions of all five views.
 
+## Equipment readability pass — operator-first, Nov 16
+
+The five Equipment composition screens (CHASSIS, SHELF, FRAME, PANEL, CIRCUIT_BREAKER) now use a shared presentation-only readability scale. This is **not** an assertion that any age group can read the UI without a manual accessibility test.
+
+| Element | Target | Manual verification |
+| --- | --- | --- |
+| Section titles | ~18 px | Chassis Interior, Shelf Structure, Frame Interior, Panel Physical, SNMP and Terminals |
+| Main Equipment identity | ~21 px | Full names remain readable without inventing abbreviations |
+| Technical body text | 14–16 px | MQTT, A/B shunts, capacity qualifiers, counts, live/stale status, location, connector labels |
+| Key Breaker and SNMP metrics | ~21–24 px | Real V/I/P/E and capacities, units and existing numeric precision remain unchanged |
+| Panel table | ~14–15 px | Header + all 24 positions; scrolling within table when resized; no shortened columns or removed alarms |
+| Interactive actions | ~14 px; min-height ~40 px | Configure/Delete, Installation, Manage Positions, terminals, workbench and original tabs |
+| Topology and Inspector | ~14 px for labels | Inspect deeply nested full Equipment names and wrapped exact location at narrow saved widths |
+
+**Local acceptance gate**: inspect each of five views at 1440×900 and 1920×1080, **125%, 150% and 200% browser zoom**, keyboard-only navigation, inspector/tree resize, last-row access and complete end-of-page content. Verify text does not overlap or disappear, including line wraps, SNMP A/B feed disclaimers, alarms, timestamp, physical terminals, administration actions and technical configuration. Check against target WCAG 2.2 AA contrast and text-resize/reflow requirements rather than assuming font size alone ensures accessibility. Report failures before approval.
+
+No presentation sample value was used to replace runtime data. The global AppManager identity, operational state logic and physical QDF-2/4/5 overview layout are unchanged.
+
 ## Manual local acceptance (after checkout)
 
 Review the feature branch using the existing local environment and seeded/connected data. Compare against the approved MK2 screenshot.

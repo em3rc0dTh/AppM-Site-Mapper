@@ -16,16 +16,16 @@ The Alarm Center and legacy `alarm_policies` remain authoritative for existing o
 
 Observed in the provided rectifier settings screenshot:
 
-| Field | V |
-|---|---:|
-| Nominal system | 48 |
-| Rectifier OVS | 59.0 |
-| Reference | 54.50 |
-| Boost | 56.50 |
+| Field                     |     V |
+| ------------------------- | ----: |
+| Nominal system            |    48 |
+| Rectifier OVS             |  59.0 |
+| Reference                 | 54.50 |
+| Boost                     | 56.50 |
 | Rectifier standby setting | 44.40 |
-| Battery disconnect | 43.00 |
-| Battery reconnect | 48.00 |
-| Battery test end | 45.50 |
+| Battery disconnect        | 43.00 |
+| Battery reconnect         | 48.00 |
+| Battery test end          | 45.50 |
 
 Battery cells: 24.
 

@@ -388,7 +388,9 @@ export function RuleManager({
                         {c} · {ruleMetric(c)}
                       </small>
                     </span>
-                    <em>{count} {t('active')}</em>
+                    <em>
+                      {count} {t('active')}
+                    </em>
                   </button>
                 );
               })}
@@ -413,9 +415,7 @@ export function RuleManager({
                     <em>{r.published ? t('published') : t('draft')}</em>
                   </button>
                 ))}
-              {records.length === 0 ? (
-                <p>{t('noRules')}</p>
-              ) : null}
+              {records.length === 0 ? <p>{t('noRules')}</p> : null}
             </div>
           </section>
           <section className="sm-rule-panel sm-rule-inspector">
@@ -432,7 +432,9 @@ export function RuleManager({
               </span>
             </div>
             <div className="sm-rule-form">
-              <label>{t('scope')}<select
+              <label>
+                {t('scope')}
+                <select
                   value={scope}
                   onChange={(e) => {
                     setScope(e.target.value as RuleScope);
@@ -473,7 +475,9 @@ export function RuleManager({
                     />
                   </label>
                 ))}
-                <label>{t('severity')}<select
+                <label>
+                  {t('severity')}
+                  <select
                     value={severity}
                     onChange={(e) => setSeverity(e.target.value as AlarmSeverity)}
                   >
@@ -482,7 +486,9 @@ export function RuleManager({
                     <option value="CRITICAL">{t('critical')}</option>
                   </select>
                 </label>
-                <label>{t('debounce')}<input
+                <label>
+                  {t('debounce')}
+                  <input
                     type="number"
                     min={1}
                     max={30}
@@ -490,7 +496,9 @@ export function RuleManager({
                     onChange={(e) => setDebounce(Number(e.target.value))}
                   />
                 </label>
-                <label>{t('recovery')}<input
+                <label>
+                  {t('recovery')}
+                  <input
                     type="number"
                     min={1}
                     max={30}
@@ -506,13 +514,17 @@ export function RuleManager({
                 <div className="sm-rule-simulator">
                   <h3>{t('loadLossSimulator')}</h3>
                   <div className="sm-rule-form-grid">
-                    <label>{t('previousCurrent')}<input
+                    <label>
+                      {t('previousCurrent')}
+                      <input
                         type="number"
                         value={simPrevious}
                         onChange={(e) => setSimPrevious(Number(e.target.value))}
                       />
                     </label>
-                    <label>{t('currentReading')}<input
+                    <label>
+                      {t('currentReading')}
+                      <input
                         type="number"
                         value={simCurrent}
                         onChange={(e) => setSimCurrent(Number(e.target.value))}
@@ -526,21 +538,25 @@ export function RuleManager({
                 </div>
               ) : null}
               <div className="sm-rule-actions">
-                <button type="button" onClick={save} disabled={!canEdit || busy}>{t('saveDraft')}</button>
+                <button type="button" onClick={save} disabled={!canEdit || busy}>
+                  {t('saveDraft')}
+                </button>
                 <button
                   type="button"
                   onClick={() => change('PUBLISH')}
                   disabled={!canEdit || busy || !selected}
-                >{t('publish')}</button>
+                >
+                  {t('publish')}
+                </button>
                 <button
                   type="button"
                   onClick={() => change('DISABLE')}
                   disabled={!canEdit || busy || !selected || !selected.published}
-                >{t('disable')}</button>
+                >
+                  {t('disable')}
+                </button>
               </div>
-              {!canEdit ? (
-                <p className="sm-rule-note">{t('readOnlyNote')}</p>
-              ) : null}
+              {!canEdit ? <p className="sm-rule-note">{t('readOnlyNote')}</p> : null}
               {selected?.published ? (
                 <p className="sm-rule-note">{t('publishedSnapshotNote')}</p>
               ) : null}
@@ -582,7 +598,9 @@ export function RuleManager({
               value={previewId}
               onChange={(e) => setPreviewId(e.target.value)}
             />
-            <button type="button" onClick={() => void loadEffective()} disabled={!previewId}>{t('inspectBreaker')}</button>
+            <button type="button" onClick={() => void loadEffective()} disabled={!previewId}>
+              {t('inspectBreaker')}
+            </button>
           </div>
           {preview ? (
             <div className="sm-rule-table-wrap">

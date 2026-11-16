@@ -126,9 +126,7 @@ export function AlarmCenter() {
           {snapshot.correlationGroups?.length ? (
             <section className="sm-alarm-correlation-panel" aria-label={tr('relatedConditions')}>
               <h2>{tr('relatedConditions')}</h2>
-              <p>
-                {tr('relatedDesc')}
-              </p>
+              <p>{tr('relatedDesc')}</p>
               <div className="sm-alarm-correlation-list">
                 {snapshot.correlationGroups.map((group) => (
                   <article key={group.id}>

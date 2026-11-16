@@ -686,8 +686,7 @@
   }
 }
 
-
-/* MK2 alarm target quick search */
+/* MK2 alarm target searchable combobox */
 .sm-rule-target-picker {
   display: grid;
   gap: 6px;
@@ -695,6 +694,46 @@
 .sm-rule-target-picker > label {
   display: block;
 }
-.sm-rule-target-picker input[type='search'] {
+.sm-rule-target-combobox {
+  position: relative;
+}
+.sm-rule-target-combobox input[type='search'] {
+  width: 100%;
   min-width: 0;
+}
+.sm-rule-target-results {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 4px;
+  border: 1px solid #b9c9d5;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(15, 35, 55, 0.12);
+}
+.sm-rule-target-results button {
+  display: block;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #173047;
+  text-align: left;
+  cursor: pointer;
+}
+.sm-rule-target-results button:hover,
+.sm-rule-target-results button[aria-selected='true'] {
+  background: #edf8f6;
+  color: #0b625f;
+}
+.sm-rule-target-empty {
+  display: block;
+  padding: 10px;
+  color: #60758a;
+  font-size: 12px;
 }

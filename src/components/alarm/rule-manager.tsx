@@ -112,6 +112,7 @@ export function RuleManager({
     initialBreakerId ? targetKey('BREAKER', initialBreakerId) : targetKey('GLOBAL', null),
   );
   const [targetSearch, setTargetSearch] = useState('');
+  const [targetPickerOpen, setTargetPickerOpen] = useState(false);
   const [severity, setSeverity] = useState<AlarmSeverity>('WARNING');
   const [debounce, setDebounce] = useState(3);
   const [recovery, setRecovery] = useState(2);
@@ -143,15 +144,20 @@ export function RuleManager({
         targetLabel(target).toLocaleLowerCase().includes(normalizedTargetSearch),
       )
     : targets;
-  const visibleTargets =
-    selectedTargetRecord &&
-    !filteredTargets.some(
-      (target) =>
-        targetKey(target.scope, target.id) ===
-        targetKey(selectedTargetRecord.scope, selectedTargetRecord.id),
-    )
-      ? [selectedTargetRecord, ...filteredTargets]
-      : filteredTargets;
+  const visibleTargets = filteredTargets.slice(0, 30);
+  const targetInputValue = targetPickerOpen
+    ? targetSearch
+    : selectedTargetRecord
+      ? targetLabel(selectedTargetRecord)
+      : targetSearch;
+
+  const chooseTarget = (target: AlarmTarget) => {
+    setSelectedTarget(targetKey(target.scope, target.id));
+    setSelectedId(null);
+    setTargetSearch('');
+    setTargetPickerOpen(false);
+    setError('');
+  };
 
   const reload = useCallback(async () => {
     const [rulesResponse, targetsResponse] = await Promise.all([
@@ -200,6 +206,7 @@ export function RuleManager({
     setCode(draft.code);
     setSelectedTarget(targetKey(draft.scope, draft.scopeId));
     setTargetSearch('');
+    setTargetPickerOpen(false);
     setSeverity(draft.severity);
     setDebounce(draft.debounceSamples);
     setRecovery(draft.recoverySamples);
@@ -215,6 +222,7 @@ export function RuleManager({
       initialBreakerId ? targetKey('BREAKER', initialBreakerId) : targetKey('GLOBAL', null),
     );
     setTargetSearch('');
+    setTargetPickerOpen(false);
     setSeverity('WARNING');
     setDebounce(3);
     setRecovery(2);
@@ -345,39 +353,64 @@ export function RuleManager({
         <div className="sm-rule-simple-grid">
           <div className="sm-rule-target-picker">
             <label htmlFor="alarm-target-search">{t('appliesTo')}</label>
-            <input
-              id="alarm-target-search"
-              type="search"
-              value={targetSearch}
-              placeholder={t('targetSearchPlaceholder')}
-              autoComplete="off"
-              onChange={(event) => setTargetSearch(event.target.value)}
-            />
-            <select
-              aria-label={t('appliesTo')}
-              value={selectedTarget}
-              disabled={loading}
-              onChange={(event) => {
-                setSelectedTarget(event.target.value);
-                setSelectedId(null);
-                setTargetSearch('');
-              }}
-            >
-              {visibleTargets.length ? (
-                visibleTargets.map((target) => (
-                  <option
-                    key={targetKey(target.scope, target.id)}
-                    value={targetKey(target.scope, target.id)}
-                  >
-                    {targetLabel(target)}
-                  </option>
-                ))
-              ) : (
-                <option value="" disabled>
-                  {t('noTargetMatches')}
-                </option>
-              )}
-            </select>
+            <div className="sm-rule-target-combobox">
+              <input
+                id="alarm-target-search"
+                type="search"
+                role="combobox"
+                aria-expanded={targetPickerOpen}
+                aria-controls="alarm-target-results"
+                aria-autocomplete="list"
+                value={targetInputValue}
+                placeholder={t('targetSearchPlaceholder')}
+                autoComplete="off"
+                disabled={loading}
+                onFocus={() => {
+                  setTargetPickerOpen(true);
+                  setTargetSearch('');
+                }}
+                onChange={(event) => {
+                  setTargetSearch(event.target.value);
+                  setTargetPickerOpen(true);
+                }}
+                onBlur={() => {
+                  setTargetPickerOpen(false);
+                  setTargetSearch('');
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Escape') {
+                    setTargetPickerOpen(false);
+                    setTargetSearch('');
+                  }
+                  if (event.key === 'Enter' && targetPickerOpen && visibleTargets[0]) {
+                    event.preventDefault();
+                    chooseTarget(visibleTargets[0]);
+                  }
+                }}
+              />
+              {targetPickerOpen ? (
+                <div id="alarm-target-results" className="sm-rule-target-results" role="listbox">
+                  {visibleTargets.length ? (
+                    visibleTargets.map((target) => (
+                      <button
+                        key={targetKey(target.scope, target.id)}
+                        type="button"
+                        role="option"
+                        aria-selected={targetKey(target.scope, target.id) === selectedTarget}
+                        onMouseDown={(event) => {
+                          event.preventDefault();
+                          chooseTarget(target);
+                        }}
+                      >
+                        {targetLabel(target)}
+                      </button>
+                    ))
+                  ) : (
+                    <span className="sm-rule-target-empty">{t('noTargetMatches')}</span>
+                  )}
+                </div>
+              ) : null}
+            </div>
           </div>
 
           <label>

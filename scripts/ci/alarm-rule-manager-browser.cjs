@@ -29,19 +29,25 @@ async function main() {
     assert.equal(response?.status(), 200, 'Rule Manager route failed');
     await page.locator('.sm-rule-manager').waitFor({ state: 'visible', timeout: 20_000 });
     await page.locator('.sm-rule-simple-card').waitFor({ state: 'visible', timeout: 20_000 });
-    const selects = page.locator('.sm-rule-simple-grid select');
-    await selects.first().waitFor({ timeout: 20_000 });
-    const targetOptions = await selects.nth(0).locator('option').count();
-    const ruleOptions = await selects.nth(1).locator('option').count();
-    assert.ok(targetOptions >= 1, 'Readable alarm target selector did not render');
+    const ruleSelect = page.locator('.sm-rule-simple-grid select');
+    await ruleSelect.waitFor({ timeout: 20_000 });
+    const ruleOptions = await ruleSelect.locator('option').count();
     assert.equal(ruleOptions, 11, 'Simple alarm editor did not render all rule definitions');
     const targetSearch = page.locator('#alarm-target-search');
+    await targetSearch.focus();
+    await page.locator('.sm-rule-target-results').waitFor({ timeout: 20_000 });
+    const initialTargetOptions = await page.locator('.sm-rule-target-results button').count();
+    assert.ok(initialTargetOptions >= 1, 'Readable alarm target combobox did not render');
     await targetSearch.fill('__no_target_match__');
-    assert.equal(await selects.nth(0).locator('option').count(), 1);
-    assert.equal(await selects.nth(0).locator('option').first().isDisabled(), true);
+    assert.equal(await page.locator('.sm-rule-target-results button').count(), 0);
+    await page.locator('.sm-rule-target-empty').waitFor();
     await targetSearch.fill('');
-    assert.equal(await selects.nth(0).locator('option').count(), targetOptions);
-    checks.push({ test: 'Alarm target quick search filters without exposing internal IDs', result: 'PASS' });
+    assert.ok((await page.locator('.sm-rule-target-results button').count()) >= 1);
+    checks.push({
+      test: 'Alarm target combobox filters in one control without exposing internal IDs',
+      result: 'PASS',
+      initialTargetOptions,
+    });
     assert.equal(
       await page.locator('input[placeholder*="topolog"]').count(),
       0,
@@ -55,7 +61,7 @@ async function main() {
     checks.push({
       test: 'Simple Rule Manager renders readable target and rule selectors without canonical IDs',
       result: 'PASS',
-      targetOptions,
+      targetOptions: initialTargetOptions,
       ruleOptions,
     });
     await page.locator('.sm-rule-advanced summary').waitFor();

@@ -271,11 +271,7 @@ export function RuleManager({
     });
   const change = (action: 'PUBLISH' | 'DISABLE') => {
     if (!selected) return;
-    if (
-      action === 'PUBLISH' &&
-      !window.confirm(t('publishConfirm'))
-    )
-      return;
+    if (action === 'PUBLISH' && !window.confirm(t('publishConfirm'))) return;
     void post({
       action,
       id: selected.id,

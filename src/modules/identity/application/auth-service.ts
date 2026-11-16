@@ -195,7 +195,19 @@ export class AuthService {
     if (!sessionUser) return failure('SESSION_INVALID');
     const user = await this.repository.getUserById(sessionUser.id);
 
-    if (!user || !(await verifyPassword(currentPassword, user.passwordHash))) {
+    if (
+      !user ||
+      !(await this.throttle.consume(
+        'password-change:' + user.id,
+        this.clock(),
+        5,
+        15 * 60_000,
+      ))
+    ) {
+      return failure(user ? 'RATE_LIMITED' : 'INVALID_CREDENTIALS');
+    }
+
+    if (!(await verifyPassword(currentPassword, user.passwordHash))) {
       return failure('INVALID_CREDENTIALS');
     }
 

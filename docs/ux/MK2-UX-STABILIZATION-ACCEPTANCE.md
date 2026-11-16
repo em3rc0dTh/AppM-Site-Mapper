@@ -161,6 +161,18 @@ Manual acceptance: verify Room at 100%, 125%, 150%, and with user-resized tree/I
 
 **Static review only.** No build, tests, merge or deployment in this pass.
 
+## Room header parity with frontal elevation — Nov 16
+
+The operator's Room and QDF2 frontal screenshots show that the shared AppManager SiteMapper Mk2 header is correct on frontal elevation, while Room was clipping the text/cube/Home due to accumulating blueprint-only fixed widths and brand font overrides. Room also rendered a **second APPMANAGER** label above `TOPOLOGÍA GLOBAL`.
+
+- **One identity only:** the global AppShell brand remains the primary link to Workspace. The Room's TopologyContextTree renders **no secondary brand header**, because Room already uses `showHomeLink={false}`. The actual Topology heading, navigation tree, selected item and collapse toggle remain intact. Other views preserve their original navigation header.
+- **Exact shared brand component:** Room continues using `SiteMapperBrand variant="compact"` from AppShell. Removed blueprint-only width, typography and icon-size overrides from MK2 CSS and the historical mini-font blueprint overrides in `site-mapper-brand.css`; the established global MK2 layout (AppManager, SiteMapper Mk2, cube, Home) controls all dimensions again, including responsive breakpoints.
+- No changes to the room plan or its pan/zoom controls, cluster/QDF geometry, SVG axes, inspector, permissions, telemetry or persistence.
+
+Acceptance: compare Room and QDF2 front elevation at equal browser zoom and viewport. Verify complete brand text is visible, cube/Home do not overlap or clip, the Home link works, no second APPMANAGER appears in the Room left pane, the Topology collapse button remains operable, and narrow-width behavior works at 100%/125%/150% zoom.
+
+**Static code/CSS review only:** visual browser acceptance and build remain pending. No deploy or merge.
+
 ## Manual local acceptance (after checkout)
 
 Review the feature branch using the existing local environment and seeded/connected data. Compare against the approved MK2 screenshot.

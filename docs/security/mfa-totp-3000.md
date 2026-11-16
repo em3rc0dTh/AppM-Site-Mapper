@@ -41,3 +41,30 @@ atomically in MongoDB or memory and cannot be reused. An operator may use a rema
 recovery code at login or as the second factor alongside their password to disable
 MFA and re-enroll. Protect printed/offline copies; losing all codes and the authenticator
 requires a separately approved administrator recovery process.
+
+
+## Offline QR enrollment (MK2)
+
+- The Security page renders the `otpauth://` URI as a **client-side SVG QR** via
+  the pinned, bundled `qrcode.react@4.2.0` package. It requires no Internet,
+  public DNS, CDN, Google Charts, QR image API, or external runtime request.
+- The QR embeds the same TOTP provisioning URI returned by the existing
+  authenticated `POST /api/auth/mfa` enrollment flow; it does **not** change
+  how the backend creates, encrypts, or validates TOTP secrets.
+- The long provisioning URI is not displayed as text or copied into external
+  services. The manual secret remains available behind an explicit disclosure
+  for users who cannot scan a QR. Both reveal enrollment credentials and must
+  be kept out of screenshots, logs, tickets, and support conversations.
+- The QR uses an opaque white background, a four-module quiet zone, and SVG
+  paths with no embedded remote image. The client bundle is installed during
+  build/package preparation, **not** fetched from the Internet at runtime.
+- Use an offline-capable TOTP authenticator or a pre-provisioned compatible
+  hardware token. Keep client and server clocks reasonably synchronized with
+  an approved local NTP source. No Internet is needed for subsequent codes.
+- MFA enrollment is per-user; leave `SITE_MAPPER_MFA_REQUIRED=false` until
+  all required accounts are enrolled and a recovery procedure is approved.
+- Acceptance: activate MFA by scanning the QR with network access disabled;
+  confirm the six-digit code; store recovery codes; log out and sign in using
+  the next unused code. Repeat using the manual fallback without exposing
+  credentials.
+

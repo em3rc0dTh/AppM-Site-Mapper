@@ -139,12 +139,16 @@ export function RuleManager({
   const selected = records.find((record) => record.id === selectedId) ?? null;
   const normalizedTargetSearch = targetSearch.trim().toLocaleLowerCase();
   const filteredTargets = normalizedTargetSearch
-    ? targets.filter((target) => targetLabel(target).toLocaleLowerCase().includes(normalizedTargetSearch))
+    ? targets.filter((target) =>
+        targetLabel(target).toLocaleLowerCase().includes(normalizedTargetSearch),
+      )
     : targets;
   const visibleTargets =
     selectedTargetRecord &&
     !filteredTargets.some(
-      (target) => targetKey(target.scope, target.id) === targetKey(selectedTargetRecord.scope, selectedTargetRecord.id),
+      (target) =>
+        targetKey(target.scope, target.id) ===
+        targetKey(selectedTargetRecord.scope, selectedTargetRecord.id),
     )
       ? [selectedTargetRecord, ...filteredTargets]
       : filteredTargets;

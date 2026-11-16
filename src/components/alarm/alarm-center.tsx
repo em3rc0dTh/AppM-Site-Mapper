@@ -122,6 +122,24 @@ export function AlarmCenter() {
             </article>
           </div>
 
+          {snapshot.correlationGroups?.length ? (
+            <section className="sm-alarm-correlation-panel" aria-label="Related breaker conditions">
+              <h2>Related breaker conditions</h2>
+              <p>Conditions opened within 10 minutes on the same breaker. Correlation does not prove root cause.</p>
+              <div className="sm-alarm-correlation-list">
+                {snapshot.correlationGroups.map((group) => (
+                  <article key={group.id}>
+                    <strong>{group.primaryCode}</strong>
+                    <span>{group.occurrenceIds.length} active conditions · {group.highestSeverity}</span>
+                    <Link href={'/alarms/' + encodeURIComponent(group.occurrenceIds[0]!)}>
+                      Inspect evidence
+                    </Link>
+                  </article>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
           <nav className="sm-alarm-view-tabs sm-alarm-main-tabs" aria-label={t('viewLabel')}>
             {(['ACTIVE', 'RESOLVED', 'HISTORY'] as const).map((tab) => (
               <button

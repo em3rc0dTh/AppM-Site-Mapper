@@ -1072,8 +1072,8 @@
     "category": "Category",
     "positionsPlaceholder": "Number of physical positions",
     "create": "Create and install",
-    "slotsCount": "{count} slots",
-    "childrenCount": "{count} children",
+    "slotsCount": "{count, plural, one {# position} other {# positions}}",
+    "childrenCount": "{count, plural, one {# child Equipment} other {# child Equipment items}}",
     "rawMqtt": "Raw MQTT group such as 0_2. Leave empty if not commissioned.",
     "pointPrefixHelp": "Point 1 becomes prefix_1. This records the address only; it does not reassign existing circuit bindings or prove their physical wiring.",
     "instanceHelp": "Choose child slots and presentation for this instance",
@@ -1092,7 +1092,11 @@
     "mk1_aliases": "Aliases",
     "mk1_one_per_line_or_comma_separated": "One per line or comma-separated",
     "mk1_manufacturer": "Manufacturer",
-    "mk1_model": "Model"
+    "mk1_model": "Model",
+    "statusActive": "Active",
+    "statusArchived": "Archived",
+    "technicalInfo": "Technical configuration details",
+    "telemetryPrefix": "Telemetry identifier"
   },
   "accessPorts": {
     "title": "ACCESS PORTS",

@@ -106,7 +106,7 @@ jobs:
 
   http-browser:
     name: Authenticated HTTP and Chromium visual acceptance
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 22
     env:
       APP_ENV: development

@@ -155,4 +155,19 @@ describe('AuthService', () => {
     now = new Date('2026-11-16T16:06:00.000Z');
     expect(await service.resolveSession(second.value.token)).toBeNull();
   });
+  it('rejects excessively long credentials before expensive authentication work', async () => {
+    const repo = new MemoryIdentityRepository();
+    const limiter = new MemoryAuthThrottle();
+    const app = new AuthService(repo, limiter);
+    await expect(app.authenticate('x'.repeat(255), 'strong password 2026', 'oversized')).resolves.toEqual({
+      ok: false,
+      error: 'INVALID_INPUT',
+    });
+    await expect(app.authenticate('admin@example.com', 'x'.repeat(1025), 'oversized')).resolves.toEqual({
+      ok: false,
+      error: 'INVALID_INPUT',
+    });
+    await expect(app.bootstrapSuperadmin('admin@example.com', 'strong password 2026', 'a'.repeat(121)))
+      .resolves.toEqual({ ok: false, error: 'INVALID_INPUT' });
+  });
 });

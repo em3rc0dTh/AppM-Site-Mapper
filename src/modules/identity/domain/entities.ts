@@ -14,7 +14,7 @@ export interface User extends DomainEntity {
   readonly mfaPendingSecretCiphertext?: string;
   readonly mfaPendingStartedAt?: string;
   readonly mfaLastUsedStep?: number;
-  readonly mfaRecoveryHashes?: readonly string[];
+  readonly mfaRecoveryHashes?: string[];
 }
 
 export interface SafeUser {

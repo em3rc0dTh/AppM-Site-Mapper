@@ -133,6 +133,20 @@ The operator marked **top-left identity + Inicio too small** (red) and **plan ax
 - At 100%, 125%, and 150% browser zoom, and after reducing/expanding the resizable Canvas, verify 2-digit column labels (e.g. 21–44) do not collide, the row coordinate labels remain in the plot margin, and the brand/Home/Inicio controls remain fully readable and clickable. At very narrow pane widths, columns may show every second label, not tiny text.
 - Inspect the real browser. Static review does not demonstrate accessibility, and no build/test/deploy was executed in this pass.
 
+## Room final hierarchy refinement — centred cluster/QDF labels and action consolidation
+
+The operator's follow-up screenshot confirmed that axis coordinate tick labels are now acceptable, but physical cluster and QDF labels are oversized and sit over the dashed rectangle borders; the SiteMapper Mk2 header is cramped and the view-only **Editar sala** toolbar consumes a separate empty row.
+
+Presentation-only corrections:
+- Cluster names target **17 rendered CSS px** (fitted to actual strip width/height) and are vertically centred at the persisted polygon centroid. The previous `center.y - 250` SVG-unit offset has been removed. Original cluster coordinates are unchanged.
+- QDF/rack identifiers target **14 rendered CSS px** with a cap derived from real rack width and depth. Full short names QDF2/QDF4/QDF5 are maintained; original rack coordinates and dimensions remain unchanged.
+- Existing **13px** grid-axis font conversion, ticks and reference grid are left untouched.
+- Room topbar has enough space for the full SiteMapper Mk2 brand without squashing it against the cube or the existing Home control; global non-Room brand styles remain untouched.
+- The ordinary view-only Edit Room button now appears beside the existing **Plano de sala** title and mode badge. Editing keeps the full Undo/Redo/Cancel/Save header. An empty/unmapped room still shows an Edit Room entry point because no BlueprintCanvas exists until a room boundary has been drawn.
+- Access to Edit Room remains conditional on `canWrite`; no permission, persistence, coordinate or data changes.
+
+Acceptance to check manually at desktop 100%, 125% and 150% browser zoom: no label overlap with surveyed borders, QDF names stay fully inside recorded rack rectangles, grid tick size remains stable, header text does not clip, view mode gains vertical space with no blank Edit Room row, read-only users cannot enter edit mode, and empty-room editing still works. **Static review passed; no production build/tests/deployment executed.**
+
 ## Manual local acceptance (after checkout)
 
 Review the feature branch using the existing local environment and seeded/connected data. Compare against the approved MK2 screenshot.

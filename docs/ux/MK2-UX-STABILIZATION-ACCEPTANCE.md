@@ -51,6 +51,10 @@ Review the feature branch using the existing local environment and seeded/connec
 | Physical/Operation | Both original tabs remain functional; physical view remains read-only and Operation retains telemetry and alarms |
 | Circuit scrolling | Entire selected panel breaker list is reachable; no footer controls cover last rows; no silent filtering or truncation. The inventory disclaimer remains accessible |
 | Panel hierarchy | Shelf and Frame labels visible, A3/B3/A2/B2 panels retain exact positions, occupancy, selected state and composition links; no invented inventory |
+| Physical card ergonomics | A3/B3/A2/B2 cards fit their actual identifiers, occupancy and composition action with minimal idle height; do not crop long names or alarm badges |
+| Inspector width | Existing 320px default, saved per-user widths and drag handles remain unchanged; resize inspector to its supported minimum and confirm full location text remains legible |
+| Action strip | Create Equipment stays available in its own non-overlapping bottom strip; Reset layout remains available at right; last breaker row and inventory disclaimer can be scrolled fully into view |
+| Editor disclosure | Opening Create Equipment keeps the original form usable, does not clip its fields or steal keyboard focus unexpectedly |
 | QDF-4 / QDF-2 | Light physical refinements now staged for *local* acceptance, not merged; Home status-card styling stays unchanged |
 | Scroll | Global top bar stays visible; cards do not overlap |
 | 1920×1080 and 1440×900 | No unintended clipping of header actions or QDF values |

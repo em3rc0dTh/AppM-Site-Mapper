@@ -192,7 +192,11 @@ describe('AuthService', () => {
       ).resolves.toEqual({ ok: false, error: 'INVALID_CREDENTIALS' });
     }
     await expect(
-      service.changeOwnPassword(login.value.token, 'secure unchanged password', 'new safe password 2026'),
+      service.changeOwnPassword(
+        login.value.token,
+        'secure unchanged password',
+        'new safe password 2026',
+      ),
     ).resolves.toEqual({ ok: false, error: 'RATE_LIMITED' });
   });
 });

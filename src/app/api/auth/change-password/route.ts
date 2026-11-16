@@ -53,8 +53,8 @@ async function handlePOST(request: Request) {
         : result.error === 'RATE_LIMITED'
           ? 429
           : result.error === 'PASSWORD_COMPROMISED'
-          ? 422
-          : 400;
+            ? 422
+            : 400;
     return NextResponse.json({ error: result.error }, { status });
   }
 

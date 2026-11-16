@@ -197,12 +197,7 @@ export class AuthService {
 
     if (
       !user ||
-      !(await this.throttle.consume(
-        'password-change:' + user.id,
-        this.clock(),
-        5,
-        15 * 60_000,
-      ))
+      !(await this.throttle.consume('password-change:' + user.id, this.clock(), 5, 15 * 60_000))
     ) {
       return failure(user ? 'RATE_LIMITED' : 'INVALID_CREDENTIALS');
     }

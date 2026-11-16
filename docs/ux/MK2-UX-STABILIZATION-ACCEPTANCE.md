@@ -123,6 +123,16 @@ Applied presentation-only changes on the same Mk2 light styling:
 
 No persisted topology, geometry, API, telemetry data, layout draft, capability or RBAC changes. No test/build/deployment performed in this typography pass.
 
+## Room brand / grid axis rebalance — Nov 16 (follow-up)
+
+The operator marked **top-left identity + Inicio too small** (red) and **plan axis ticks too large** (orange). These are distinct sizing systems and must be validated separately:
+
+- The Room AppShell brand is now sized in the existing 67px topbar: AppManager **18px**, SiteMapper **15px**, Mk2 **13px**, cube **30px**, and Home control **42×42px** with a **22px** icon. The Room Topology header's **Inicio** link is **14px**. Visual brand/header changes are scoped to `app-shell--blueprint`, not Network/Equipment/login.
+- The Room's SVG ticks use `getBoundingClientRect()` and `ResizeObserver` to calculate actual displayed SVG user-unit scale, including the `viewBox` and aspect-ratio letterboxing. They target **13 rendered CSS pixels** regardless of physical survey dimensions or in-canvas zoom. Narrow canvases show spaced-out column captions to avoid overlap; the **600×600mm grid and original coordinates remain unchanged**.
+- Coordinate labels are secondary-weight, lower contrast than cluster names. Room physical clusters and QDF identifiers preserve their existing visual hierarchy.
+- At 100%, 125%, and 150% browser zoom, and after reducing/expanding the resizable Canvas, verify 2-digit column labels (e.g. 21–44) do not collide, the row coordinate labels remain in the plot margin, and the brand/Home/Inicio controls remain fully readable and clickable. At very narrow pane widths, columns may show every second label, not tiny text.
+- Inspect the real browser. Static review does not demonstrate accessibility, and no build/test/deploy was executed in this pass.
+
 ## Manual local acceptance (after checkout)
 
 Review the feature branch using the existing local environment and seeded/connected data. Compare against the approved MK2 screenshot.

@@ -1,5 +1,7 @@
 .sm-rule-page{width:min(1480px,calc(100% - 36px));margin:0 auto;padding:24px 0 80px;color:#dfe8f2}
 .sm-rule-manager{display:grid;gap:20px}
+.sm-breaker-limit-actions{display:flex;gap:8px;align-items:center}
+.sm-breaker-limit-actions a{font-size:12px;color:#8adaec;text-decoration:none;border:1px solid #4c8292;border-radius:7px;padding:7px 9px}
 .sm-rule-head{display:flex;justify-content:space-between;align-items:start;gap:20px;border-bottom:1px solid #293a4c;padding-bottom:16px}
 .sm-rule-head h1{margin:6px 0;font-size:29px;letter-spacing:-.035em}
 .sm-rule-head small,.sm-rule-panel small,.sm-rule-kpis small{color:#91a6bc;font-size:11px;letter-spacing:.06em}

@@ -81,6 +81,18 @@ export function RuleManager({canEdit}:{canEdit:boolean}) {
     void reload().catch((e)=>{if(active)setError(String(e));}).finally(()=>{if(active)setLoading(false);});
     return ()=>{active=false;};
   },[reload]);
+  useEffect(()=>{
+    const breakerId = new URLSearchParams(window.location.search).get('breakerId');
+    if (!breakerId || breakerId.length > 128) return;
+    setScope('BREAKER');setScopeId(breakerId);setPreviewId(breakerId);setView('ASSIGNMENTS');
+    void fetch('/api/alarms/rules/effective?breakerId=' + encodeURIComponent(breakerId),{cache:'no-store'})
+      .then(async (r)=>{
+        if(!r.ok) throw new Error('Breaker policy unavailable');
+        setPreview(await r.json() as {rules:readonly {code:string;source:string;scope:string}[]});
+      })
+      .catch((e)=>setError(String(e)));
+  },[]);
+
   const selected = records.find((r)=>r.id===selectedId)||null;
   const filtered = MANAGED_RULE_CODES.filter((c)=>metric==='ALL'||ruleMetric(c)===metric);
   const published = records.filter((r)=>Boolean(r.published));

@@ -12,10 +12,7 @@ export default async function WorkbenchLayout({ children }: Readonly<{ children:
   return (
     <div className="sm-workbench-shell">
       <header className="sm-workbench-brandbar">
-        <SiteMapperProductHeader
-          tagline={t('tagline')}
-          ariaLabel={t('goHome')}
-        />
+        <SiteMapperProductHeader tagline={t('tagline')} ariaLabel={t('goHome')} />
       </header>
       {children}
     </div>

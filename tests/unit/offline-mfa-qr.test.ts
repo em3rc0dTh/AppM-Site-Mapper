@@ -23,7 +23,7 @@ describe('offline MFA enrollment QR', () => {
     expect(markup).toContain('<svg');
     expect(markup).toContain('<path');
     expect(markup).toContain('<title>Authenticator setup</title>');
-    expect(markup).not.toMatch(/<image|<img|<script|https?:\/\//i);
+    expect(markup).not.toMatch(/<image|<img|<script|\s(?:href|src|xlink:href)=/i);
     expect(markup).not.toContain(provisioningUri);
   });
 });

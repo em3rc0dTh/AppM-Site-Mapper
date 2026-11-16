@@ -79,7 +79,7 @@ function BreakerMeasurementStrip({ reading }: Readonly<{ reading: CompositionBre
           {reading.receivedAt && <p>{t('rawTimestamp')} {reading.receivedAt}</p>}
           {reading.diagnostic && <p>{reading.diagnostic}</p>}
         </details>
-      )
+      )}
     </div>
   );
 }

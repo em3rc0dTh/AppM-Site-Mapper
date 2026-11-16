@@ -32,6 +32,9 @@ export function buildBoundBfdbEquipmentPatches(
   message: NormalizedTelemetryMessage,
   bindings: readonly TelemetryBinding[],
   eligibleBreakerIds: ReadonlySet<string>,
+  // Runtime supplies the canonical physical location; never trust a stale
+  // sourcePointId as evidence that a breaker belongs to that meter.
+  physicalLocations?: ReadonlyMap<string, { readonly panelLabel: string; readonly position: number }>,
 ): readonly TelemetrySample[] {
   if (message.protocol !== 'BFDB') return [];
 
@@ -56,6 +59,15 @@ export function buildBoundBfdbEquipmentPatches(
           Object.hasOwn(METRICS, binding.metric.toUpperCase()),
       );
       if (!links.length) continue;
+
+      if (physicalLocations) {
+        const assigned = physicalLocations.get(links[0]!.targetId);
+        if (
+          !assigned ||
+          assigned.panelLabel !== point.panelLabel ||
+          assigned.position !== point.panelPosition
+        ) continue;
+      }
 
       // A channel-qualified point may not be attributed to two breakers or
       // duplicate semantic metrics.

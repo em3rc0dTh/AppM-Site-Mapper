@@ -100,6 +100,13 @@ await check('Rule Manager API exposes 48V profile and V/A/P/E rule codes', async
     assert.ok(data.managedCodes.includes(code), 'Missing rule code ' + code);
   }
 });
+await check('Rule Manager exposes readable targets without requiring operator IDs', async () => {
+  const data = await (
+    await request('/api/alarms/rules/targets', { headers: { cookie } })
+  ).json();
+  assert.ok(Array.isArray(data.targets));
+  assert.ok(data.targets.some((target) => target.scope === 'GLOBAL' && target.id === null));
+});
 const draft = {
   code: 'LOW_CURRENT',
   scope: 'GLOBAL',

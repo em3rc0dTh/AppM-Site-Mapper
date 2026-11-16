@@ -153,17 +153,32 @@ export function RuleManager({
 
   useEffect(() => {
     let active = true;
-    void reload()
+    const controller = new AbortController();
+    void Promise.all([
+      fetch('/api/alarms/rules', { cache: 'no-store', signal: controller.signal }),
+      fetch('/api/alarms/rules/targets', { cache: 'no-store', signal: controller.signal }),
+    ])
+      .then(async ([rulesResponse, targetsResponse]) => {
+        if (!rulesResponse.ok || !targetsResponse.ok) throw new Error(t('loadManagerError'));
+        const rulesBody = (await rulesResponse.json()) as { records: ManagedRuleRecord[] };
+        const targetsBody = (await targetsResponse.json()) as { targets: AlarmTarget[] };
+        if (!active) return;
+        setRecords(rulesBody.records);
+        setTargets(targetsBody.targets);
+      })
       .catch((loadError) => {
-        if (active) setError(loadError instanceof Error ? loadError.message : t('unexpectedError'));
+        if (active && !controller.signal.aborted) {
+          setError(loadError instanceof Error ? loadError.message : t('unexpectedError'));
+        }
       })
       .finally(() => {
         if (active) setLoading(false);
       });
     return () => {
       active = false;
+      controller.abort();
     };
-  }, [reload, t]);
+  }, [t]);
 
   const selectRecord = (record: ManagedRuleRecord) => {
     const draft = record.draft;

@@ -568,3 +568,120 @@
 .sm-alarm-correlation-list a {
   color: #0b625f;
 }
+
+/* MK2 simple alarm-rule editor */
+.sm-rule-simple {
+  width: min(980px, 100%);
+  margin: 0 auto;
+  gap: 16px;
+}
+.sm-rule-simple-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #d7e0e8;
+}
+.sm-rule-simple-head h1 {
+  margin: 4px 0 6px;
+  color: #10243a;
+  font-size: 26px;
+}
+.sm-rule-simple-head p {
+  margin: 0;
+  color: #5c7187;
+  font-size: 13px;
+}
+.sm-rule-simple-head small {
+  color: #0b625f;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.sm-rule-simple-card {
+  gap: 18px;
+}
+.sm-rule-simple-card label {
+  display: grid;
+  gap: 6px;
+  color: #314b63;
+  font-size: 12px;
+}
+.sm-rule-simple-saved {
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e2e8ee;
+}
+.sm-rule-simple-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 14px;
+}
+.sm-rule-simple-explanation {
+  display: grid;
+  gap: 5px;
+  padding: 12px 14px;
+  border: 1px solid #d5e4e1;
+  border-radius: 9px;
+  background: #f4faf9;
+}
+.sm-rule-simple-explanation strong {
+  color: #173047;
+  font-size: 13px;
+}
+.sm-rule-simple-explanation span {
+  color: #5c7187;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.sm-rule-advanced {
+  border-top: 1px solid #e2e8ee;
+  padding-top: 10px;
+}
+.sm-rule-advanced summary {
+  width: fit-content;
+  color: #4b657b;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.sm-rule-advanced[open] summary {
+  margin-bottom: 12px;
+}
+.sm-rule-simple-actions {
+  padding-top: 4px;
+}
+.sm-rule-simple-actions button {
+  border-color: #b9c9d5;
+  background: #ffffff;
+  color: #173047;
+}
+.sm-rule-simple-actions button.sm-rule-primary {
+  border-color: #236f8c;
+  background: #236f8c;
+  color: #ffffff;
+}
+.sm-rule-simple-actions button.sm-rule-publish {
+  border-color: #7faea7;
+  background: #edf8f6;
+  color: #0b625f;
+}
+.sm-rule-simple-actions button.sm-rule-disable {
+  border-color: #d5b9bf;
+  background: #fff4f5;
+  color: #8a3340;
+}
+.sm-rule-simple-actions button:hover:not(:disabled) {
+  border-color: #5ba89f;
+}
+.sm-rule-simple-actions button.sm-rule-primary:hover:not(:disabled) {
+  background: #1b607a;
+}
+@media (max-width: 720px) {
+  .sm-rule-simple-grid {
+    grid-template-columns: 1fr;
+  }
+  .sm-rule-simple-head {
+    flex-direction: column;
+  }
+}

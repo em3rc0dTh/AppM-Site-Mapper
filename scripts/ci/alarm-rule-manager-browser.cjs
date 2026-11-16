@@ -28,36 +28,35 @@ async function main() {
     let response = await page.goto(base + '/alarms/rules', { waitUntil: 'networkidle' });
     assert.equal(response?.status(), 200, 'Rule Manager route failed');
     await page.locator('.sm-rule-manager').waitFor({ state: 'visible', timeout: 20_000 });
-    await page.locator('.sm-rule-list button').first().waitFor({ timeout: 20_000 });
-    const catalogCount = await page.locator('.sm-rule-list button').count();
-    assert.ok(catalogCount >= 11, 'Rule Catalog did not render all definitions');
+    await page.locator('.sm-rule-simple-card').waitFor({ state: 'visible', timeout: 20_000 });
+    const selects = page.locator('.sm-rule-simple-grid select');
+    await selects.first().waitFor({ timeout: 20_000 });
+    const targetOptions = await selects.nth(0).locator('option').count();
+    const ruleOptions = await selects.nth(1).locator('option').count();
+    assert.ok(targetOptions >= 1, 'Readable alarm target selector did not render');
+    assert.equal(ruleOptions, 11, 'Simple alarm editor did not render all rule definitions');
+    assert.equal(
+      await page.locator('input[placeholder*="topolog"]').count(),
+      0,
+      'Canonical topology ID must not be exposed in the operator form',
+    );
+    assert.equal(
+      await page.locator('.sm-rule-tabs').count(),
+      0,
+      'Technical tabs must stay out of the simple operator flow',
+    );
     checks.push({
-      test: 'Rule Manager renders interactive catalog',
+      test: 'Simple Rule Manager renders readable target and rule selectors without canonical IDs',
       result: 'PASS',
-      count: catalogCount,
+      targetOptions,
+      ruleOptions,
     });
-    await page.screenshot({ path: path.join(dest, 'rule-manager-catalog.png'), fullPage: true });
-
-    await page.locator('.sm-rule-tabs button').nth(1).click();
-    await page.locator('.sm-rule-profile-grid article').first().waitFor();
-    assert.equal(await page.locator('.sm-rule-profile-grid article').count(), 9);
-    const profileContent = await page.locator('.sm-rule-profile-grid').innerText();
-    assert.match(profileContent, /54\.5/);
-    assert.match(profileContent, /56\.5/);
-    assert.match(profileContent, /59/);
-    checks.push({ test: 'DC-48V-24CELL profile renders 9 reference settings', result: 'PASS' });
-    await page.screenshot({ path: path.join(dest, 'dc-48v-profile.png'), fullPage: true });
-
-    await page.locator('.sm-rule-tabs button').nth(2).click();
-    await page.locator('.sm-rule-preview input').waitFor();
+    await page.locator('.sm-rule-advanced summary').waitFor();
     checks.push({
-      test: 'Assignments / effective breaker inspector route renders',
+      test: 'Advanced debounce/recovery settings are collapsed by default',
       result: 'PASS',
     });
-
-    await page.locator('.sm-rule-tabs button').nth(3).click();
-    await page.locator('.sm-rule-table').waitFor();
-    checks.push({ test: 'Policy History route renders', result: 'PASS' });
+    await page.screenshot({ path: path.join(dest, 'rule-manager-simple.png'), fullPage: true });
 
     response = await page.goto(base + '/alarms', { waitUntil: 'networkidle' });
     assert.equal(response?.status(), 200);
@@ -74,7 +73,7 @@ async function main() {
         {
           at: new Date().toISOString(),
           checks,
-          screenshots: ['rule-manager-catalog.png', 'dc-48v-profile.png', 'alarm-center.png'],
+          screenshots: ['rule-manager-simple.png', 'alarm-center.png'],
         },
         null,
         2,

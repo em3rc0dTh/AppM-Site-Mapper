@@ -72,13 +72,18 @@ describe('AuthService', () => {
     expect(changed.ok).toBe(true);
     await expect(service.resolveSession(login.value.token)).resolves.toBeNull();
   });
+
   it('renews validated activity and rejects a session idle for 30 minutes', async () => {
     const repository = new MemoryIdentityRepository();
     const throttle = new MemoryAuthThrottle();
     let now = new Date('2026-11-16T08:00:00.000Z');
     const service = new AuthService(repository, throttle, () => now);
     await service.bootstrapSuperadmin('admin@example.com', 'a strong initial password', 'Admin');
-    const login = await service.authenticate('admin@example.com', 'a strong initial password', 'test-idle');
+    const login = await service.authenticate(
+      'admin@example.com',
+      'a strong initial password',
+      'test-idle',
+    );
     if (!login.ok) throw new Error('Expected login success');
 
     now = new Date('2026-11-16T08:29:00.000Z');
@@ -99,7 +104,11 @@ describe('AuthService', () => {
     let now = new Date('2026-11-16T08:00:00.000Z');
     const service = new AuthService(repository, throttle, () => now);
     await service.bootstrapSuperadmin('admin@example.com', 'a strong initial password', 'Admin');
-    const login = await service.authenticate('admin@example.com', 'a strong initial password', 'test-idle-edits');
+    const login = await service.authenticate(
+      'admin@example.com',
+      'a strong initial password',
+      'test-idle-edits',
+    );
     if (!login.ok) throw new Error('Expected login success');
 
     now = new Date('2026-11-16T08:31:00.000Z');
@@ -122,7 +131,11 @@ describe('AuthService', () => {
     let now = new Date('2026-11-16T08:00:00.000Z');
     const service = new AuthService(repository, throttle, () => now);
     await service.bootstrapSuperadmin('admin@example.com', 'a strong initial password', 'Admin');
-    const login = await service.authenticate('admin@example.com', 'a strong initial password', 'test-absolute');
+    const login = await service.authenticate(
+      'admin@example.com',
+      'a strong initial password',
+      'test-absolute',
+    );
     if (!login.ok) throw new Error('Expected login success');
 
     for (let minutes = 10; minutes < 480; minutes += 10) {
@@ -132,11 +145,14 @@ describe('AuthService', () => {
     now = new Date('2026-11-16T16:00:00.000Z');
     expect(await service.resolveSession(login.value.token)).toBeNull();
 
-    const second = await service.authenticate('admin@example.com', 'a strong initial password', 'test-revoked');
+    const second = await service.authenticate(
+      'admin@example.com',
+      'a strong initial password',
+      'test-revoked',
+    );
     if (!second.ok) throw new Error('Expected a new login');
     await service.logout(second.value.token);
     now = new Date('2026-11-16T16:06:00.000Z');
     expect(await service.resolveSession(second.value.token)).toBeNull();
   });
-
 });

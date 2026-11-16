@@ -13,10 +13,7 @@ export async function GET() {
   const topology = await createTopologyRepository();
   const devices = (await topology.listByKind('DEVICE'))
     .filter(
-      (node) =>
-        node.kind === 'DEVICE' &&
-        node.lifecycle === 'ACTIVE' &&
-        node.deviceType === 'BDFB',
+      (node) => node.kind === 'DEVICE' && node.lifecycle === 'ACTIVE' && node.deviceType === 'BDFB',
     )
     .sort((a, b) => a.name.localeCompare(b.name));
 

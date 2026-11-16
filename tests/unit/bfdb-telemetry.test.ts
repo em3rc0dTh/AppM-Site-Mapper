@@ -130,4 +130,42 @@ describe('BFDB telemetry binding', () => {
     expect(result.readings).toHaveLength(0);
     expect(result.unmappedPointIds).toEqual(['0_1_2']);
   });
+  it('does not attribute a field slave-3 reading to a physical B3 breaker', () => {
+    const physical = {
+      ...presentation,
+      shelves: [{
+        ...presentation.shelves[0]!,
+        frames: [{
+          ...presentation.shelves[0]!.frames[0]!,
+          panels: [{
+            id: 'panel-b3',
+            label: 'B3',
+            positions: [{
+              id: 'breaker-b3-01',
+              label: 'B3-01',
+              accessPortId: 'breaker-b3-01:power-out',
+            }],
+          }],
+        }],
+      }],
+    } satisfies BdfbPresentation;
+
+    const stale = buildBfdbBreakerReadings(
+      physical,
+      message({ '0_3_1': { state: 'ONLINE', U1: '0.00', U2: '0.00', I1: '7.64' } }),
+      bindings('0_3_1', 'breaker-b3-01'),
+    );
+    expect(stale.readings).toHaveLength(0);
+    expect(stale.unmappedPointIds).toEqual(['0_3_1']);
+
+    const correct = buildBfdbBreakerReadings(
+      physical,
+      message({ '0_5_1': { state: 'ONLINE', U1: '14.29', U2: '0.00', I1: '0.00' } }),
+      bindings('0_5_1#1', 'breaker-b3-01'),
+    );
+    expect(correct.readings).toHaveLength(1);
+    expect(correct.readings[0]?.panelLabel).toBe('B3');
+    expect(correct.readings[0]?.metrics.voltageV?.value).toBe(14.29);
+  });
+
 });

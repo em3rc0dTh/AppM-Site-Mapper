@@ -2261,3 +2261,75 @@
   letter-spacing: 0 !important;
   fill: #597186 !important;
 }
+
+
+/* MK2 Room acceptance refinement — no composition or geometry changes. */
+/* Leave the accepted coordinate-tick scaling untouched. Keep the physical
+   names inside their actual surveyed strips and rack footprint. */
+.mk2-room-ergonomics .blueprint-cluster-label {
+  font-weight: 650 !important;
+  letter-spacing: 0.015em !important;
+}
+.mk2-room-ergonomics .blueprint-rack-label {
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+}
+/* The Edit Room action now lives beside the plan's existing status control,
+   so no standalone view-only toolbar consumes a blank strip above the map. */
+.mk2-room-ergonomics .mk2-blueprint-toolbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+.mk2-room-ergonomics .mk2-blueprint-edit-room {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #1b71d5;
+  border-radius: 5px;
+  background: #216ddb;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.mk2-room-ergonomics .mk2-blueprint-edit-room:hover {
+  background: #165bab;
+}
+.mk2-room-ergonomics .mk2-blueprint-edit-room:focus-visible {
+  outline: 2px solid #0051a5;
+  outline-offset: 3px;
+}
+/* Preserve the brand hierarchy, but allocate enough horizontal room for the
+   complete "SiteMapper Mk2" string and the real Home control. */
+.zip-app-shell.app-shell--blueprint .zip-topbar > .zip-brand {
+  width: 315px !important;
+  flex-basis: 315px !important;
+}
+.zip-app-shell.app-shell--blueprint .zip-brand .sm-brand {
+  flex: 0 1 auto;
+  width: auto;
+}
+.zip-app-shell.app-shell--blueprint .zip-brand .sm-brand-copy,
+.zip-app-shell.app-shell--blueprint .zip-brand .sm-brand-product-line {
+  min-width: max-content;
+  overflow: visible;
+}
+.zip-app-shell.app-shell--blueprint .zip-brand .sm-brand-lockup {
+  gap: 10px;
+}
+.zip-app-shell.app-shell--blueprint .zip-brand .zip-brand-home {
+  margin-left: auto;
+}
+@media (max-width: 1199px) {
+  .zip-app-shell.app-shell--blueprint .zip-topbar > .zip-brand {
+    width: 282px !important;
+    flex-basis: 282px !important;
+  }
+  .zip-app-shell.app-shell--blueprint .zip-brand .sm-brand-lockup {
+    gap: 6px;
+  }
+}

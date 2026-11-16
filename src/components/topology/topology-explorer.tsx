@@ -47,6 +47,8 @@ export function TopologyExplorer({
   const [selected, setSelected] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const item = items.find((entry) => entry.node.id === selected);
+  const focusedNode = item?.node ?? node;
+  const focusedPolygon = 'polygon' in focusedNode ? focusedNode.polygon : undefined;
   // Retain persisted ordering; never impose a demo-specific geography on MongoDB.
   const visualItems = items;
   const polygons = items.flatMap((entry) =>
@@ -287,32 +289,11 @@ export function TopologyExplorer({
             <button onClick={() => setZoom((value) => Math.min(2, value + 0.1))}>+</button>
           </div>
           <button onClick={() => setZoom(1)}>{t('fit')}</button>
-          <strong className="zip-synced">{t('inventory')}</strong>
+
         </footer>
       </div>
 
       <aside className="mk-inline-inspector zip-inspector">
-        {node.kind === 'SITE' && (
-          <div className="spatial-site-facts">
-            <strong>{node.name}</strong>
-            <dl>
-              <dt>{t('boundary')}</dt>
-              <dd>
-                {boundary?.length ? t('vertices', { count: boundary.length }) : t('notDrawn')}
-              </dd>
-              <dt>{t('area')}</dt>
-              <dd>
-                {isValidPolygon(boundary)
-                  ? `${(polygonArea(boundary) / 1_000_000).toFixed(2)} m²`
-                  : '—'}
-              </dd>
-              <dt>{t('status')}</dt>
-              <dd>{node.lifecycle === 'ACTIVE' ? t('active') : t('archived')}</dd>
-              <dt>{t('containedObjects')}</dt>
-              <dd>{items.length}</dd>
-            </dl>
-          </div>
-        )}
         <header className="zip-inspector-heading">
           <strong>{t('inspector')}</strong>
           <span>⌄</span>
@@ -322,35 +303,39 @@ export function TopologyExplorer({
           <div>
             <h2>{(item?.node.name ?? node.name).toUpperCase()}</h2>
             <small>
-              {node.name} / {item?.node.name ?? node.name}
+              {displayKind(focusedNode.kind)}
             </small>
           </div>
         </div>
         <section>
           <h3>{t('info')}</h3>
           <dl>
-            <dt>{t('name')}</dt>
-            <dd>{item?.node.name ?? node.name}</dd>
             <dt>{t('type')}</dt>
-            <dd>{displayKind(item?.node.kind ?? node.kind)}</dd>
+            <dd>{displayKind(focusedNode.kind)}</dd>
             <dt>{t('contained')}</dt>
             <dd>{item ? (item.directChildCount ?? '—') : items.length}</dd>
             <dt>{t('status')}</dt>
-            <dd>{(item?.node ?? node).lifecycle === 'ACTIVE' ? t('active') : t('archived')}</dd>
+            <dd>{focusedNode.lifecycle === 'ACTIVE' ? t('active') : t('archived')}</dd>
+            {focusedPolygon && focusedPolygon.length >= 3 && (
+              <>
+                <dt>{t('boundary')}</dt>
+                <dd>{t('vertices', { count: focusedPolygon.length })}</dd>
+              </>
+            )}
+            {focusedPolygon && isValidPolygon(focusedPolygon) && (
+              <>
+                <dt>{t('area')}</dt>
+                <dd>{(polygonArea(focusedPolygon) / 1_000_000).toFixed(2)} m²</dd>
+              </>
+            )}
           </dl>
-        </section>
-        <section className="topology-telemetry-note">
-          <h3>{t('telemetry')}</h3>
-          <p>{t('liveStatusScope')}</p>
         </section>
         {item ? (
           <Link className="mk-primary zip-open-action" href={item.href}>
             ↗ {t('openAction')}{' '}
             {item.node.kind === 'ROOM_SUBSTRUCTURE' ? t('roomType') : displayKind(item.node.kind)}
           </Link>
-        ) : (
-          <p>{t('selectHelp')}</p>
-        )}
+        ) : null}
         <ThradexAttribution variant="inspector" />
       </aside>
     </section>

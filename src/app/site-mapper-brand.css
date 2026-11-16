@@ -126,13 +126,10 @@
   color: inherit !important;
 }
 
+/* Room uses the same compact brand type scale as frontal/rack views.
+   The shared MK2 shell styles control its sizes at every breakpoint. */
 .app-shell--blueprint .zip-brand .sm-brand-appmanager {
-  font-size: 19px !important;
   font-weight: 400 !important;
-}
-
-.app-shell--blueprint .zip-brand .sm-brand-product-line {
-  font-size: 10px !important;
 }
 
 .app-shell--blueprint .zip-brand .sm-brand-tagline {

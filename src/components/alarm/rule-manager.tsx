@@ -378,7 +378,7 @@ export function RuleManager({
               >
                 {(['ALL', 'V', 'A', 'P', 'E'] as const).map((m) => (
                   <option key={m} value={m}>
-                    {m === 'ALL' ? 'All metrics' : m}
+                    {m === 'ALL' ? t('allMetrics') : m}
                   </option>
                 ))}
               </select>
@@ -399,7 +399,7 @@ export function RuleManager({
                         {c} · {ruleMetric(c)}
                       </small>
                     </span>
-                    <em>{count} active</em>
+                    <em>{count} {t('active')}</em>
                   </button>
                 );
               })}
@@ -418,10 +418,10 @@ export function RuleManager({
                     <span>
                       <b>{titles[r.draft.code]}</b>
                       <small>
-                        {r.draft.scope} · {r.draft.scopeId ?? 'All breakers'}
+                        {r.draft.scope} · {r.draft.scopeId ?? t('allBreakers')}
                       </small>
                     </span>
-                    <em>{r.published ? 'Published' : 'Draft'}</em>
+                    <em>{r.published ? t('published') : t('draft')}</em>
                   </button>
                 ))}
               {records.length === 0 ? (
@@ -439,7 +439,7 @@ export function RuleManager({
                 </p>
               </div>
               <span className="sm-rule-pill">
-                {selected?.published ? 'Published' : 'Draft / Pending'}
+                {selected?.published ? t('published') : t('draftPending')}
               </span>
             </div>
             <div className="sm-rule-form">
@@ -458,7 +458,7 @@ export function RuleManager({
               </label>
               {scope !== 'GLOBAL' ? (
                 <label>
-                  Canonical {scope.toLowerCase()} ID
+                  {t('canonical')} {scope.toLowerCase()} {t('idLabel')}
                   <input
                     value={scopeId}
                     onChange={(e) => {
@@ -531,7 +531,7 @@ export function RuleManager({
                     </label>
                   </div>
                   <span className={loadLossCandidate ? 'sm-rule-test-alert' : 'sm-rule-test-ok'}>
-                    {loadLossCandidate ? 'Candidate: LOAD_LOSS' : 'No Load Loss candidate'}
+                    {loadLossCandidate ? t('loadLossCandidate') : t('noLoadLossCandidate')}
                   </span>
                   <p>{t('simulatorWarning')}</p>
                 </div>

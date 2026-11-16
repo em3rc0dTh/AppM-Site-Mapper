@@ -194,6 +194,7 @@ export function CommissioningConsole({
   const [credentialBusy, setCredentialBusy] = useState(false);
   const [credentialMetadata, setCredentialMetadata] = useState<CredentialMetadata | null>(null);
   const [passwordInput, setPasswordInput] = useState('');
+  const [revealConfirmation, setRevealConfirmation] = useState('');
   const [revealedPassword, setRevealedPassword] = useState('');
 
   const [role, setRole] = useState<ProfileRole>('GATEWAY');
@@ -419,9 +420,11 @@ export function CommissioningConsole({
           action,
           equipmentId,
           ...(action === 'set' ? { password: passwordInput } : {}),
+          ...(action === 'reveal' ? { currentPassword: revealConfirmation } : {}),
         }),
       });
       if (action === 'reveal') {
+        setRevealConfirmation('');
         setRevealedPassword(String(data.password ?? ''));
         setCredentialMetadata(data.metadata as unknown as CredentialMetadata);
       } else {
@@ -446,6 +449,7 @@ export function CommissioningConsole({
   function selectProfile(id: string) {
     setEquipmentId(id);
     setPasswordInput('');
+    setRevealConfirmation('');
     setRevealedPassword('');
     void loadCredential(id);
     const current = overview?.profiles.find((item) => item.equipmentId === id);
@@ -853,10 +857,23 @@ export function CommissioningConsole({
                         </button>
                       </>
                     ) : null}
+                    {canReadCredentials && credentialMetadata?.hasCredential && !revealedPassword ? (
+                      <label style={fieldStyle}>
+                        Contraseña actual de Site Mapper (confirmación para revelar)
+                        <input
+                          type="password"
+                          maxLength={1024}
+                          style={inputStyle}
+                          value={revealConfirmation}
+                          autoComplete="current-password"
+                          onChange={(event) => setRevealConfirmation(event.target.value)}
+                        />
+                      </label>
+                    ) : null}
                     {canReadCredentials && credentialMetadata?.hasCredential ? (
                       <button
                         type="button"
-                        disabled={credentialBusy}
+                        disabled={credentialBusy || (!revealedPassword && !revealConfirmation)}
                         onClick={() =>
                           revealedPassword
                             ? setRevealedPassword('')

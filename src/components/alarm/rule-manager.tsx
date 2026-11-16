@@ -90,7 +90,7 @@ export function RuleManager({canEdit}:{canEdit:boolean}) {
     simPrevious > 0 && simCurrent <= Number(parameters.zeroToleranceA);
   const showCode = (next:ManagedRuleCode) => {
     setCode(next);setSelectedId(null);setParameters(defaults(next));
-    setDebounce(next==='LOAD_LOSS'?3:2);setRecovery(2);
+    setDebounce(next==='LOAD_LOSS'?3:next==='ENERGY_COUNTER_RESET'?1:2);setRecovery(2);
     setSeverity(next==='VOLTAGE_LOSS'?'CRITICAL':'WARNING');
     setMessage('');setError('');
   };

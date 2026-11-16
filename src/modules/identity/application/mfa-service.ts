@@ -2,9 +2,11 @@ import type { AuthThrottle, IdentityRepository } from './identity-repository';
 import { AuthService } from './auth-service';
 import { verifyPassword } from '@/modules/identity/domain/password';
 import {
+  createMfaRecoveryCodes,
   createMfaSecret,
   decryptMfaSecret,
   encryptMfaSecret,
+  hashMfaRecoveryCode,
   matchTotpStep,
   mfaKeyAvailable,
   provisioningUri,
@@ -83,7 +85,7 @@ export class MfaService {
   async confirm(
     token: string,
     code: string,
-  ): Promise<Result<{ reauthenticationRequired: true }, MfaError>> {
+  ): Promise<Result<{ reauthenticationRequired: true; recoveryCodes: readonly string[] }, MfaError>> {
     const user = await this.account(token);
     if (!user) return failure('SESSION_INVALID');
     if (user.mfaSecretCiphertext) return failure('MFA_ALREADY_ENABLED');
@@ -104,13 +106,20 @@ export class MfaService {
 
     const { mfaPendingSecretCiphertext, mfaPendingStartedAt, ...rest } = user;
     void mfaPendingStartedAt;
+    const recoveryCodes = createMfaRecoveryCodes();
+    const recoveryHashes = recoveryCodes.map((item) => hashMfaRecoveryCode(user.id, item)!);
     await this.repository.replaceUser(
-      { ...rest, mfaSecretCiphertext: mfaPendingSecretCiphertext, updatedAt: nowIso() },
+      {
+        ...rest,
+        mfaSecretCiphertext: mfaPendingSecretCiphertext,
+        mfaRecoveryHashes: recoveryHashes,
+        updatedAt: nowIso(),
+      },
       user,
       user.id,
     );
     await this.repository.revokeUserSessions(user.id, now);
-    return success({ reauthenticationRequired: true });
+    return success({ reauthenticationRequired: true, recoveryCodes });
   }
 
   async disable(
@@ -128,16 +137,26 @@ export class MfaService {
     if (!(await verifyPassword(password, user.passwordHash))) return failure('PASSWORD_INVALID');
     const secret = decryptMfaSecret(user.id, user.mfaSecretCiphertext);
     if (!secret) return failure('MFA_KEY_NOT_CONFIGURED');
-    const step = matchTotpStep(secret, code, now.getTime());
-    if (
-      step === null ||
-      !(await this.repository.consumeMfaStep(user.id, user.mfaSecretCiphertext, step))
-    )
-      return failure('MFA_CODE_INVALID');
+    if (/^[0-9]{6}$/.test(code)) {
+      const step = matchTotpStep(secret, code, now.getTime());
+      if (
+        step === null ||
+        !(await this.repository.consumeMfaStep(user.id, user.mfaSecretCiphertext, step))
+      )
+        return failure('MFA_CODE_INVALID');
+    } else {
+      const recoveryHash = hashMfaRecoveryCode(user.id, code);
+      if (
+        !recoveryHash ||
+        !(await this.repository.consumeMfaRecoveryCode(user.id, recoveryHash))
+      )
+        return failure('MFA_CODE_INVALID');
+    }
 
-    const { mfaSecretCiphertext, mfaLastUsedStep, ...rest } = user;
+    const { mfaSecretCiphertext, mfaLastUsedStep, mfaRecoveryHashes, ...rest } = user;
     void mfaSecretCiphertext;
     void mfaLastUsedStep;
+    void mfaRecoveryHashes;
     await this.repository.replaceUser({ ...rest, updatedAt: nowIso() }, user, user.id);
     await this.repository.revokeUserSessions(user.id, now);
     return success({ reauthenticationRequired: true });

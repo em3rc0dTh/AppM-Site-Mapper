@@ -5,7 +5,7 @@ import type {
 import type { SafeUser, SessionRecord, User } from '@/modules/identity/domain/entities';
 import { toSafeUser } from '@/modules/identity/domain/entities';
 import { hashPassword, verifyPassword } from '@/modules/identity/domain/password';
-import { decryptMfaSecret, matchTotpStep } from '@/modules/identity/application/mfa-totp';
+import { decryptMfaSecret, hashMfaRecoveryCode, matchTotpStep } from '@/modules/identity/application/mfa-totp';
 import { assessNewPassword } from '@/modules/identity/application/password-policy';
 import { createSessionToken, hashSessionToken } from '@/modules/identity/domain/session-token';
 import type { Permission, Role } from '@/modules/identity/domain/roles';
@@ -81,12 +81,22 @@ export class AuthService {
       if (!mfaCode) return failure('MFA_REQUIRED');
       const secret = decryptMfaSecret(user.id, user.mfaSecretCiphertext);
       if (!secret) return failure('MFA_KEY_NOT_CONFIGURED');
-      const step = matchTotpStep(secret, mfaCode, now.getTime());
-      if (
-        step === null ||
-        !(await this.repository.consumeMfaStep(user.id, user.mfaSecretCiphertext, step))
-      ) {
-        return failure('MFA_INVALID');
+      if (/^[0-9]{6}$/.test(mfaCode)) {
+        const step = matchTotpStep(secret, mfaCode, now.getTime());
+        if (
+          step === null ||
+          !(await this.repository.consumeMfaStep(user.id, user.mfaSecretCiphertext, step))
+        ) {
+          return failure('MFA_INVALID');
+        }
+      } else {
+        const recoveryHash = hashMfaRecoveryCode(user.id, mfaCode);
+        if (
+          !recoveryHash ||
+          !(await this.repository.consumeMfaRecoveryCode(user.id, recoveryHash))
+        ) {
+          return failure('MFA_INVALID');
+        }
       }
     } else if (process.env.SITE_MAPPER_MFA_REQUIRED === 'true') {
       // Roll out only after account enrollment and recovery provisioning.

@@ -197,8 +197,8 @@
       "connectionError": "Connection unavailable. Please try again.",
       "credentialsError": "Invalid email or password.",
       "loginError": "Unable to sign in. Please try again.",
-      "mfaCode": "Authenticator code (if enabled)",
-      "mfaNeeded": "Enter the six-digit code from your authenticator.",
+      "mfaCode": "Authenticator code or recovery code",
+      "mfaNeeded": "Enter a six-digit authenticator code or a saved recovery code.",
       "mfaEnrollmentRequired": "MFA enrollment is required. Contact the administrator."
     },
     "changePassword": {
@@ -224,7 +224,10 @@
       "disable": "Disable MFA",
       "startInstructions": "Add the secret to your authenticator and confirm the six-digit code.",
       "failed": "Could not complete the MFA operation.",
-      "connectionError": "Could not connect to the server."
+      "connectionError": "Could not connect to the server.",
+      "recoveryTitle": "Save your recovery codes",
+      "recoveryInstructions": "These one-time codes are shown only now. Store them offline in a safe location. Do not share them.",
+      "finish": "I have saved the codes — sign in"
     }
   },
   "workspace": {

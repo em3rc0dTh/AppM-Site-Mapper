@@ -197,8 +197,8 @@
       "connectionError": "No hay conexión disponible. Inténtalo nuevamente.",
       "credentialsError": "Correo electrónico o contraseña incorrectos.",
       "loginError": "No se pudo iniciar sesión. Inténtalo nuevamente.",
-      "mfaCode": "Código de autenticador (si está activado)",
-      "mfaNeeded": "Introduce el código de seis dígitos de tu autenticador.",
+      "mfaCode": "Código del autenticador o de recuperación",
+      "mfaNeeded": "Introduce el código de seis dígitos o un código de recuperación guardado.",
       "mfaEnrollmentRequired": "Se requiere activar MFA. Contacta al administrador."
     },
     "changePassword": {
@@ -224,7 +224,10 @@
       "disable": "Desactivar MFA",
       "startInstructions": "Agrega la clave a tu autenticador y confirma el código de seis dígitos.",
       "failed": "No fue posible completar la operación de MFA.",
-      "connectionError": "No fue posible comunicarse con el servidor."
+      "connectionError": "No fue posible comunicarse con el servidor.",
+      "recoveryTitle": "Guarda tus códigos de recuperación",
+      "recoveryInstructions": "Estos códigos de un solo uso se muestran únicamente ahora. Guárdalos fuera de línea en un lugar seguro y no los compartas.",
+      "finish": "Ya guardé los códigos — iniciar sesión"
     }
   },
   "workspace": {

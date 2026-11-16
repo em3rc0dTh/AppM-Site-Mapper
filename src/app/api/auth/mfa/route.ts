@@ -59,7 +59,7 @@ async function handlePost(request: Request) {
         ? await app.confirm(token, body.code)
         : body.action === 'disable' &&
             isBoundedString(body.currentPassword, 1024) &&
-            isBoundedString(body.code, 6)
+            isBoundedString(body.code, 35)
           ? await app.disable(token, body.currentPassword, body.code)
           : null;
   if (!result) return Response.json({ error: 'INVALID_REQUEST' }, { status: 400 });

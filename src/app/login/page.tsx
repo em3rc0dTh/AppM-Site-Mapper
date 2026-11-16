@@ -109,8 +109,7 @@ export default function LoginPage() {
             type="text"
             inputMode="numeric"
             autoComplete="one-time-code"
-            pattern="[0-9]{6}"
-            maxLength={6}
+            maxLength={35}
             placeholder="000000"
           />
         </label>

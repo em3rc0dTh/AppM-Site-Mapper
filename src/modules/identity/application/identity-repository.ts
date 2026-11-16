@@ -7,6 +7,8 @@ export interface IdentityRepository {
   getUserByEmail(email: string): Promise<User | null>;
   /** Rejects reuse of an already accepted TOTP time step across replicas. */
   consumeMfaStep(userId: string, sealedSecret: string, step: number): Promise<boolean>;
+  /** Atomically remove a one-time MFA backup code digest. */
+  consumeMfaRecoveryCode(userId: string, codeHash: string): Promise<boolean>;
   bootstrapUser?(user: User): Promise<boolean>;
   insertUser(user: User, actorId?: string): Promise<void>;
   replaceUser(user: User, expected?: User, actorId?: string): Promise<void>;

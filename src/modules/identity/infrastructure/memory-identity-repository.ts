@@ -50,6 +50,23 @@ export class MemoryIdentityRepository implements IdentityRepository {
     return true;
   }
 
+  async consumeMfaRecoveryCode(userId: string, codeHash: string): Promise<boolean> {
+    const user = this.users.get(userId);
+    if (
+      !user ||
+      user.lifecycle !== 'ACTIVE' ||
+      !user.mfaSecretCiphertext ||
+      !user.mfaRecoveryHashes?.includes(codeHash)
+    ) {
+      return false;
+    }
+    this.users.set(userId, {
+      ...user,
+      mfaRecoveryHashes: user.mfaRecoveryHashes.filter((hash) => hash !== codeHash),
+    });
+    return true;
+  }
+
   async bootstrapUser(user: User): Promise<boolean> {
     if (this.users.size) return false;
     this.users.set(user.id, structuredClone(user));

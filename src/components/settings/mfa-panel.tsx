@@ -18,6 +18,7 @@ export function MfaPanel() {
   const [code, setCode] = useState('');
   const [secret, setSecret] = useState('');
   const [uri, setUri] = useState('');
+  const [recoveryCodes, setRecoveryCodes] = useState<readonly string[]>([]);
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -50,6 +51,7 @@ export function MfaPanel() {
         error?: string;
         secret?: string;
         uri?: string;
+        recoveryCodes?: string[];
       };
       if (!response.ok) {
         setNotice(data.error ?? t('failed'));
@@ -63,8 +65,13 @@ export function MfaPanel() {
         setPassword('');
         setSecret('');
         setUri('');
-        router.replace('/login');
-        router.refresh();
+        if (kind === 'confirm') {
+          setRecoveryCodes(data.recoveryCodes ?? []);
+          setNotice('');
+        } else {
+          router.replace('/login');
+          router.refresh();
+        }
       }
     } catch {
       setNotice(t('connectionError'));
@@ -83,7 +90,7 @@ export function MfaPanel() {
       ) : (
         <>
           <p>{state.enabled ? t('enabled') : t('disabled')}</p>
-          {!state.enabled && !secret ? (
+          {!state.enabled && !secret && recoveryCodes.length === 0 ? (
             <>
               <label>
                 {t('currentPassword')}
@@ -130,6 +137,29 @@ export function MfaPanel() {
               </button>
             </>
           ) : null}
+          {recoveryCodes.length > 0 ? (
+            <div>
+              <h4>{t('recoveryTitle')}</h4>
+              <p>{t('recoveryInstructions')}</p>
+              <ul>
+                {recoveryCodes.map((item) => (
+                  <li key={item}>
+                    <code>{item}</code>
+                  </li>
+                ))}
+              </ul>
+              <button
+                type="button"
+                onClick={() => {
+                  setRecoveryCodes([]);
+                  router.replace('/login');
+                  router.refresh();
+                }}
+              >
+                {t('finish')}
+              </button>
+            </div>
+          ) : null}
           {state.enabled ? (
             <>
               <p>{t('disableIntro')}</p>
@@ -148,15 +178,14 @@ export function MfaPanel() {
                   type="text"
                   inputMode="numeric"
                   autoComplete="one-time-code"
-                  pattern="[0-9]{6}"
-                  maxLength={6}
+                  maxLength={35}
                   value={code}
                   onChange={(event) => setCode(event.target.value)}
                 />
               </label>
               <button
                 type="button"
-                disabled={busy || !password || code.length !== 6}
+                disabled={busy || !password || (code.length !== 6 && code.length !== 35)}
                 onClick={() => void action('disable')}
               >
                 {t('disable')}

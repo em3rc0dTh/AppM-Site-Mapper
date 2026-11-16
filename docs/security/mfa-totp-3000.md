@@ -32,3 +32,12 @@ Operational Console is excluded.
 - Design and validate a secure recovery mechanism before mandatory MFA.
 - Verify MFA flows with genuine client devices before customer rollout.
 - Full ASVS L2 coverage and production acceptance remain separate.
+
+## Recovery codes
+
+MFA confirmation generates eight independent 128-bit random recovery codes, shown once.
+The database stores only user-scoped SHA-256 digests. Each recovery code is consumed
+atomically in MongoDB or memory and cannot be reused. An operator may use a remaining
+recovery code at login or as the second factor alongside their password to disable
+MFA and re-enroll. Protect printed/offline copies; losing all codes and the authenticator
+requires a separately approved administrator recovery process.

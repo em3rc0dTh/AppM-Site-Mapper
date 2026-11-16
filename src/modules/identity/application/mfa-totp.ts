@@ -2,6 +2,7 @@ import {
   createCipheriv,
   createDecipheriv,
   createHmac,
+  createHash,
   randomBytes,
   timingSafeEqual,
 } from 'node:crypto';
@@ -115,4 +116,18 @@ export function provisioningUri(email: string, secret: string): string {
     secret +
     '&issuer=Site%20Mapper&algorithm=SHA1&digits=6&period=30'
   );
+}
+
+/** Eight 128-bit single-use codes. Only their hashes are stored server-side. */
+export function createMfaRecoveryCodes(): readonly string[] {
+  return Array.from({ length: 8 }, () => {
+    const value = randomBytes(16).toString('hex').toUpperCase();
+    return value.match(/.{1,8}/g)!.join('-');
+  });
+}
+
+export function hashMfaRecoveryCode(userId: string, code: string): string | null {
+  const clean = code.replaceAll('-', '').trim().toUpperCase();
+  if (!/^[A-F0-9]{32}$/.test(clean)) return null;
+  return createHash('sha256').update('mfa-recovery:' + userId + ':' + clean).digest('hex');
 }

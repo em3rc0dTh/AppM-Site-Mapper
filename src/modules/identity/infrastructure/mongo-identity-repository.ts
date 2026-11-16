@@ -70,6 +70,19 @@ export class MongoIdentityRepository implements IdentityRepository {
     return result.matchedCount === 1;
   }
 
+  async consumeMfaRecoveryCode(userId: string, codeHash: string): Promise<boolean> {
+    const result = await this.users.updateOne(
+      {
+        id: userId,
+        lifecycle: 'ACTIVE',
+        mfaSecretCiphertext: { $exists: true },
+        mfaRecoveryHashes: codeHash,
+      },
+      { $pull: { mfaRecoveryHashes: codeHash } },
+    );
+    return result.matchedCount === 1;
+  }
+
   private async audit(actorId: string, action: string, targetId: string, session: ClientSession) {
     await this.database
       .collection('admin_audit')

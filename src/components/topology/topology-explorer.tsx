@@ -161,26 +161,55 @@ export function TopologyExplorer({
                       polygon.reduce((sum, value) => sum + value.x, 0) / polygon.length;
                     const centerY =
                       polygon.reduce((sum, value) => sum + value.y, 0) / polygon.length;
+                    // Persisted survey coordinates determine label placement.
+                    // SVG font size scales with the survey envelope rather than using
+                    // a fixed 48-unit text that becomes unreadable on large plans.
+                    const scale = (width + pad * 2) / 900;
+                    const polygonWidth = Math.max(
+                      1,
+                      Math.max(...polygon.map((point) => point.x)) -
+                        Math.min(...polygon.map((point) => point.x)),
+                    );
+                    const fontSize = Math.min(
+                      19 * scale,
+                      Math.max(11 * scale, (polygonWidth * 0.8) / (entry.node.name.length * 0.6)),
+                    );
+                    const labelWidth = Math.min(
+                      polygonWidth * 0.9,
+                      (entry.node.name.length * 0.62 + 3) * fontSize,
+                    );
                     return (
-                      <g
+                      <a
                         key={entry.node.id}
-                        tabIndex={0}
-                        role="button"
-                        aria-label={t('select', { name: entry.node.name })}
-                        onClick={() => setSelected(entry.node.id)}
-                        onDoubleClick={() => window.location.assign(entry.href)}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter') setSelected(entry.node.id);
-                        }}
+                        href={entry.href}
+                        className="mk2-map-element"
+                        onMouseEnter={() => setSelected(entry.node.id)}
+                        onFocus={() => setSelected(entry.node.id)}
+                        aria-label={t('openNamed', { name: entry.node.name })}
                       >
+                        <title>{t('openNamed', { name: entry.node.name })}</title>
                         <polygon
                           points={points(polygon)}
                           className={selected === entry.node.id ? 'is-selected' : ''}
                         />
-                        <text x={centerX} y={centerY} textAnchor="middle">
+                        <rect
+                          x={centerX - labelWidth / 2}
+                          y={centerY - fontSize * 1.35}
+                          width={labelWidth}
+                          height={fontSize * 2.7}
+                          rx={fontSize * 0.27}
+                          className="mk2-map-nameplate"
+                        />
+                        <text
+                          x={centerX}
+                          y={centerY}
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          style={{ fontSize }}
+                        >
                           {entry.node.name.toUpperCase()}
                         </text>
-                      </g>
+                      </a>
                     );
                   })}
                 </svg>
@@ -206,16 +235,16 @@ export function TopologyExplorer({
                 <p>{t('noMapWarning')}</p>
                 <div>
                   {visualItems.map((entry) => (
-                    <button
+                    <Link
                       key={entry.node.id}
-                      type="button"
+                      href={entry.href}
                       className={selected === entry.node.id ? 'is-selected' : ''}
-                      onClick={() => setSelected(entry.node.id)}
-                      onDoubleClick={() => window.location.assign(entry.href)}
+                      onMouseEnter={() => setSelected(entry.node.id)}
+                      onFocus={() => setSelected(entry.node.id)}
                     >
                       <strong>{entry.node.name}</strong>
-                      <small>{t('clickHelp')}</small>
-                    </button>
+                      <small>{t('openAction')}</small>
+                    </Link>
                   ))}
                 </div>
               </div>

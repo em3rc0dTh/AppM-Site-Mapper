@@ -8,7 +8,6 @@ import {
   DEFAULT_DC_PROFILE,
   MANAGED_RULE_CODES,
   ruleMetric,
-  type ManagedAlarmRule,
   type ManagedRuleCode,
   type RuleScope,
 } from '@/modules/alarm/domain/rule-manager';
@@ -97,8 +96,14 @@ function defaults(code: ManagedRuleCode): Record<string, number | boolean> {
   return params;
 }
 
-export function RuleManager({ canEdit }: { canEdit: boolean }) {
-  const [view, setView] = useState<View>('RULES');
+export function RuleManager({
+  canEdit,
+  initialBreakerId = '',
+}: {
+  canEdit: boolean;
+  initialBreakerId?: string;
+}) {
+  const [view, setView] = useState<View>(initialBreakerId ? 'ASSIGNMENTS' : 'RULES');
   const [metric, setMetric] = useState<Metric>('ALL');
   const [records, setRecords] = useState<readonly ManagedRuleRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -107,7 +112,7 @@ export function RuleManager({ canEdit }: { canEdit: boolean }) {
   const [error, setError] = useState('');
   const [code, setCode] = useState<ManagedRuleCode>('LOAD_LOSS');
   const [scope, setScope] = useState<RuleScope>('BREAKER');
-  const [scopeId, setScopeId] = useState('');
+  const [scopeId, setScopeId] = useState(initialBreakerId);
   const [severity, setSeverity] = useState<AlarmSeverity>('WARNING');
   const [debounce, setDebounce] = useState(3);
   const [recovery, setRecovery] = useState(2);
@@ -115,7 +120,7 @@ export function RuleManager({ canEdit }: { canEdit: boolean }) {
     defaults('LOAD_LOSS'),
   );
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [previewId, setPreviewId] = useState('');
+  const [previewId, setPreviewId] = useState(initialBreakerId);
   const [preview, setPreview] = useState<{
     rules: readonly { code: string; source: string; scope: string }[];
   } | null>(null);
@@ -130,7 +135,13 @@ export function RuleManager({ canEdit }: { canEdit: boolean }) {
   }, []);
   useEffect(() => {
     let active = true;
-    void reload()
+    const controller = new AbortController();
+    void fetch('/api/alarms/rules', { cache: 'no-store', signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Cannot load Rule Manager');
+        const body = (await response.json()) as { records: ManagedRuleRecord[] };
+        if (active) setRecords(body.records);
+      })
       .catch((e) => {
         if (active) setError(String(e));
       })
@@ -139,26 +150,29 @@ export function RuleManager({ canEdit }: { canEdit: boolean }) {
       });
     return () => {
       active = false;
+      controller.abort();
     };
-  }, [reload]);
+  }, []);
   useEffect(() => {
-    const breakerId = new URLSearchParams(window.location.search).get('breakerId');
-    if (!breakerId || breakerId.length > 128) return;
-    setScope('BREAKER');
-    setScopeId(breakerId);
-    setPreviewId(breakerId);
-    setView('ASSIGNMENTS');
-    void fetch('/api/alarms/rules/effective?breakerId=' + encodeURIComponent(breakerId), {
+    if (!initialBreakerId) return;
+    const controller = new AbortController();
+    void fetch('/api/alarms/rules/effective?breakerId=' + encodeURIComponent(initialBreakerId), {
       cache: 'no-store',
+      signal: controller.signal,
     })
-      .then(async (r) => {
-        if (!r.ok) throw new Error('Breaker policy unavailable');
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Breaker policy unavailable');
         setPreview(
-          (await r.json()) as { rules: readonly { code: string; source: string; scope: string }[] },
+          (await response.json()) as {
+            rules: readonly { code: string; source: string; scope: string }[];
+          },
         );
       })
-      .catch((e) => setError(String(e)));
-  }, []);
+      .catch((error) => {
+        if (!controller.signal.aborted) setError(String(error));
+      });
+    return () => controller.abort();
+  }, [initialBreakerId]);
 
   const selected = records.find((r) => r.id === selectedId) || null;
   const filtered = MANAGED_RULE_CODES.filter((c) => metric === 'ALL' || ruleMetric(c) === metric);

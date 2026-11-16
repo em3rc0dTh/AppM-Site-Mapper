@@ -373,6 +373,10 @@ export function RuleManager({
                   setTargetSearch(event.target.value);
                   setTargetPickerOpen(true);
                 }}
+                onBlur={() => {
+                  setTargetPickerOpen(false);
+                  setTargetSearch('');
+                }}
                 onKeyDown={(event) => {
                   if (event.key === 'Escape') {
                     setTargetPickerOpen(false);

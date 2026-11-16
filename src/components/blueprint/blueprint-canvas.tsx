@@ -396,7 +396,7 @@ export function BlueprintCanvas({
               <text
                 key={`column-${column.label}-${column.x}`}
                 x={column.x}
-                y={labels.minY - 115}
+                y={labels.minY - 320}
                 textAnchor="middle"
                 style={{ fontSize: axisFontSize }}
               >
@@ -406,7 +406,7 @@ export function BlueprintCanvas({
             {labels.rows.map((row) => (
               <text
                 key={`row-${row.label}-${row.y}`}
-                x={labels.minX - 115}
+                x={labels.minX - 320}
                 y={row.y}
                 textAnchor="middle"
                 dominantBaseline="middle"

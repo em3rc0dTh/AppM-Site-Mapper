@@ -604,6 +604,7 @@
       "email": "Correo electrónico",
       "role": "Rol",
       "temporaryPassword": "Contraseña temporal",
+      "temporaryPasswordHelp": "El usuario deberá reemplazar esta contraseña en su primer inicio de sesión.",
       "creating": "Creando…",
       "create": "Crear usuario",
       "failed": "No se pudo crear el usuario.",

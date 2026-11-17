@@ -355,7 +355,15 @@ describe('TelemetryService', () => {
         method: 'update',
         sn: 'AUTO-QDF-4',
         timestamp: 1_790_580_002,
-        reported: { '0_1_2': { state: 'ONLINE', U1: '12.24', I1: '4.82' } },
+        reported: {
+          '0_1_2': {
+            state: 'ONLINE',
+            U1: '12.24',
+            I1: '4.82',
+            P1: '9999',
+            EP1: '9999',
+          },
+        },
       }),
     );
     expect(
@@ -380,6 +388,8 @@ describe('TelemetryService', () => {
     pointBindings = (await bindings.listForSource('MQTT', 'AUTO-QDF-4')).filter(
       (item) => item.sourcePointId === '0_1_2',
     );
+    // Raw device P/EP may be present and unreliable; automatic commissioning
+    // still creates only authoritative V/I source bindings.
     expect(pointBindings.map((item) => item.metric).sort()).toEqual(['CURRENT', 'VOLTAGE']);
   });
 

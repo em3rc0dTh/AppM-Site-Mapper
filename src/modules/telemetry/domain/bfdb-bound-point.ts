@@ -3,7 +3,7 @@ import {
   bindingPointIdsForWirePoint,
   detectBfdbWireProfile,
   expandBfdbWirePoint,
-  type BdfbWireProfile,
+  type BfdbWireProfile,
 } from './bfdb-wire-layout';
 import type { TelemetryBinding, TelemetrySample, NormalizedTelemetryMessage } from './entities';
 
@@ -36,7 +36,7 @@ export function buildBoundBfdbEquipmentPatches(
   // Runtime supplies the canonical physical location; never trust a stale
   // sourcePointId as evidence that a breaker belongs to that meter.
   physicalLocations?: ReadonlyMap<string, { readonly panelLabel: string; readonly position: number }>,
-  wireProfile?: BdfbWireProfile,
+  wireProfile?: BfdbWireProfile,
 ): readonly TelemetrySample[] {
   if (message.protocol !== 'BFDB') return [];
 

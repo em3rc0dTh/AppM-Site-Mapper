@@ -63,12 +63,7 @@ export function PasswordForm({
     >
       <label>
         <span>{forced ? t('temporary') : t('current')}</span>
-        <input
-          autoComplete="current-password"
-          name="currentPassword"
-          required
-          type="password"
-        />
+        <input autoComplete="current-password" name="currentPassword" required type="password" />
       </label>
 
       <label>

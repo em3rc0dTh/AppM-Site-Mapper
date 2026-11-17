@@ -604,6 +604,7 @@
       "email": "Email",
       "role": "Role",
       "temporaryPassword": "Temporary password",
+      "temporaryPasswordHelp": "The user must replace this password on the first sign-in.",
       "creating": "Creating…",
       "create": "Create user",
       "failed": "Unable to create the user.",

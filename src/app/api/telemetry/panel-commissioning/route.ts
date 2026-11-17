@@ -19,6 +19,12 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const METRICS = ['VOLTAGE', 'CURRENT', 'POWER', 'ENERGY'] as const;
+const FIELD_PANEL_PREFIX = new Map([
+  ['A3', '0_1'],
+  ['A2', '0_3'],
+  ['B3', '0_5'],
+  ['B2', '0_7'],
+] as const);
 
 async function inspect(panelId: string) {
   const topology = await createTopologyRepository();
@@ -90,9 +96,13 @@ async function inspect(panelId: string) {
     pointPrefix: prefix,
     capacity: panel.children.length,
     // This endpoint commissions one raw point per physical position.
-    // FIELD_DUAL_12 uses channel-qualified points and is owned by the
-    // automatic topology reconciler until a field-aware manual UI exists.
-    wireProfile: 'LEGACY_SINGLE_24' as const,
+    // Generic panels can therefore declare the legacy contract safely.
+    // A3/A2/B3/B2 field panels remain undeclared here so existing FIELD
+    // detection and the automatic channel-qualified reconciler stay untouched.
+    wireProfile:
+      FIELD_PANEL_PREFIX.get(panel.name as 'A3' | 'A2' | 'B3' | 'B2') === prefix
+        ? null
+        : ('LEGACY_SINGLE_24' as const),
     rows,
   };
 }
@@ -201,8 +211,12 @@ async function handlePOST(request: Request) {
       observedEquipmentId: row.breakerId,
       panelId: preview.panelId,
       position: row.position,
-      wireProfile: preview.wireProfile,
-      wireProfileSource: 'EXPLICIT_PANEL_POSITION_V1',
+      ...(preview.wireProfile
+        ? {
+            wireProfile: preview.wireProfile,
+            wireProfileSource: 'EXPLICIT_PANEL_POSITION_V1',
+          }
+        : {}),
     },
   }));
   const ids = await repository.commitBindings(bindings, [panel, breaker]);

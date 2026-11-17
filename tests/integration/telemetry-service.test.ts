@@ -164,6 +164,85 @@ describe('TelemetryService', () => {
     expect(service.latest(breakers[1]!.id)).toBeNull();
   });
 
+  it('keeps a declared legacy source LIVE when a compatibility payload also carries channel-2 fields', async () => {
+    const owner = device('device-declared-legacy', 'DEVICE-DECLARED-LEGACY');
+    const repository = new MemoryTopologyRepository([owner]);
+    const [breaker] = await createBdfbBreakers(repository, owner, 1);
+    if (!breaker) throw new Error('Expected breaker');
+    const panelId = breaker.parentEquipmentId;
+    if (!panelId) throw new Error('Expected panel');
+
+    const declared = (['VOLTAGE', 'CURRENT', 'POWER', 'ENERGY'] as const).map((metric) => ({
+      ...binding(
+        'declared-legacy-' + metric.toLowerCase(),
+        'CI-BFDB-LIMA',
+        'EQUIPMENT' as const,
+        breaker.id,
+        '0_1_1',
+        metric,
+      ),
+      attributes: {
+        commissioning: 'EXPLICIT_OPERATOR_CONFIRMATION',
+        wireProfile: 'LEGACY_SINGLE_24',
+        wireProfileSource: 'EXPLICIT_PANEL_POSITION_V1',
+      },
+    }));
+    const bindings = new MemoryTelemetryBindingRepository([
+      binding('declared-legacy-source', 'CI-BFDB-LIMA', 'EQUIPMENT', panelId),
+      ...declared,
+    ]);
+    const service = new TelemetryService(
+      repository,
+      new TelemetryHub(10),
+      { topicPrefix: 'data/dev/', maxPayloadBytes: 8192 },
+      {},
+      bindings,
+    );
+
+    const result = await service.ingest(
+      'data/dev/CI-BFDB-LIMA',
+      new TextEncoder().encode(
+        JSON.stringify({
+          method: 'update',
+          sn: 'CI-BFDB-LIMA',
+          msgid: 900001,
+          timestamp: 1_790_580_000,
+          reported: {
+            '0_1_1': {
+              state: 'ONLINE',
+              U1: 13.79,
+              U2: 0,
+              I1: 9.91,
+              I2: 0,
+              P1: 136.72,
+              P2: 0,
+              EP1: 0.4155,
+              EP2: 0,
+            },
+          },
+        }),
+      ),
+      '2026-11-16T21:30:00.000Z',
+    );
+
+    expect(result.ok).toBe(true);
+    expect(service.latest(panelId)).toMatchObject({
+      wireProfile: 'LEGACY_SINGLE_24',
+      wireProfileSource: 'DECLARED',
+      wireProfileMismatch: true,
+    });
+    expect(service.latest(breaker.id)).toMatchObject({
+      sourceIdentity: 'CI-BFDB-LIMA',
+      sourcePointId: '0_1_1',
+      reported: {
+        voltageV: { value: 13.79, unit: 'V' },
+        currentA: { value: 9.91, unit: 'A' },
+        powerW: { value: 136.72, unit: 'W' },
+        energyKwh: { value: 0.4155, unit: 'kWh' },
+      },
+    });
+  });
+
   it('auto-reconciles BFDB metrics only after the matching breaker exists in Site Mapper', async () => {
     const bdfb: DeviceNode = {
       ...device('auto-qdf-4', 'AUTO-QDF-4'),

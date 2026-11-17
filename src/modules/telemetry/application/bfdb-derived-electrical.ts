@@ -25,10 +25,7 @@ function finite(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
-function scalar(
-  raw: unknown,
-  expectedUnit: string,
-): { value: number; observedAt?: string } | null {
+function scalar(raw: unknown, expectedUnit: string): { value: number; observedAt?: string } | null {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const record = raw as Record<string, unknown>;
   if (record.unit !== expectedUnit) return null;
@@ -135,11 +132,13 @@ export class BfdbDerivedElectricalEngine {
       const observedAt =
         voltage?.observedAt ?? current?.observedAt ?? sample.sourceObservedAt ?? sample.receivedAt;
       const voltageMetric =
-        voltage && (!current?.observedAt || !voltage.observedAt || voltage.observedAt === observedAt)
+        voltage &&
+        (!current?.observedAt || !voltage.observedAt || voltage.observedAt === observedAt)
           ? { value: voltage.value, observedAt }
           : undefined;
       const currentMetric =
-        current && (!voltage?.observedAt || !current.observedAt || current.observedAt === observedAt)
+        current &&
+        (!voltage?.observedAt || !current.observedAt || current.observedAt === observedAt)
           ? { value: current.value, observedAt }
           : undefined;
       const derived = this.derive(
@@ -196,7 +195,7 @@ export class BfdbDerivedElectricalEngine {
     ) {
       const gapMs = receivedAtMs - previous.receivedAtMs;
       if (gapMs <= this.maxGapMs && previous.powerW !== undefined) {
-        const deltaKwh = ((previous.powerW + powerW.value) / 2) * gapMs / 3_600_000_000;
+        const deltaKwh = (((previous.powerW + powerW.value) / 2) * gapMs) / 3_600_000_000;
         if (Number.isFinite(deltaKwh)) {
           energyKwh += deltaKwh;
           integrated = true;
@@ -252,11 +251,7 @@ export class BfdbDerivedElectricalEngine {
         const key = this.key(sample.sourceIdentity, sample.targetId);
         if (!allowed.has(key)) continue;
         const energy = scalar(sample.reported.energyKwh, 'kWh');
-        if (
-          !energy ||
-          !isDerived(sample.reported.energyKwh, BFDB_DERIVED_ENERGY_FORMULA)
-        )
-          continue;
+        if (!energy || !isDerived(sample.reported.energyKwh, BFDB_DERIVED_ENERGY_FORMULA)) continue;
         const power = scalar(sample.reported.powerW, 'W');
         const receivedAtMs = Date.parse(sample.receivedAt);
         if (!Number.isFinite(receivedAtMs)) continue;

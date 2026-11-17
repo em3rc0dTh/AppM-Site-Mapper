@@ -6,21 +6,14 @@ import {
   BfdbDerivedElectricalEngine,
 } from '@/modules/telemetry/application/bfdb-derived-electrical';
 import type { TelemetryHistoryWriter } from '@/modules/telemetry/application/telemetry-history-writer';
-import type {
-  BreakerTelemetryReading,
-  TelemetrySample,
-} from '@/modules/telemetry/domain/entities';
+import type { BreakerTelemetryReading, TelemetrySample } from '@/modules/telemetry/domain/entities';
 
 const sourceIdentity = '26092403950002';
 const breakerId = 'breaker-b3-01';
 const t0 = '2026-11-17T15:30:00.000Z';
 const t60 = '2026-11-17T15:31:00.000Z';
 
-function reading(
-  voltageV: number,
-  currentA: number,
-  receivedAt: string,
-): BreakerTelemetryReading {
+function reading(voltageV: number, currentA: number, receivedAt: string): BreakerTelemetryReading {
   return {
     deviceId: 'qdf5',
     sourceIdentity,

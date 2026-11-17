@@ -252,10 +252,7 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
       { topicPrefix, maxPayloadBytes },
       {
         configuredBindings: configuredBindings(process.env.MQTT_SOURCE_DEVICE_MAP),
-        derivedEnergyMaxGapMs: positiveInt(
-          process.env.BFDB_DERIVED_ENERGY_MAX_GAP_MS,
-          120_000,
-        ),
+        derivedEnergyMaxGapMs: positiveInt(process.env.BFDB_DERIVED_ENERGY_MAX_GAP_MS, 120_000),
       },
       bindingRepository,
       historyStore ?? undefined,
@@ -437,12 +434,7 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
                 const point = findBfdbWirePointByBindingId(sourcePointId, freshPoints, wireProfile);
                 if (!point) continue;
                 const metrics: Record<string, { value: number }> = {};
-                for (const normalized of [
-                  'voltageV',
-                  'currentA',
-                  'powerW',
-                  'energyKwh',
-                ] as const) {
+                for (const normalized of ['voltageV', 'currentA', 'powerW', 'energyKwh'] as const) {
                   // Forward the canonical Equipment metric. In BFDB mode power
                   // and energy may be Site Mapper-derived and must never be
                   // overwritten by untrusted raw P/EP fields from the gateway.

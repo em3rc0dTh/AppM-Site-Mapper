@@ -45,7 +45,9 @@ function finiteNumber(value: unknown): number | null {
 
 function metric(value: unknown, observedAt: string): TelemetryMetricValue | undefined {
   const numeric = finiteNumber(value);
-  return numeric === null ? undefined : { value: numeric, observedAt };
+  return numeric === null
+    ? undefined
+    : { value: numeric, observedAt, origin: 'SOURCE', quality: 'GOOD' };
 }
 
 function breakerMap(presentation: BdfbPresentation): ReadonlyMap<string, ResolvedBreaker> {

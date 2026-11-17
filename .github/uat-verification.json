@@ -1,5 +1,5 @@
 {
-  "campaign": "UAT-LAB-2026-11-17-R3",
+  "campaign": "UAT-LAB-2026-11-17-R4",
   "application_baseline": "c701a60b604756a8fc1ad112009d086141a0aaff",
   "environment": "disposable GitHub Actions LAB; synthetic sources only",
   "workflows": [

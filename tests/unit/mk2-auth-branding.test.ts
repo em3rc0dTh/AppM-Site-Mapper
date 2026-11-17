@@ -30,7 +30,7 @@ describe('Mk2 authentication branding and recovery', () => {
   it('requires confirmation for the new password in the shared password form', () => {
     const form = source('src/components/settings/password-form.tsx');
     expect(form).toContain('name="confirmPassword"');
-    expect(form).toContain("newPassword !== confirmPassword");
+    expect(form).toContain('newPassword !== confirmPassword');
     expect(form).toContain("forced ? t('temporary') : t('current')");
   });
 

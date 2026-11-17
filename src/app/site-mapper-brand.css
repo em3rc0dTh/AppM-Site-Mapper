@@ -226,8 +226,9 @@
 
 /* Login hero identity. */
 .sm-brand--hero .sm-brand-lockup {
+  flex-direction: row-reverse;
   justify-content: center;
-  gap: 19px;
+  gap: 24px;
 }
 
 .sm-brand--hero .sm-brand-mark {

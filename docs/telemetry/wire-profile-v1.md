@@ -95,14 +95,13 @@ bindings require no change and retain the pre-v1 detection path.
 
 The release gate must preserve all of the following:
 
-| Scenario                                           | Required result                                                  |
-| -------------------------------------------------- | ---------------------------------------------------------------- |
-| Existing undeclared binding                        | Existing detection behavior                                      |
-| Declared LEGACY + dual-field compatibility payload | Breaker LIVE                                                      |
-| FIELD A3 / slave 1                                 | LIVE                                                              |
-| FIELD A2 / slave 3                                 | LIVE                                                              |
-| FIELD B3 / slave 5                                 | LIVE                                                              |
-| FIELD B2 / slave 7                                 | LIVE                                                              |
-| FIELD stale cross-panel binding                    | Rejected                                                          |
-| Conflicting profile declarations                   | Diagnostic conflict; no silent choice                             |
-| HTTP/Mongo golden path                             | MQTT -> LIVE -> history -> Modbus -> browser -> restart -> audit |
+- Existing undeclared binding -> existing detection behavior.
+- Declared LEGACY + dual-field compatibility payload -> breaker LIVE.
+- FIELD A3 / slave 1 -> LIVE.
+- FIELD A2 / slave 3 -> LIVE.
+- FIELD B3 / slave 5 -> LIVE.
+- FIELD B2 / slave 7 -> LIVE.
+- FIELD stale cross-panel binding -> rejected.
+- Conflicting profile declarations -> diagnostic conflict; no silent choice.
+- HTTP/Mongo golden path:
+  MQTT -> LIVE -> history -> Modbus -> browser -> restart -> audit.

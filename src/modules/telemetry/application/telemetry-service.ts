@@ -7,6 +7,7 @@ import type { TelemetryHistoryWriter } from '@/modules/telemetry/application/tel
 import { BdfbProjectionService } from '@/modules/power/application/bdfb-projection-service';
 import { buildBfdbBreakerReadings } from '@/modules/telemetry/domain/bfdb';
 import { buildBoundBfdbEquipmentPatches } from '@/modules/telemetry/domain/bfdb-bound-point';
+import { resolveBdfbWireProfile } from '@/modules/telemetry/domain/bfdb-wire-layout';
 import type {
   TelemetryBinding,
   TelemetrySample,
@@ -163,6 +164,11 @@ export class TelemetryService {
       if (created.length) bindings = await this.bindingsFor(normalized.value.sourceIdentity);
     }
 
+    const wireProfileResolution =
+      normalized.value.protocol === 'BFDB'
+        ? resolveBdfbWireProfile(normalized.value.reported, bindings)
+        : null;
+
     if (target.type === 'DEVICE' || target.type === 'EQUIPMENT') {
       const projection = await new BdfbProjectionService(this.topologyRepository).get(ownerId);
       if (projection) {
@@ -180,6 +186,16 @@ export class TelemetryService {
       reported: normalized.value.reported,
       receivedAt: normalized.value.receivedAt,
       protocol: normalized.value.protocol,
+      ...(wireProfileResolution
+        ? {
+            wireProfile: wireProfileResolution.effective,
+            wireProfileSource: wireProfileResolution.source,
+            ...(wireProfileResolution.mismatch ? { wireProfileMismatch: true } : {}),
+            ...(wireProfileResolution.declarationConflict
+              ? { wireProfileDeclarationConflict: true }
+              : {}),
+          }
+        : {}),
       ...(normalized.value.messageId ? { messageId: normalized.value.messageId } : {}),
       ...(normalized.value.sourceObservedAt
         ? { sourceObservedAt: normalized.value.sourceObservedAt }
@@ -261,6 +277,7 @@ export class TelemetryService {
           bindings,
           verified,
           physicalLocations,
+          wireProfileResolution?.effective,
         )) {
           this.hub.publish(own);
           void this.captureHistory(own);

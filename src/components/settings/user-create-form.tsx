@@ -61,6 +61,7 @@ export function UserCreateForm() {
         {t('temporaryPassword')}
         <input minLength={12} name="temporaryPassword" required type="password" />
       </label>
+      <small>{t('temporaryPasswordHelp')}</small>
       <button disabled={busy} type="submit">
         {busy ? t('creating') : t('create')}
       </button>

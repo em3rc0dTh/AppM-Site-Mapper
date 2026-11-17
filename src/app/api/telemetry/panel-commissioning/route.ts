@@ -89,6 +89,10 @@ async function inspect(panelId: string) {
     sourceIdentity: panel.serialNumber,
     pointPrefix: prefix,
     capacity: panel.children.length,
+    // This endpoint commissions one raw point per physical position.
+    // FIELD_DUAL_12 uses channel-qualified points and is owned by the
+    // automatic topology reconciler until a field-aware manual UI exists.
+    wireProfile: 'LEGACY_SINGLE_24' as const,
     rows,
   };
 }
@@ -197,6 +201,8 @@ async function handlePOST(request: Request) {
       observedEquipmentId: row.breakerId,
       panelId: preview.panelId,
       position: row.position,
+      wireProfile: preview.wireProfile,
+      wireProfileSource: 'EXPLICIT_PANEL_POSITION_V1',
     },
   }));
   const ids = await repository.commitBindings(bindings, [panel, breaker]);
@@ -204,6 +210,7 @@ async function handlePOST(request: Request) {
     ok: true,
     breakerId: row.breakerId,
     point: row.point,
+    wireProfile: preview.wireProfile,
     created: bindings
       .filter((binding) => ids.includes(binding.id))
       .map((binding) => binding.metric),

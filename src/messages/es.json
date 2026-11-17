@@ -190,23 +190,35 @@
       "eyebrow": "Identidad / acceso seguro",
       "title": "Iniciar sesión",
       "description": "Autentícate para entrar al espacio operativo de Site Mapper.",
-      "email": "Correo electrónico",
+      "email": "Usuario",
+      "userPlaceholder": "usuario@empresa.com",
       "password": "Contraseña",
+      "forgotPassword": "¿Olvidaste tu contraseña?",
       "submit": "INICIAR SESIÓN",
       "submitting": "Estableciendo sesión segura…",
       "connectionError": "No hay conexión disponible. Inténtalo nuevamente.",
-      "credentialsError": "Correo electrónico o contraseña incorrectos.",
+      "credentialsError": "Usuario o contraseña incorrectos.",
       "loginError": "No se pudo iniciar sesión. Inténtalo nuevamente.",
-      "mfaCode": "Código del autenticador o de recuperación",
-      "mfaNeeded": "Introduce el código de seis dígitos o un código de recuperación guardado.",
+      "mfaCode": "MFA",
+      "mfaNeeded": "Introduce el código MFA de seis dígitos o un código de recuperación guardado.",
       "mfaEnrollmentRequired": "Se requiere activar MFA. Contacta al administrador."
     },
     "changePassword": {
       "eyebrow": "Identidad / política de credenciales",
-      "title": "Cambiar contraseña",
-      "forcedDescription": "Reemplaza la contraseña temporal antes de habilitar el acceso operativo.",
+      "title": "Crear nueva contraseña",
+      "forcedDescription": "Primer acceso: reemplaza la contraseña temporal entregada por el SuperAdmin antes de entrar a SiteMapper.",
       "description": "Actualiza tu contraseña y revoca las sesiones existentes.",
-      "signedInAs": "Sesión iniciada como"
+      "signedInAs": "Usuario"
+    },
+    "forgotPassword": {
+      "eyebrow": "Identidad / recuperación",
+      "title": "Recuperar acceso",
+      "description": "La recuperación de contraseña es administrada por el SuperAdmin. SiteMapper no envía enlaces de recuperación por correo.",
+      "stepOne": "Solicita al SuperAdmin una nueva contraseña temporal.",
+      "stepTwo": "Inicia sesión con tu usuario, la contraseña temporal y MFA si tu cuenta ya lo usa.",
+      "stepThree": "SiteMapper te llevará automáticamente a crear una nueva contraseña.",
+      "note": "La contraseña temporal solo sirve para recuperar el acceso. Al cambiarla se revocan las sesiones anteriores.",
+      "back": "VOLVER A INICIAR SESIÓN"
     },
     "mfa": {
       "title": "Autenticación multifactor (TOTP)",
@@ -568,12 +580,17 @@
   "forms": {
     "password": {
       "current": "Contraseña actual",
-      "next": "Contraseña nueva",
+      "temporary": "Contraseña temporal",
+      "next": "Nueva contraseña",
+      "confirm": "Confirmar nueva contraseña",
       "changing": "Cambiando…",
       "submit": "Cambiar contraseña",
+      "setPassword": "CREAR NUEVA CONTRASEÑA",
       "help": "Cambiar la contraseña revoca todas las sesiones activas, incluida esta.",
+      "forcedHelp": "Usa la contraseña temporal una sola vez. La nueva contraseña debe tener al menos 12 caracteres.",
       "minLength": "La contraseña debe tener al menos 12 caracteres.",
-      "failed": "No se pudo cambiar la contraseña. Revisa la contraseña actual e inténtalo nuevamente."
+      "mismatch": "Las nuevas contraseñas no coinciden.",
+      "failed": "No se pudo cambiar la contraseña. Revisa la contraseña actual o temporal e inténtalo nuevamente."
     },
     "profile": {
       "displayName": "Nombre visible",
@@ -609,7 +626,13 @@
       "failed": "No se pudo actualizar este usuario.",
       "standard": "Estándar",
       "admin": "Administrador",
-      "superadmin": "Superadministrador"
+      "superadmin": "Superadministrador",
+      "resetPassword": "Restablecer",
+      "temporaryPassword": "Contraseña temporal",
+      "assignTemporary": "Asignar temporal",
+      "resetting": "Restableciendo…",
+      "resetHelp": "Revoca las sesiones del usuario y obliga a cambiar la contraseña en el próximo acceso.",
+      "resetFailed": "No se pudo restablecer la contraseña de este usuario."
     },
     "import": {
       "title": "Importación de datos",

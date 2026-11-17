@@ -2,6 +2,7 @@ name: BFDB SNMP Config4 Docker wiring
 on:
   pull_request:
     paths:
+      - '.github/uat-verification.json'
       - 'infra/lab/bfdb-snmp/**'
       - 'scripts/lab/bfdb-snmp-config4.sh'
       - 'docs/operations/bfdb-snmp-compose-lab.md'

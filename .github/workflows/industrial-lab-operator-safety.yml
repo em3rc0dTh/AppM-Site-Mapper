@@ -7,6 +7,7 @@ on:
       - 'release/**'
   pull_request:
     paths:
+      - '.github/uat-verification.json'
       - 'scripts/telemetry/**'
       - 'infra/lab/bfdb-snmp/**'
       - 'tests/python/**'

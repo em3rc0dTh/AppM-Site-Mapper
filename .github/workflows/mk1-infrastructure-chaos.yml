@@ -2,6 +2,7 @@ name: MK1 infrastructure fault-injection certification
 on:
   pull_request:
     paths:
+      - '.github/uat-verification.json'
       - 'tests/integration/mk1-mqtt-infrastructure-chaos.test.ts'
       - 'tests/integration/mk1-mongo-infrastructure-chaos.test.ts'
       - 'tests/integration/mk1-spool-infrastructure-chaos.test.ts'

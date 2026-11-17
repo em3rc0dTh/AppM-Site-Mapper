@@ -1,6 +1,10 @@
 name: Visual parity capture
 
 on:
+  pull_request:
+    paths:
+      - '.github/uat-verification.json'
+      - '.github/workflows/visual-parity.yml'
   workflow_dispatch:
 
 permissions:

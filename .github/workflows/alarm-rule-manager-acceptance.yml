@@ -1,6 +1,10 @@
 name: Alarm Rule Manager MK1 acceptance
 
 on:
+  pull_request:
+    paths:
+      - '.github/uat-verification.json'
+      - '.github/workflows/alarm-rule-manager-acceptance.yml'
   push:
     branches:
       - feat/alarm-rule-manager-dc48v-mk1

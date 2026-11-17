@@ -1,6 +1,10 @@
 name: BFDB MQTT transport integration
 
 on:
+  pull_request:
+    paths:
+      - '.github/uat-verification.json'
+      - '.github/workflows/bfdb-mqtt-integration.yml'
   workflow_dispatch:
 
 permissions:

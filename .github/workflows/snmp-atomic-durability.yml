@@ -2,6 +2,7 @@ name: SNMP atomic TimescaleDB integration
 on:
   pull_request:
     paths:
+      - '.github/uat-verification.json'
       - 'infra/telemetry-store/**'
       - 'src/modules/telemetry/**'
       - 'tests/unit/snmp-chaos-stress.test.ts'

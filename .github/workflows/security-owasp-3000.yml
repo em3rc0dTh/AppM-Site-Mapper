@@ -6,6 +6,7 @@ on:
       - security/site-mapper-3000-owasp-hardening
   pull_request:
     paths:
+      - '.github/uat-verification.json'
       - '.github/workflows/security-owasp-3000.yml'
       - 'src/modules/identity/**'
       - 'src/shared/http/**'

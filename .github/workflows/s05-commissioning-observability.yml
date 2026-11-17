@@ -25,6 +25,7 @@ on:
       - .github/workflows/s05-commissioning-observability.yml
   pull_request:
     paths:
+      - '.github/uat-verification.json'
       - src/app/api/industrial/commissioning/route.ts
       - src/components/industrial/commissioning-console.tsx
       - src/components/industrial/commissioning-observability.tsx

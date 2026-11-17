@@ -2,6 +2,7 @@ name: SNMP adversarial security certification
 on:
   pull_request:
     paths:
+      - '.github/uat-verification.json'
       - 'src/app/api/telemetry/snmp/**'
       - 'src/modules/telemetry/**'
       - 'infra/snmp-collector/**'

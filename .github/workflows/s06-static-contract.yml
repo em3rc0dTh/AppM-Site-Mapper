@@ -3,6 +3,7 @@ name: S06 static contract (no deployment)
 on:
   pull_request:
     paths:
+      - '.github/uat-verification.json'
       - 'docker-compose.field-lan.yml'
       - 'docker-compose.lab-remote.yml'
       - 'infra/field/caddy/**'

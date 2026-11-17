@@ -4,6 +4,7 @@ on:
     branches: [main, security/snmp-chaos-stress-20261021]
   pull_request:
     paths:
+      - '.github/uat-verification.json'
       - 'tests/unit/snmp-chaos-stress.test.ts'
       - 'infra/snmp-collector/**'
       - 'src/modules/telemetry/**'

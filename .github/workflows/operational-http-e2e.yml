@@ -29,6 +29,7 @@ on:
       - 'scripts/ci/modbus-tcp-operational.mjs'
   pull_request:
     paths:
+      - '.github/uat-verification.json'
       - '.github/workflows/operational-http-e2e.yml'
       - 'docker-compose.telemetry.yml'
       - 'infra/telemetry-store/**'

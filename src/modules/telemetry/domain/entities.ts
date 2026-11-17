@@ -19,6 +19,11 @@ export interface TelemetryBinding extends DomainEntity {
 export interface TelemetryMetricValue {
   readonly value: number;
   readonly observedAt: string;
+  /** Measurement provenance. SOURCE is device-reported; DERIVED is computed by Site Mapper. */
+  readonly origin?: 'SOURCE' | 'DERIVED';
+  /** Stable formula identifier for auditable derived metrics. */
+  readonly formula?: string;
+  readonly quality?: 'GOOD' | 'ESTIMATED' | 'PARTIAL';
 }
 
 export interface BreakerTelemetryMetrics {

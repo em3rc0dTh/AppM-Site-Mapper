@@ -43,10 +43,10 @@ export interface TelemetrySourceDiagnostic {
   readonly pointCount: number;
   readonly mappedBreakerCount: number;
   readonly unmappedPointCount: number;
-  readonly wireProfile: 'FIELD_DUAL_12' | 'LEGACY_SINGLE_24' | null;
-  readonly wireProfileSource: 'DECLARED' | 'DETECTED' | null;
-  readonly wireProfileMismatch: boolean;
-  readonly wireProfileDeclarationConflict: boolean;
+  readonly wireProfile?: 'FIELD_DUAL_12' | 'LEGACY_SINGLE_24' | null;
+  readonly wireProfileSource?: 'DECLARED' | 'DETECTED' | null;
+  readonly wireProfileMismatch?: boolean;
+  readonly wireProfileDeclarationConflict?: boolean;
   readonly freshness: 'LIVE' | 'STALE' | 'OFFLINE';
 }
 

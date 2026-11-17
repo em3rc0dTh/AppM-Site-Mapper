@@ -1,4 +1,15 @@
+import type { TelemetryBinding } from './entities';
+
 export type BfdbWireProfile = 'FIELD_DUAL_12' | 'LEGACY_SINGLE_24';
+
+export interface BfdbWireProfileResolution {
+  readonly effective: BfdbWireProfile;
+  readonly detected: BfdbWireProfile;
+  readonly declared: BfdbWireProfile | null;
+  readonly source: 'DECLARED' | 'DETECTED';
+  readonly mismatch: boolean;
+  readonly declarationConflict: boolean;
+}
 export type BfdbWireChannel = 1 | 2;
 export type BfdbPanelLabel = 'A3' | 'A2' | 'B3' | 'B2';
 
@@ -168,4 +179,50 @@ export function findBfdbWirePointByBindingId(
     }
   }
   return null;
+}
+
+function asBfdbWireProfile(value: unknown): BfdbWireProfile | null {
+  return value === 'FIELD_DUAL_12' || value === 'LEGACY_SINGLE_24' ? value : null;
+}
+
+/**
+ * Resolve a source profile without changing existing behavior:
+ * - existing bindings without a declaration still use payload detection;
+ * - one explicit declaration becomes authoritative;
+ * - conflicting declarations fail back to payload detection and are surfaced
+ *   diagnostically instead of silently picking one.
+ */
+export function resolveBfdbWireProfile(
+  reported: Readonly<Record<string, unknown>>,
+  bindings: readonly TelemetryBinding[] = [],
+): BfdbWireProfileResolution {
+  const detected = detectBfdbWireProfile(reported);
+  const declaredProfiles = new Set<BfdbWireProfile>();
+
+  for (const binding of bindings) {
+    if (binding.lifecycle !== 'ACTIVE' || binding.protocol !== 'MQTT') continue;
+    const declared = asBfdbWireProfile(binding.attributes?.wireProfile);
+    if (declared) declaredProfiles.add(declared);
+  }
+
+  if (declaredProfiles.size === 1) {
+    const declared = [...declaredProfiles][0]!;
+    return {
+      effective: declared,
+      detected,
+      declared,
+      source: 'DECLARED',
+      mismatch: declared !== detected,
+      declarationConflict: false,
+    };
+  }
+
+  return {
+    effective: detected,
+    detected,
+    declared: null,
+    source: 'DETECTED',
+    mismatch: false,
+    declarationConflict: declaredProfiles.size > 1,
+  };
 }

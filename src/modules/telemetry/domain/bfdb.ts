@@ -11,6 +11,7 @@ import {
   detectBfdbWireProfile,
   expandBfdbWirePoint,
   isFieldStatusOnlyPoint,
+  type BfdbWireProfile,
 } from '@/modules/telemetry/domain/bfdb-wire-layout';
 import { normalizePowerToWatts } from '@/modules/telemetry/domain/power-unit-contract';
 
@@ -119,6 +120,7 @@ export function buildBfdbBreakerReadings(
   presentation: BdfbPresentation,
   message: NormalizedTelemetryMessage,
   bindings: readonly TelemetryBinding[],
+  wireProfile?: BfdbWireProfile,
 ): BdfbBreakerBuildResult {
   if (message.protocol !== 'BFDB') return { readings: [], unmappedPointIds: [] };
 
@@ -126,7 +128,7 @@ export function buildBfdbBreakerReadings(
   const byBreaker = breakerMap(presentation);
   const readings: BreakerTelemetryReading[] = [];
   const unmappedPointIds: string[] = [];
-  const profile = detectBfdbWireProfile(message.reported);
+  const profile = wireProfile ?? detectBfdbWireProfile(message.reported);
 
   for (const [rawPointId, rawPoint] of Object.entries(message.reported)) {
     if (!isRecord(rawPoint)) {

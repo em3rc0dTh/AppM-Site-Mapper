@@ -53,6 +53,34 @@ describe('field breaker latest-state binding guard', () => {
     });
   });
 
+  it('honors an explicit legacy profile for a dual-field compatibility payload', () => {
+    const patches = buildBoundBfdbEquipmentPatches(
+      message({
+        '0_1_1': {
+          U1: '13.79',
+          U2: '0.00',
+          I1: '9.91',
+          I2: '0.00',
+          P1: '136.72',
+          P2: '0.00',
+          EP1: '0.4155',
+          EP2: '0.00',
+          state: 'ONLINE',
+        },
+      }),
+      metrics('0_1_1'),
+      eligible,
+      physical,
+      'LEGACY_SINGLE_24',
+    );
+    expect(patches).toHaveLength(1);
+    expect(patches[0]?.sourceIdentity).toBe('TEST-QDF');
+    expect(patches[0]?.reported).toMatchObject({
+      voltageV: { value: 13.79 },
+      currentA: { value: 9.91 },
+    });
+  });
+
   it('rejects channel 2 when the breaker occupies panel position 1', () => {
     const patches = buildBoundBfdbEquipmentPatches(
       message({ '0_5_1': { U1: '14.29', U2: '14.30', I1: '0.00', I2: '2.00' } }),

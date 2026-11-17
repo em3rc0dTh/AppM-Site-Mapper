@@ -56,10 +56,10 @@ await page.getByRole('button', { name: 'SIGN IN' }).click();
 await page
   .waitForURL(/\/(?:workspace|network|topology|blueprint|rack|device|power)(?:\/|\?|$)/)
   .catch(async (error) => {
-  console.error('Login failure', await page.locator('.auth-error').allTextContents());
-  await snap('00-login-failure');
-  throw error;
-});
+    console.error('Login failure', await page.locator('.auth-error').allTextContents());
+    await snap('00-login-failure');
+    throw error;
+  });
 await page.waitForTimeout(450);
 await snap('14-operations');
 

@@ -1,11 +1,11 @@
 import type { TelemetryBinding } from './entities';
 
-export type BdfbWireProfile = 'FIELD_DUAL_12' | 'LEGACY_SINGLE_24';
+export type BfdbWireProfile = 'FIELD_DUAL_12' | 'LEGACY_SINGLE_24';
 
-export interface BdfbWireProfileResolution {
-  readonly effective: BdfbWireProfile;
-  readonly detected: BdfbWireProfile;
-  readonly declared: BdfbWireProfile | null;
+export interface BfdbWireProfileResolution {
+  readonly effective: BfdbWireProfile;
+  readonly detected: BfdbWireProfile;
+  readonly declared: BfdbWireProfile | null;
   readonly source: 'DECLARED' | 'DETECTED';
   readonly mismatch: boolean;
   readonly declarationConflict: boolean;
@@ -182,7 +182,7 @@ export function findBfdbWirePointByBindingId(
 }
 
 
-function asBdfbWireProfile(value: unknown): BdfbWireProfile | null {
+function asBfdbWireProfile(value: unknown): BfdbWireProfile | null {
   return value === 'FIELD_DUAL_12' || value === 'LEGACY_SINGLE_24' ? value : null;
 }
 
@@ -193,16 +193,16 @@ function asBdfbWireProfile(value: unknown): BdfbWireProfile | null {
  * - conflicting declarations fail back to payload detection and are surfaced
  *   diagnostically instead of silently picking one.
  */
-export function resolveBdfbWireProfile(
+export function resolveBfdbWireProfile(
   reported: Readonly<Record<string, unknown>>,
   bindings: readonly TelemetryBinding[] = [],
-): BdfbWireProfileResolution {
+): BfdbWireProfileResolution {
   const detected = detectBfdbWireProfile(reported);
-  const declaredProfiles = new Set<BdfbWireProfile>();
+  const declaredProfiles = new Set<BfdbWireProfile>();
 
   for (const binding of bindings) {
     if (binding.lifecycle !== 'ACTIVE' || binding.protocol !== 'MQTT') continue;
-    const declared = asBdfbWireProfile(binding.attributes?.wireProfile);
+    const declared = asBfdbWireProfile(binding.attributes?.wireProfile);
     if (declared) declaredProfiles.add(declared);
   }
 

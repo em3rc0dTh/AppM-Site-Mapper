@@ -73,6 +73,62 @@ describe('AuthService', () => {
     await expect(service.resolveSession(login.value.token)).resolves.toBeNull();
   });
 
+  it('lets the superadmin recover a user with a temporary password and revokes old sessions', async () => {
+    const repository = new MemoryIdentityRepository();
+    const throttle = new MemoryAuthThrottle();
+    const service = new AuthService(repository, throttle);
+
+    const admin = await service.bootstrapSuperadmin(
+      'admin@example.com',
+      'superadmin initial password',
+      'Admin',
+    );
+    if (!admin.ok) throw new Error('Expected bootstrap success');
+
+    const created = await service.createUser(admin.value, {
+      email: 'operator@example.com',
+      displayName: 'Operator',
+      role: 'STANDARD',
+      temporaryPassword: 'first temporary password',
+    });
+    if (!created.ok) throw new Error('Expected user creation');
+
+    const initialLogin = await service.authenticate(
+      'operator@example.com',
+      'first temporary password',
+      'operator-initial',
+    );
+    if (!initialLogin.ok) throw new Error('Expected temporary-password login');
+
+    const reset = await service.resetManagedUserPassword(
+      admin.value,
+      created.value.id,
+      'replacement temporary password',
+    );
+    expect(reset.ok).toBe(true);
+    if (!reset.ok) throw new Error('Expected managed password reset');
+    expect(reset.value.mustChangePassword).toBe(true);
+
+    await expect(service.resolveSession(initialLogin.value.token)).resolves.toBeNull();
+    await expect(
+      service.authenticate(
+        'operator@example.com',
+        'first temporary password',
+        'operator-old-password',
+      ),
+    ).resolves.toEqual({ ok: false, error: 'INVALID_CREDENTIALS' });
+
+    const recoveredLogin = await service.authenticate(
+      'operator@example.com',
+      'replacement temporary password',
+      'operator-recovered',
+    );
+    expect(recoveredLogin.ok).toBe(true);
+    if (recoveredLogin.ok) {
+      expect(recoveredLogin.value.user.mustChangePassword).toBe(true);
+    }
+  });
+
   it('renews validated activity and rejects a session idle for 30 minutes', async () => {
     const repository = new MemoryIdentityRepository();
     const throttle = new MemoryAuthThrottle();

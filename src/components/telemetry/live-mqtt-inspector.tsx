@@ -80,10 +80,15 @@ function panelNames(sample: TelemetrySample | null): string[] {
   ].sort((left, right) => left.localeCompare(right, undefined, { numeric: true }));
 }
 
-function metric(metricValue: BreakerTelemetryReading['metrics']['voltageV']) {
+function metric(
+  metricValue: BreakerTelemetryReading['metrics']['voltageV'],
+  unit: string,
+  scale = 1,
+) {
   if (!metricValue) return null;
   return {
-    value: metricValue.value,
+    value: metricValue.value * scale,
+    unit,
     observedAt: metricValue.observedAt,
     ...(metricValue.origin ? { origin: metricValue.origin } : {}),
     ...(metricValue.formula ? { formula: metricValue.formula } : {}),
@@ -115,9 +120,10 @@ function normalizedPayload(
       position: reading.position,
       breaker: reading.breakerLabel,
       rawPointId: reading.rawPointId,
-      voltageV: metric(reading.metrics.voltageV),
-      currentA: metric(reading.metrics.currentA),
-      powerW: metric(reading.metrics.powerW),
+      voltageV: metric(reading.metrics.voltageV, 'V'),
+      currentA: metric(reading.metrics.currentA, 'A'),
+      powerKw: metric(reading.metrics.powerW, 'kW', 0.001),
+      energyKwh: metric(reading.metrics.energyKwh, 'kWh'),
       ...(reading.state ? { state: reading.state } : {}),
     })),
   };
@@ -396,7 +402,7 @@ export function LiveMqttInspector() {
                   <span className={styles.panelGlyph} aria-hidden="true">◇</span>
                   <div>
                     <strong>Site Mapper · transformación</strong>
-                    <small>V/A fuente · P derivado · E omitido en esta vista</small>
+                    <small>V/A fuente · kW/kWh derivados por Site Mapper</small>
                   </div>
                 </div>
                 <button onClick={() => void copy(normalized)}>Copiar</button>
@@ -411,8 +417,8 @@ export function LiveMqttInspector() {
         <div className={styles.rules}>
           <span><b>V</b> fuente primaria</span>
           <span><b>A</b> fuente primaria</span>
-          <span><b>P</b> calculado V × A</span>
-          <span><b>E</b> no mostrado</span>
+          <span><b>kW</b> derivado V × A</span>
+          <span><b>kWh</b> energía derivada Site Mapper</span>
         </div>
         <button className={styles.pause} onClick={() => setPaused((value) => !value)}>
           {paused ? '▶ Reanudar' : 'Ⅱ Pausar'}

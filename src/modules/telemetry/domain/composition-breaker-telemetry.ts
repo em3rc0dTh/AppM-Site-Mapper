@@ -62,6 +62,32 @@ function numericMetric(value: unknown, expectedUnit: string): number | undefined
   return Number.isFinite(number) ? number : undefined;
 }
 
+function isSiteMapperDerived(value: unknown): boolean {
+  return Boolean(
+    value &&
+      typeof value === 'object' &&
+      !Array.isArray(value) &&
+      (value as Record<string, unknown>).origin === 'DERIVED',
+  );
+}
+
+function metricAllowed(
+  point: boolean,
+  permitted: ReadonlySet<string>,
+  metricName: string,
+  raw: unknown,
+): boolean {
+  if (!point || permitted.has(metricName)) return true;
+  if (
+    (metricName === 'POWER' || metricName === 'ENERGY') &&
+    isSiteMapperDerived(raw) &&
+    permitted.has('VOLTAGE') &&
+    permitted.has('CURRENT')
+  )
+    return true;
+  return false;
+}
+
 function fromOwnSample(
   sample: TelemetrySample,
   links: readonly CompositionBreakerBinding[],
@@ -87,8 +113,8 @@ function fromOwnSample(
   const observed: string[] = [];
 
   for (const field of ELECTRICAL) {
-    if (point && !permitted.has(field.metric)) continue;
     const raw = sample.reported[field.key];
+    if (!metricAllowed(point, permitted, field.metric, raw)) continue;
     const value = numericMetric(raw, field.unit);
     if (value === undefined) continue;
     values[field.key] = value;
@@ -137,8 +163,8 @@ function fromGatewayReading(
   const values: Partial<Record<ElectricalKey, number>> = {};
   const observed: string[] = [];
   for (const field of ELECTRICAL) {
-    if (!permitted.has(field.metric)) continue;
     const metric = reading.metrics[field.key];
+    if (!metricAllowed(true, permitted, field.metric, metric)) continue;
     if (!metric) continue;
     values[field.key] = metric.value;
     observed.push(metric.observedAt);

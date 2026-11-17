@@ -22,6 +22,13 @@ const voltageLink: CompositionBreakerBinding = {
   sourcePointId: '0_1_1',
   metric: 'VOLTAGE',
 };
+const currentLink: CompositionBreakerBinding = {
+  id: 'current',
+  targetId: 'breaker-01',
+  sourceIdentity: 'EMU-BFDB-03',
+  sourcePointId: '0_1_1',
+  metric: 'CURRENT',
+};
 
 function sample(
   targetId: string,
@@ -119,6 +126,98 @@ describe('Equipment Composition breaker telemetry', () => {
       compositionBreakerTelemetry('breaker-01', 'unrelated-device', [packet], [voltageLink], now)
         .status,
     ).toBe('NO DATA');
+  });
+
+  it('projects Site Mapper derived power and energy from verified V/A bindings', () => {
+    const packet: TelemetrySample = {
+      ...sample('chassis', 'EMU-BFDB-03', {}),
+      breakerReadings: [
+        {
+          deviceId: 'device',
+          sourceIdentity: 'EMU-BFDB-03',
+          shelfId: 'shelf',
+          frameId: 'frame',
+          panelId: 'panel',
+          panelLabel: 'A1',
+          breakerId: 'breaker-01',
+          breakerLabel: 'Circuit Breaker',
+          rawPointId: '0_1_1',
+          position: 1,
+          metrics: {
+            voltageV: { value: 53.41, observedAt: timestamp, origin: 'SOURCE' },
+            currentA: { value: 2.14, observedAt: timestamp, origin: 'SOURCE' },
+            powerW: {
+              value: 114.2974,
+              observedAt: timestamp,
+              origin: 'DERIVED',
+              formula: 'DC_V_X_I',
+              quality: 'ESTIMATED',
+            },
+            energyKwh: {
+              value: 0.001842,
+              observedAt: timestamp,
+              origin: 'DERIVED',
+              formula: 'TRAPEZOIDAL_DC_POWER',
+              quality: 'ESTIMATED',
+            },
+          },
+          receivedAt: timestamp,
+        },
+      ],
+    };
+
+    expect(
+      compositionBreakerTelemetry(
+        'breaker-01',
+        'device',
+        [packet],
+        [voltageLink, currentLink],
+        now,
+      ),
+    ).toMatchObject({
+      status: 'LIVE',
+      voltageV: 53.41,
+      currentA: 2.14,
+      powerW: 114.2974,
+      energyKwh: 0.001842,
+    });
+  });
+
+  it('does not promote source power/energy without explicit source bindings', () => {
+    const packet: TelemetrySample = {
+      ...sample('chassis', 'EMU-BFDB-03', {}),
+      breakerReadings: [
+        {
+          deviceId: 'device',
+          sourceIdentity: 'EMU-BFDB-03',
+          shelfId: 'shelf',
+          frameId: 'frame',
+          panelId: 'panel',
+          panelLabel: 'A1',
+          breakerId: 'breaker-01',
+          breakerLabel: 'Circuit Breaker',
+          rawPointId: '0_1_1',
+          position: 1,
+          metrics: {
+            voltageV: { value: 53.41, observedAt: timestamp, origin: 'SOURCE' },
+            currentA: { value: 2.14, observedAt: timestamp, origin: 'SOURCE' },
+            powerW: { value: 999, observedAt: timestamp, origin: 'SOURCE' },
+            energyKwh: { value: 999, observedAt: timestamp, origin: 'SOURCE' },
+          },
+          receivedAt: timestamp,
+        },
+      ],
+    };
+
+    const reading = compositionBreakerTelemetry(
+      'breaker-01',
+      'device',
+      [packet],
+      [voltageLink, currentLink],
+      now,
+    );
+    expect(reading.powerW).toBeUndefined();
+    expect(reading.energyKwh).toBeUndefined();
   });
 
   it('keeps a 5-minute publisher LIVE, then transitions through STALE and OFFLINE', () => {

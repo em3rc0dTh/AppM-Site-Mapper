@@ -9,7 +9,7 @@ import type {
 import {
   bindingPointIdsForWirePoint,
   expandBfdbWirePoint,
-  resolveBdfbWireProfile,
+  resolveBfdbWireProfile,
 } from '@/modules/telemetry/domain/bfdb-wire-layout';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type { EquipmentNode, TopologyNode } from '@/modules/topology/domain/entities';
@@ -94,7 +94,7 @@ export class AutomaticBfdbBindingReconciler {
     }> = [];
     const candidateBreakerIds = new Set<string>();
     const now = new Date().toISOString();
-    const profileResolution = resolveBdfbWireProfile(message.reported, currentSourceBindings);
+    const profileResolution = resolveBfdbWireProfile(message.reported, currentSourceBindings);
     const profile = profileResolution.effective;
 
     for (const [rawPointId, rawValue] of Object.entries(message.reported)) {

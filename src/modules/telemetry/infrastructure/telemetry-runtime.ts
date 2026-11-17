@@ -395,12 +395,14 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
                 rawPointId: string;
                 receivedAt: string;
                 metrics: unknown;
-              }> = [...(result.value.breakerReadings ?? [])].map((reading) => ({
-                sourceIdentity: reading.sourceIdentity,
-                rawPointId: reading.modbusPointId ?? reading.rawPointId,
-                receivedAt: reading.receivedAt,
-                metrics: reading.metrics,
-              }));
+              }> = [...(result.value.breakerReadings ?? [])]
+                .filter((reading) => reading.receivedAt === result.value.receivedAt)
+                .map((reading) => ({
+                  sourceIdentity: reading.sourceIdentity,
+                  rawPointId: reading.modbusPointId ?? reading.rawPointId,
+                  receivedAt: reading.receivedAt,
+                  metrics: reading.metrics,
+                }));
               // A physically configured breaker may have point-level Equipment
               // bindings without a legacy BDFB shelf/frame projection.
               // Read only accepted exact-target patches, never raw unbound points.

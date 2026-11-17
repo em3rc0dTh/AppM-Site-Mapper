@@ -157,7 +157,7 @@ describe('TelemetryService', () => {
       reported: {
         voltageV: { value: 13.78, unit: 'V' },
         currentA: { value: 1.93, unit: 'A' },
-        powerW: { value: 26.5954, unit: 'W', origin: 'DERIVED', formula: 'DC_V_X_I' },
+        powerW: { unit: 'W', origin: 'DERIVED', formula: 'DC_V_X_I' },
         energyKwh: {
           value: 0,
           unit: 'kWh',
@@ -166,6 +166,10 @@ describe('TelemetryService', () => {
         },
       },
     });
+    const directPower = service.latest(breaker.id)?.reported.powerW as
+      | { value?: number }
+      | undefined;
+    expect(directPower?.value).toBeCloseTo(26.5954, 10);
     expect(service.latest(breakers[1]!.id)).toBeNull();
   });
 
@@ -374,7 +378,7 @@ describe('TelemetryService', () => {
     expect(service.latest(created.value.id)?.reported).toMatchObject({
       voltageV: { value: 12.24, unit: 'V' },
       currentA: { value: 4.82, unit: 'A' },
-      powerW: { value: 58.9968, unit: 'W', origin: 'DERIVED', formula: 'DC_V_X_I' },
+      powerW: { unit: 'W', origin: 'DERIVED', formula: 'DC_V_X_I' },
       energyKwh: {
         value: 0,
         unit: 'kWh',
@@ -382,6 +386,11 @@ describe('TelemetryService', () => {
         formula: 'TRAPEZOIDAL_DC_POWER',
       },
     });
+
+    const autoPower = service.latest(created.value.id)?.reported.powerW as
+      | { value?: number }
+      | undefined;
+    expect(autoPower?.value).toBeCloseTo(58.9968, 10);
 
     // Replaying the same packet is idempotent: one binding per reported metric.
     await service.ingest('data/dev/AUTO-QDF-4', voltageAndCurrent, '2026-09-22T00:00:03.000Z');

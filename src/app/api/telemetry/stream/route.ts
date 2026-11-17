@@ -7,6 +7,8 @@ import { getTelemetryRuntime } from '@/modules/telemetry/infrastructure/telemetr
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const encoder = new TextEncoder();
+const AUTH_RECHECK_INTERVAL_MS = 15_000;
+
 function event(name: string, data: unknown): Uint8Array {
   return encoder.encode(`event: ${name}\ndata: ${JSON.stringify(data)}\n\n`);
 }
@@ -19,6 +21,7 @@ export async function GET() {
   if (!(await auth.authorize(token, 'telemetry:read')).ok)
     return Response.json({ error: 'FORBIDDEN' }, { status: 403 });
   const telemetry = await getTelemetryRuntime();
+  let lastAuthorizedAt = Date.now();
   let unsubscribe: (() => void) | null = null;
   let heartbeat: ReturnType<typeof setInterval> | null = null;
   let closed = false;
@@ -49,10 +52,15 @@ export async function GET() {
             if (!first) break;
             const [key, item] = first;
             pending.delete(key);
-            // Re-read session and user for every delivery; no cached role authority.
-            if (!(await auth.authorize(token, 'telemetry:read')).ok) {
-              close();
-              return;
+            // Bound session/role revalidation instead of hitting MongoDB for
+            // every telemetry packet. Revocation remains bounded to 15 seconds.
+            const now = Date.now();
+            if (now - lastAuthorizedAt >= AUTH_RECHECK_INTERVAL_MS) {
+              if (!(await auth.authorize(token, 'telemetry:read')).ok) {
+                close();
+                return;
+              }
+              lastAuthorizedAt = now;
             }
             if (!closed) controller.enqueue(event(item.name, item.data));
           }

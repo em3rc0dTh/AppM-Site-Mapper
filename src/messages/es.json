@@ -205,6 +205,7 @@
     },
     "changePassword": {
       "eyebrow": "Identidad / política de credenciales",
+      "firstAccess": "PRIMER ACCESO",
       "title": "Crear nueva contraseña",
       "forcedDescription": "Primer acceso: reemplaza la contraseña temporal entregada por el SuperAdmin antes de entrar a SiteMapper.",
       "description": "Actualiza tu contraseña y revoca las sesiones existentes.",

@@ -13,7 +13,7 @@
     "lint": "eslint .",
     "docs:check": "node scripts/ci/docs-links.mjs",
     "format": "prettier --write .",
-    "format:check": "prettier --check docs/security/authentication.md src/app/api/settings/users/[id]/route.ts src/app/change-password/page.tsx src/app/forgot-password/page.tsx src/app/login/page.tsx src/app/s04-branding.css src/app/site-mapper-brand.css src/components/settings/password-form.tsx src/components/settings/user-admin-table.tsx src/components/settings/user-create-form.tsx src/messages/en.json src/messages/es.json src/modules/identity/application/auth-service.ts src/shared/ui/app-shell.tsx tests/integration/auth-service.test.ts tests/unit/mk2-auth-branding.test.ts",
+    "format:check": "prettier --check .",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit && node --test infra/snmp-collector/server.test.mjs",
     "test:integration": "vitest run tests/integration --passWithNoTests",

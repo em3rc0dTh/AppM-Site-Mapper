@@ -158,7 +158,9 @@ describe('automatic operational commissioning end-to-end', () => {
         (item) =>
           item.targetId === breaker.id &&
           item.attributes?.commissioning === 'AUTO_RECONCILED' &&
-          item.attributes?.discovery === 'TOPOLOGY_POINT_MATCH',
+          item.attributes?.discovery === 'TOPOLOGY_POINT_MATCH' &&
+          item.attributes?.wireProfile === 'LEGACY_SINGLE_24' &&
+          item.attributes?.wireProfileSource === 'DETECTED',
       ),
     ).toBe(true);
 

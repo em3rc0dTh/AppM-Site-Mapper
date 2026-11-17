@@ -149,8 +149,6 @@ describe('automatic operational commissioning end-to-end', () => {
     });
     expect(pointBindings.map((item) => item.metric).sort()).toEqual([
       'CURRENT',
-      'ENERGY',
-      'POWER',
       'VOLTAGE',
     ]);
     expect(

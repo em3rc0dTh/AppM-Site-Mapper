@@ -66,6 +66,10 @@ export interface TelemetrySample {
   readonly reported: Readonly<Record<string, unknown>>;
   readonly receivedAt: string;
   readonly protocol?: 'GENERIC' | 'BFDB' | 'SNMP';
+  readonly wireProfile?: 'FIELD_DUAL_12' | 'LEGACY_SINGLE_24';
+  readonly wireProfileSource?: 'DECLARED' | 'DETECTED';
+  readonly wireProfileMismatch?: boolean;
+  readonly wireProfileDeclarationConflict?: boolean;
   readonly messageId?: string;
   readonly sourceObservedAt?: string;
   readonly sourceSentAt?: string;

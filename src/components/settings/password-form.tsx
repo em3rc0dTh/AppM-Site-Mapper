@@ -6,7 +6,11 @@ import { useState, type FormEvent } from 'react';
 
 export function PasswordForm({
   presentation = 'settings',
-}: Readonly<{ presentation?: 'settings' | 'auth' }>) {
+  forced = false,
+}: Readonly<{
+  presentation?: 'settings' | 'auth';
+  forced?: boolean;
+}>) {
   const t = useTranslations('forms.password');
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -20,9 +24,16 @@ export function PasswordForm({
     const form = new FormData(event.currentTarget);
     const currentPassword = String(form.get('currentPassword') ?? '');
     const newPassword = String(form.get('newPassword') ?? '');
+    const confirmPassword = String(form.get('confirmPassword') ?? '');
 
     if (newPassword.length < 12) {
       setError(t('minLength'));
+      setBusy(false);
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError(t('mismatch'));
       setBusy(false);
       return;
     }
@@ -32,7 +43,6 @@ export function PasswordForm({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ currentPassword, newPassword }),
     });
-    const body = (await response.json().catch(() => null)) as { error?: string } | null;
 
     if (!response.ok) {
       setError(t('failed'));
@@ -52,9 +62,10 @@ export function PasswordForm({
       onSubmit={submit}
     >
       <label>
-        <span>{t('current')}</span>
+        <span>{forced ? t('temporary') : t('current')}</span>
         <input autoComplete="current-password" name="currentPassword" required type="password" />
       </label>
+
       <label>
         <span>{t('next')}</span>
         <input
@@ -65,14 +76,30 @@ export function PasswordForm({
           type="password"
         />
       </label>
+
+      <label>
+        <span>{t('confirm')}</span>
+        <input
+          autoComplete="new-password"
+          minLength={12}
+          name="confirmPassword"
+          required
+          type="password"
+        />
+      </label>
+
       <button
         className={authPresentation ? 'auth-submit' : undefined}
         disabled={busy}
         type="submit"
       >
-        {busy ? t('changing') : t('submit')}
+        {busy ? t('changing') : forced ? t('setPassword') : t('submit')}
       </button>
-      <small className={authPresentation ? 'auth-password-help' : undefined}>{t('help')}</small>
+
+      <small className={authPresentation ? 'auth-password-help' : undefined}>
+        {forced ? t('forcedHelp') : t('help')}
+      </small>
+
       {error ? <small className="form-error auth-error">{error}</small> : null}
     </form>
   );

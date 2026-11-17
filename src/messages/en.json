@@ -190,23 +190,36 @@
       "eyebrow": "Identity / secure access",
       "title": "Sign in",
       "description": "Authenticate to enter the Site Mapper operational workspace.",
-      "email": "Email",
+      "email": "User",
+      "userPlaceholder": "user@company.com",
       "password": "Password",
+      "forgotPassword": "Forgot your password?",
       "submit": "SIGN IN",
       "submitting": "Establishing secure session…",
       "connectionError": "Connection unavailable. Please try again.",
-      "credentialsError": "Invalid email or password.",
+      "credentialsError": "Invalid user or password.",
       "loginError": "Unable to sign in. Please try again.",
-      "mfaCode": "Authenticator code or recovery code",
-      "mfaNeeded": "Enter a six-digit authenticator code or a saved recovery code.",
+      "mfaCode": "MFA",
+      "mfaNeeded": "Enter the six-digit MFA code or a saved recovery code.",
       "mfaEnrollmentRequired": "MFA enrollment is required. Contact the administrator."
     },
     "changePassword": {
       "eyebrow": "Identity / credential policy",
-      "title": "Change password",
-      "forcedDescription": "Replace the temporary credential before operational access is enabled.",
-      "description": "Update your credential and revoke every existing session.",
-      "signedInAs": "Signed in as"
+      "firstAccess": "FIRST SIGN-IN",
+      "title": "Create a new password",
+      "forcedDescription": "First sign-in: replace the temporary password issued by the SuperAdmin before entering SiteMapper.",
+      "description": "Update your password and revoke every existing session.",
+      "signedInAs": "User"
+    },
+    "forgotPassword": {
+      "eyebrow": "Identity / recovery",
+      "title": "Recover access",
+      "description": "Password recovery is managed by the SuperAdmin. SiteMapper does not send password-reset links by email.",
+      "stepOne": "Ask the SuperAdmin for a new temporary password.",
+      "stepTwo": "Sign in with your user, temporary password, and MFA if your account already uses it.",
+      "stepThree": "SiteMapper will automatically take you to create a new password.",
+      "note": "The temporary password is only for recovering access. Changing it revokes previous sessions.",
+      "back": "BACK TO SIGN IN"
     },
     "mfa": {
       "title": "Multifactor authentication (TOTP)",
@@ -568,12 +581,17 @@
   "forms": {
     "password": {
       "current": "Current password",
+      "temporary": "Temporary password",
       "next": "New password",
+      "confirm": "Confirm new password",
       "changing": "Changing…",
       "submit": "Change password",
+      "setPassword": "CREATE NEW PASSWORD",
       "help": "Changing your password revokes every active session, including this one.",
+      "forcedHelp": "Use the temporary password once. Your new password must contain at least 12 characters.",
       "minLength": "Password must contain at least 12 characters.",
-      "failed": "Unable to change password. Check your current password and try again."
+      "mismatch": "The new passwords do not match.",
+      "failed": "Unable to change password. Check your current or temporary password and try again."
     },
     "profile": {
       "displayName": "Display name",
@@ -587,6 +605,7 @@
       "email": "Email",
       "role": "Role",
       "temporaryPassword": "Temporary password",
+      "temporaryPasswordHelp": "The user must replace this password on the first sign-in.",
       "creating": "Creating…",
       "create": "Create user",
       "failed": "Unable to create the user.",
@@ -609,7 +628,13 @@
       "failed": "Unable to update this user.",
       "standard": "Standard",
       "admin": "Admin",
-      "superadmin": "Superadmin"
+      "superadmin": "Superadmin",
+      "resetPassword": "Reset",
+      "temporaryPassword": "Temporary password",
+      "assignTemporary": "Assign temporary",
+      "resetting": "Resetting…",
+      "resetHelp": "Revokes the user's sessions and requires a password change on the next sign-in.",
+      "resetFailed": "Unable to reset this user's password."
     },
     "import": {
       "title": "Data Import",

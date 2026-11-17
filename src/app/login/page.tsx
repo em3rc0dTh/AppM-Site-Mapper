@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState, type FormEvent } from 'react';
@@ -88,7 +89,7 @@ export default function LoginPage() {
             name="email"
             type="email"
             autoComplete="username"
-            placeholder="operator@company.com"
+            placeholder={t('userPlaceholder')}
             required
           />
         </label>
@@ -113,6 +114,9 @@ export default function LoginPage() {
             placeholder="000000"
           />
         </label>
+        <div className="auth-login-support">
+          <Link href="/forgot-password">{t('forgotPassword')}</Link>
+        </div>
         <button className="auth-submit" type="submit" disabled={!hydrated || busy}>
           {busy ? t('submitting') : t('submit')}
         </button>

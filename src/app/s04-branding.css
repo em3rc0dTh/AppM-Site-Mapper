@@ -100,3 +100,185 @@
   line-height: 1 !important;
   color: #263442 !important;
 }
+
+/* MK2 auth flow clarity */
+.zip-login-page--heritage .auth-form {
+  gap: 18px !important;
+}
+
+.zip-login-page--heritage .auth-form label {
+  display: grid;
+  gap: 7px;
+  position: relative;
+}
+
+.zip-login-page--heritage .auth-form label > span {
+  display: block !important;
+  color: #31465a;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.zip-login-page--heritage .auth-form label::before {
+  display: none !important;
+  content: none !important;
+}
+
+.zip-login-page--heritage .auth-form input {
+  height: 58px !important;
+  padding: 0 18px !important;
+  font-size: 17px !important;
+}
+
+.auth-login-support {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -4px;
+}
+
+.auth-login-support a {
+  color: #087e66;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.auth-login-support a:hover,
+.auth-login-support a:focus-visible {
+  text-decoration: underline;
+}
+
+.auth-flow-heading {
+  display: grid;
+  gap: 7px;
+  margin-bottom: 18px;
+}
+
+.auth-flow-heading > span {
+  width: fit-content;
+  color: #087e66;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.auth-flow-heading h2 {
+  margin: 0;
+  color: #183044;
+  font-size: 24px;
+}
+
+.auth-flow-heading p {
+  margin: 0;
+  color: #607284;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.auth-account {
+  display: grid;
+  gap: 3px;
+  margin-bottom: 20px;
+  padding: 12px 14px;
+  border: 1px solid #d9e3ea;
+  border-radius: 8px;
+  background: #f7fafb;
+}
+
+.auth-account span,
+.auth-account small {
+  color: #607284;
+  font-size: 12px;
+}
+
+.auth-account strong {
+  color: #183044;
+  font-size: 15px;
+}
+
+.auth-password-help {
+  color: #607284;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.auth-recovery {
+  display: grid;
+  gap: 16px;
+}
+
+.auth-recovery h2 {
+  margin: 0;
+  color: #183044;
+  font-size: 24px;
+}
+
+.auth-recovery p,
+.auth-recovery li {
+  color: #52687b;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.auth-recovery ol {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+  padding-left: 22px;
+}
+
+.auth-recovery-note {
+  margin: 0;
+  padding: 11px 13px;
+  border: 1px solid #cfe2de;
+  border-radius: 8px;
+  background: #f2faf8;
+}
+
+.auth-recovery-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff !important;
+  text-decoration: none;
+}
+
+.settings-password-reset {
+  margin-top: 6px;
+}
+
+.settings-password-reset summary {
+  width: fit-content;
+  color: #087e66;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.settings-password-reset form {
+  display: grid;
+  gap: 8px;
+  min-width: 220px;
+  margin-top: 8px;
+  padding: 10px;
+  border: 1px solid #d9e3ea;
+  border-radius: 8px;
+  background: #f8fafb;
+}
+
+.settings-password-reset label {
+  display: grid;
+  gap: 5px;
+  font-size: 11px;
+}
+
+.settings-password-reset input {
+  min-width: 0;
+}
+
+.settings-password-reset small {
+  max-width: 260px;
+  color: #607284;
+  line-height: 1.4;
+}

@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { DataView, StatusBadge } from '@/shared/ui/primitives';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 
 import type { SafeUser } from '@/modules/identity/domain/entities';
 import type { Role } from '@/modules/identity/domain/roles';
@@ -16,6 +16,31 @@ export function UserAdminTable({
   const router = useRouter();
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  async function resetPassword(event: FormEvent<HTMLFormElement>, id: string) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const temporaryPassword = String(form.get('temporaryPassword') ?? '');
+
+    setPendingId(id);
+    setError(null);
+
+    const response = await fetch(`/api/settings/users/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ temporaryPassword }),
+    });
+
+    if (!response.ok) {
+      setError(t('resetFailed'));
+      setPendingId(null);
+      return;
+    }
+
+    event.currentTarget.reset();
+    setPendingId(null);
+    router.refresh();
+  }
 
   async function patch(id: string, body: Record<string, string>) {
     setPendingId(id);
@@ -76,7 +101,24 @@ export function UserAdminTable({
                     {user.lifecycle === 'ACTIVE' ? t('active') : t('archived')}
                   </StatusBadge>
                 </td>
-                <td>{user.mustChangePassword ? t('changeRequired') : t('configured')}</td>
+                <td>
+                  <span>{user.mustChangePassword ? t('changeRequired') : t('configured')}</span>
+                  {!isSelf ? (
+                    <details className="settings-password-reset">
+                      <summary>{t('resetPassword')}</summary>
+                      <form onSubmit={(event) => resetPassword(event, user.id)}>
+                        <label>
+                          {t('temporaryPassword')}
+                          <input minLength={12} name="temporaryPassword" required type="password" />
+                        </label>
+                        <button disabled={pendingId === user.id} type="submit">
+                          {pendingId === user.id ? t('resetting') : t('assignTemporary')}
+                        </button>
+                        <small>{t('resetHelp')}</small>
+                      </form>
+                    </details>
+                  ) : null}
+                </td>
                 <td>
                   <button
                     disabled={isSelf || pendingId === user.id}

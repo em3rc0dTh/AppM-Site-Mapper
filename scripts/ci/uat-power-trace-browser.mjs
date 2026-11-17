@@ -50,7 +50,7 @@ try {
     assert.equal(trace.feedB.length, 0, 'Missing B route must not be invented');
     assert.ok(trace.feedA.every((leg) => leg.telemetry.status !== 'LIVE'));
     await page.goto(base + entity.href);
-    const trigger = page.locator('a[href^="/workbench/power-trace?"]').first();
+    const trigger = page.locator('a[href^="/workbench/power-trace?"]:visible').first();
     await trigger.waitFor({ state: 'visible' });
     const popupPromise = page.waitForEvent('popup');
     await trigger.click();

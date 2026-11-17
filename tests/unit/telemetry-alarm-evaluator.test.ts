@@ -187,4 +187,60 @@ describe('TelemetryAlarmEvaluator', () => {
     expect(active[0]?.confidence).toBe('SUSPECTED');
     expect(active[0]?.evidenceRefs.map((item) => item.metric)).toEqual(['VOLTAGE', 'CURRENT']);
   });
+
+  it('does not treat a derived signed-energy decrease as an external counter reset', async () => {
+    const topology = new MemoryTopologyRepository(breakerTopology());
+    const alarms = new MemoryAlarmRepository();
+    const policies = new MemoryAlarmPolicyRepository([
+      {
+        id: 'derived-energy-policy',
+        targetType: 'EQUIPMENT',
+        targetId: 'breaker',
+        sourceContext: 'mqtt:0_1_4',
+        sourceIdentity: 'EMU-TELXIUS-QDF-4',
+        enabled: true,
+        energyCounterReset: {
+          minDecrementKwh: 0.01,
+          debounceSamples: 1,
+          recoverySamples: 1,
+          severity: 'WARNING',
+        },
+        createdAt,
+        updatedAt: createdAt,
+      },
+    ]);
+    const evaluator = new TelemetryAlarmEvaluator(alarms, policies, topology);
+
+    const first = sample(48, 2, '2026-10-30T02:40:00.000Z');
+    await evaluator.observe({
+      ...first,
+      reported: {
+        ...first.reported,
+        energyKwh: {
+          value: 2,
+          unit: 'kWh',
+          observedAt: first.receivedAt,
+          origin: 'DERIVED',
+          formula: 'TRAPEZOIDAL_DC_POWER',
+        },
+      },
+    });
+
+    const reverse = sample(48, -2, '2026-10-30T02:41:00.000Z');
+    await evaluator.observe({
+      ...reverse,
+      reported: {
+        ...reverse.reported,
+        energyKwh: {
+          value: 1.98,
+          unit: 'kWh',
+          observedAt: reverse.receivedAt,
+          origin: 'DERIVED',
+          formula: 'TRAPEZOIDAL_DC_POWER',
+        },
+      },
+    });
+
+    expect(await alarms.listActive()).toHaveLength(0);
+  });
 });

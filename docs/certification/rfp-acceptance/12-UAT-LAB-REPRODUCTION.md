@@ -13,7 +13,9 @@ La campaña parte de `c701a60b604756a8fc1ad112009d086141a0aaff`. El baseline doc
 anterior era `7a43be8161ef938dbd2da7b1586fefcd329fbd79`; no son intercambiables.
 Usar el SHA HEAD/merge probado por cada corrida, nunca asumir que es el último `main`.
 El PR añade pruebas de recuperación y habilita las pruebas TSX previamente excluidas;
-además corrige el Origin de los seeders de desarrollo y la leyenda W/kW de Equipment.
+además corrige el Origin de los seeders de desarrollo, la leyenda W/kW de Equipment,
+la sincronización de bootstrap y los selectores/fixtures del recorrido visual. Se aplica
+el parche Next.js 16.4.6 por el aviso GHSA-mfr8-8qww-v76h; package-lock fija dependencias.
 Por tanto, el candidato del PR requiere su propia evidencia y revisión de impacto.
 
 - Node 22 (>=22.13 y <23), npm con lockfile, Linux y Docker Engine + Compose v2.
@@ -178,6 +180,7 @@ npm install --prefix /tmp/uat-playwright --no-save --no-audit --no-fund playwrig
 /tmp/uat-playwright/node_modules/.bin/playwright install --with-deps chromium
 NODE_PATH=/tmp/uat-playwright/node_modules node scripts/ci/alarm-rule-manager-browser.cjs
 NODE_PATH=/tmp/uat-playwright/node_modules node scripts/visual-capture.mjs
+NODE_PATH=/tmp/uat-playwright/node_modules node scripts/ci/uat-power-trace-browser.mjs
 ```
 
 HTTP exige 14 checks: no autenticado, login, UI/API, catálogo, targets, DRAFT,
@@ -190,41 +193,41 @@ Esta tabla especifica cobertura y cierre pendiente; no sustituye resultados ni f
 Ejecutar además el procedimiento completo del plan enlazado. En el acta registrar
 observado, esperado, SHA/imagen, timestamp, operador y evidencia por cada fila.
 
-| Caso    | Evidencia técnica reproducible                       | Corroboración adicional para PASS formal                                       |
-| ------- | ---------------------------------------------------- | ------------------------------------------------------------------------------ |
-| UAT-001 | W-STACK: SHA checkout e IDs de imágenes              | Inventario de release instalada y acta; mismo SHA que el cliente               |
-| UAT-002 | Perfil integration sintético, proyecto uat-*         | Propietario, alcance autorizado y destino privado de evidencia                 |
-| UAT-101 | T-AUTH: reloj controlado, idle/absoluta/revocación   | Observar 30 min y 8 h y rechazo servidor en la release instalada               |
-| UAT-102 | T-AUTH: enrolamiento, OTP/recovery de un uso         | Viaje completo de operador offline y recuperación administrativa               |
-| UAT-103 | T-AUTH: política/denylist/throttle                   | Captura de egress aprobada, modo local y no dependencia WAN                    |
-| UAT-104 | W-SEC, W-HTTP, W-ALARM                               | Matriz de perfiles y objetos instalada; resultados HTTP y auditoría            |
-| UAT-105 | T-AUTH y W-LAN sólo evidencia parcial                | Navegador LAN, CA/TLS/HSTS/cookie y activos sin WAN                            |
-| UAT-106 | T-AUTH: credenciales OT y reautenticación            | Revelado de credencial sintética con/sin reauth y throttle; redactar secretos  |
-| UAT-107 | T-AUTH prueba cifrado, no custodia de clave          | Clon con MFA key/CA persistentes, NTP LAN y reinicio aprobado                  |
-| UAT-201 | W-ALARM: DRAFT/PUBLISH/409 Mongo y HTTP              | Revisión de impacto y acta del operador                                        |
-| UAT-202 | T-ALARM y W-ALARM: precedencia/especificidad/legado  | Tabla de política efectiva de scopes aceptados                                 |
-| UAT-203 | T-ALARM: referencia DC-48V sin activación implícita  | Ficha eléctrica de umbrales aprobada por ingeniería                            |
-| UAT-204 | T-ALARM: V/A/P/E y correlación                       | Inyección temporal controlada, capturas Alarm Center y eventos                 |
-| UAT-205 | T-ALARM, W-CHAOS: stale/replay/outage                | Secuencia completa LOAD_LOSS/expectedLoad y comportamiento tras reinicio       |
-| UAT-206 | W-ALARM: DISABLE y auditoría                         | Corroborar preservación de incidencias y rollback de política                  |
-| UAT-207 | W-ALARM: confirmación, permisos y concurrencia       | Matriz final de perfiles del cliente                                           |
-| UAT-301 | W-STACK: servicio ausente de Compose                 | Revisar manifiesto instalado aprobado                                          |
-| UAT-302 | Sin ejecución FIELD en esta campaña                  | Inspección de contenedores existentes/puerto 3100; no detenerlos               |
-| UAT-303 | W-STACK y W-HTTP: servicios y conservación           | Comparación antes/después en clon del appliance con sus datos autorizados      |
-| UAT-401 | T-TRACE y W-VISUAL cobertura parcial                 | Abrir desde Device/Equipment/Power, ventana independiente y matriz permisos    |
-| UAT-402 | T-TRACE usa fixtures A/B                             | Conciliar A3 y puertos con As-Built eléctrico; no inferir independencia física |
-| UAT-403 | T-TRACE: rutas ausentes/múltiples y fuentes          | Corroborar avisos visibles y no invención de enlaces en UI                     |
-| UAT-404 | T-TRACE y tests de frescura                          | Capturas por breaker LIVE/STALE/OFFLINE/CLOCK SKEW                             |
-| UAT-405 | W-VISUAL no recorre impresión de Rastreo             | Viewports 1440/1366/1024, zoom, Print/PDF legible y descarga                   |
-| UAT-406 | Servicio de rastreo no inventa vinculaciones         | Excel aprobado: sólo declarativo hasta conciliación; captura de advertencia    |
-| UAT-501 | T-GOLD y W-HTTP: topología/CAS/power/browser/restart | Golden path completo con deep links, logout/login y recarga del cliente        |
-| UAT-502 | W-STACK, W-HTTP, MQTT/Modbus/SNMP suites             | Comparar contra fuentes comisionadas; registrar parámetros de protocolo        |
-| UAT-503 | T-QDF, W-HTTP y W-STACK                              | Aislamiento QDF con valores distinguibles y procedencia LAB/FIELD              |
-| UAT-504 | W-STACK reinicio app; W-CHAOS fallos de procesos     | Reboot del host clonado, auto-start y recuperación integral                    |
-| UAT-505 | W-STACK restore aislado con paridad de conteos       | Restore del backup autorizado, revisión de datos/keys/roles/RPO/RTO            |
-| UAT-601 | No ejecutado, FIELD/SAT                              | Ingeniería eléctrica verifica A/B y señal/medición física                      |
-| UAT-602 | Modbus LAB cubierto; Metasys FIELD no ejecutado      | Cliente integra Metasys, offset/word order, ACL y firewall OT                  |
-| UAT-603 | W-LAN sólo sintaxis                                  | Operación real sin WAN, CA/NTP, reinicio y claves bajo custodia                |
+| Caso    | Evidencia técnica reproducible                          | Corroboración adicional para PASS formal                                       |
+| ------- | ------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| UAT-001 | W-STACK: SHA checkout e IDs de imágenes                 | Inventario de release instalada y acta; mismo SHA que el cliente               |
+| UAT-002 | Perfil integration sintético, proyecto uat-*            | Propietario, alcance autorizado y destino privado de evidencia                 |
+| UAT-101 | T-AUTH: reloj controlado, idle/absoluta/revocación      | Observar 30 min y 8 h y rechazo servidor en la release instalada               |
+| UAT-102 | T-AUTH: enrolamiento, OTP/recovery de un uso            | Viaje completo de operador offline y recuperación administrativa               |
+| UAT-103 | T-AUTH: política/denylist/throttle                      | Captura de egress aprobada, modo local y no dependencia WAN                    |
+| UAT-104 | W-SEC, W-HTTP, W-ALARM                                  | Matriz de perfiles y objetos instalada; resultados HTTP y auditoría            |
+| UAT-105 | T-AUTH y W-LAN sólo evidencia parcial                   | Navegador LAN, CA/TLS/HSTS/cookie y activos sin WAN                            |
+| UAT-106 | T-AUTH: credenciales OT y reautenticación               | Revelado de credencial sintética con/sin reauth y throttle; redactar secretos  |
+| UAT-107 | T-AUTH prueba cifrado, no custodia de clave             | Clon con MFA key/CA persistentes, NTP LAN y reinicio aprobado                  |
+| UAT-201 | W-ALARM: DRAFT/PUBLISH/409 Mongo y HTTP                 | Revisión de impacto y acta del operador                                        |
+| UAT-202 | T-ALARM y W-ALARM: precedencia/especificidad/legado     | Tabla de política efectiva de scopes aceptados                                 |
+| UAT-203 | T-ALARM: referencia DC-48V sin activación implícita     | Ficha eléctrica de umbrales aprobada por ingeniería                            |
+| UAT-204 | T-ALARM: V/A/P/E y correlación                          | Inyección temporal controlada, capturas Alarm Center y eventos                 |
+| UAT-205 | T-ALARM, W-CHAOS: stale/replay/outage                   | Secuencia completa LOAD_LOSS/expectedLoad y comportamiento tras reinicio       |
+| UAT-206 | W-ALARM: DISABLE y auditoría                            | Corroborar preservación de incidencias y rollback de política                  |
+| UAT-207 | W-ALARM: confirmación, permisos y concurrencia          | Matriz final de perfiles del cliente                                           |
+| UAT-301 | W-STACK: servicio ausente de Compose                    | Revisar manifiesto instalado aprobado                                          |
+| UAT-302 | Sin ejecución FIELD en esta campaña                     | Inspección de contenedores existentes/puerto 3100; no detenerlos               |
+| UAT-303 | W-STACK y W-HTTP: servicios y conservación              | Comparación antes/después en clon del appliance con sus datos autorizados      |
+| UAT-401 | T-TRACE y W-VISUAL: Device/Equipment, ventana real      | Abrir desde Device/Equipment/Power, ventana independiente y matriz permisos    |
+| UAT-402 | T-TRACE usa fixtures A/B                                | Conciliar A3 y puertos con As-Built eléctrico; no inferir independencia física |
+| UAT-403 | T-TRACE: rutas ausentes/múltiples y fuentes             | Corroborar avisos visibles y no invención de enlaces en UI                     |
+| UAT-404 | T-TRACE y tests de frescura                             | Capturas por breaker LIVE/STALE/OFFLINE/CLOCK SKEW                             |
+| UAT-405 | W-VISUAL: viewports y handlers Print/PDF de Rastreo     | Viewports 1440/1366/1024, zoom, Print/PDF legible y descarga                   |
+| UAT-406 | W-VISUAL: referencias Excel no vinculadas y advertencia | Excel aprobado: sólo declarativo hasta conciliación; captura de advertencia    |
+| UAT-501 | T-GOLD y W-HTTP: topología/CAS/power/browser/restart    | Golden path completo con deep links, logout/login y recarga del cliente        |
+| UAT-502 | W-STACK, W-HTTP, MQTT/Modbus/SNMP suites                | Comparar contra fuentes comisionadas; registrar parámetros de protocolo        |
+| UAT-503 | T-QDF, W-HTTP y W-STACK                                 | Aislamiento QDF con valores distinguibles y procedencia LAB/FIELD              |
+| UAT-504 | W-STACK reinicio app; W-CHAOS fallos de procesos        | Reboot del host clonado, auto-start y recuperación integral                    |
+| UAT-505 | W-STACK restore aislado con paridad de conteos          | Restore del backup autorizado, revisión de datos/keys/roles/RPO/RTO            |
+| UAT-601 | No ejecutado, FIELD/SAT                                 | Ingeniería eléctrica verifica A/B y señal/medición física                      |
+| UAT-602 | Modbus LAB cubierto; Metasys FIELD no ejecutado         | Cliente integra Metasys, offset/word order, ACL y firewall OT                  |
+| UAT-603 | W-LAN sólo sintaxis                                     | Operación real sin WAN, CA/NTP, reinicio y claves bajo custodia                |
 
 ## 7. Matriz de los 18 ACC contractuales
 

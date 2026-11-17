@@ -167,8 +167,7 @@ describe('TelemetryService', () => {
       },
     });
     const directPower = service.latest(breaker.id)?.reported.powerW as
-      | { value?: number }
-      | undefined;
+      { value?: number } | undefined;
     expect(directPower?.value).toBeCloseTo(26.5954, 10);
     expect(service.latest(breakers[1]!.id)).toBeNull();
   });
@@ -388,8 +387,7 @@ describe('TelemetryService', () => {
     });
 
     const autoPower = service.latest(created.value.id)?.reported.powerW as
-      | { value?: number }
-      | undefined;
+      { value?: number } | undefined;
     expect(autoPower?.value).toBeCloseTo(58.9968, 10);
 
     // Replaying the same packet is idempotent: one binding per reported metric.

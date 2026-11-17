@@ -147,10 +147,7 @@ describe('automatic operational commissioning end-to-end', () => {
         matchedNodeId: device.id,
       },
     });
-    expect(pointBindings.map((item) => item.metric).sort()).toEqual([
-      'CURRENT',
-      'VOLTAGE',
-    ]);
+    expect(pointBindings.map((item) => item.metric).sort()).toEqual(['CURRENT', 'VOLTAGE']);
     expect(
       pointBindings.every(
         (item) =>

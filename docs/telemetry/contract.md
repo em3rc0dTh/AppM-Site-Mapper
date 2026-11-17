@@ -69,40 +69,39 @@ Rules:
 - topic serial and payload `sn` must match;
 - malformed timestamps are rejected;
 - source observed time, source send time and AppM receive time remain distinct;
-- raw payload state remains inspectable;
-- V/I/P/E are normalized only when present.
+- raw payload state, including P/EP fields, remains inspectable;
+- V/I are normalized from the commissioned source point when present;
+- BFDB operational P/E are derived by Site Mapper from accepted V/I; raw P/EP remain audit evidence only.
 
-### BFDB v1 power unit contract
+### BFDB operational power and energy contract
 
-For the currently observed BFDB v1 wire shape, `P1/P2` are interpreted as **watts (W)** by
-default. This is an explicit versioned assumption, not a magnitude guess. A representative
-field-shaped sample contains `U1=14.95 V`, `I1=3.72 A`, `P1=55.62`; the dimensional check
-`14.95 × 3.72 = 55.614` is consistent with approximately `55.62 W`, not `55.62 kW`.
-
-The ingestion boundary now has one normalization rule:
-
-```text
-source POWER
-  unit W  -> canonical powerW unchanged
-  unit kW -> canonical powerW = value × 1000
-  other/ambiguous unit -> POWER metric rejected fail-closed
-```
-
-An ACTIVE POWER `TelemetryBinding.unit` may explicitly declare `W` or `kW`. When omitted for
-BFDB v1, the source unit defaults to `W`. If later protocol/field evidence proves that a source
-publishes kW, commission that source binding as `unit=kW`; historical/internal authority remains
-canonical W and no Timescale schema migration is required.
-
-Canonical storage and electrical calculations remain W. Contractual and operator-facing
-presentation is standardized to kW:
+For BFDB/QDF operational telemetry, Site Mapper treats the commissioned voltage and current
+channel as the electrical source authority. Device/gateway `P1/P2` and `EP1/EP2` remain
+inside the preserved raw MQTT envelope but do not govern LIVE state, alarms, history or
+Modbus.
 
 ```text
-BFDB P1/P2 -> source unit -> normalize -> powerW / power_w (W)
-                                      -> presentation / QDF / RFP (kW)
+U1/U2 -> voltageV (SOURCE)
+I1/I2 -> currentA (SOURCE)
+
+powerW = voltageV * currentA
+energyKwh = integral(powerW, real accepted intervals)
 ```
 
-The W-to-kW presentation conversion is always `kW = W / 1000`. Energy integration continues to
-consume canonical W-derived power semantics; UI conversion must never feed back into persistence.
+Power is derived only from V and I belonging to the same observed frame. Current sign is
+preserved. Energy uses trapezoidal integration between accepted samples and does not
+interpolate gaps larger than the configured limit (120 seconds by default). On restart, the
+accumulator may resume only from historian state explicitly tagged as Site Mapper-derived;
+raw/source EP is never adopted as the derived baseline.
+
+Canonical breaker power remains W internally. Contractual/operator presentation remains kW:
+
+```text
+kW = powerW / 1000
+```
+
+See [BFDB derived electrical contract](./bfdb-derived-electrical-contract.md) and
+[BFDB power unit compatibility note](./bfdb-power-unit-contract.md).
 
 ## MongoDB remains the ordered application structure
 
@@ -179,16 +178,18 @@ When those conditions are met, Site Mapper persists an idempotent `AUTO_RECONCIL
 
 If the breaker does not yet exist, the point remains RAW/unmapped. When an operator later creates the breaker in the matching Site Mapper panel/position, a subsequent MQTT packet can reconcile automatically.
 
-Metric presence is independent:
+Automatic source binding is intentionally limited to the authoritative metrics:
 
 ```text
-I1 only                -> CURRENT binding only
-U1 + I1                -> VOLTAGE + CURRENT
-U1 + I1 + P1           -> VOLTAGE + CURRENT + POWER
-U1 + I1 + P1 + EP1     -> VOLTAGE + CURRENT + POWER + ENERGY
+I1 only         -> CURRENT binding only
+U1 only         -> VOLTAGE binding only
+U1 + I1         -> VOLTAGE + CURRENT bindings
+P1 / EP1        -> preserved RAW only; no automatic POWER/ENERGY source binding
 ```
 
-Missing metrics are not inferred, calculated or persisted as zero. In particular, Site Mapper does not synthesize POWER or ENERGY merely because other electrical values are present.
+Once same-frame V and I are available on a commissioned circuit, Site Mapper derives canonical
+POWER and ENERGY operational metrics. Missing V or I is not inferred and is never converted to
+zero. An explicit numeric zero remains a real measurement.
 
 A malformed, ambiguous or conflicting point remains unmapped. Automatic reconciliation never retargets a pre-existing binding and never overwrites operator/field commissioning.
 
@@ -208,7 +209,7 @@ missing field = not updated
 explicit "0.00" = real zero
 ```
 
-A state-only patch does not erase the last accepted V/I/P/E values.
+A state-only patch does not erase the last accepted canonical V/I/P/E values and does not create a new derived electrical sample.
 
 Each normalized electrical metric retains the source observation time from the MQTT envelope.
 
@@ -229,9 +230,12 @@ accepted MQTT patch
 └→ Latest State merge
 ```
 
-Only metrics present in the accepted patch are written historically.
+For BFDB, history receives the canonical accepted electrical patch: source V/I plus any P/E
+derived from same-frame V/I before persistence. Raw P/EP are not promoted into canonical history.
 
-A state-only patch does not create an electrical history row. A missing V/I/P/E value never causes the previous Latest State value to be copied into a new historical sample.
+A state-only patch does not create a new derived electrical history row. Missing V or I never
+causes Site Mapper to invent a new P/E sample or to copy a stale value into a new historical
+observation.
 
 The canonical local table is `telemetry_samples`, keyed operationally by source identity, AppM device/breaker identity, raw point identity and observation time.
 

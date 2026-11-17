@@ -39,7 +39,6 @@ permission check
 
 Production indexes include unique email/id/token hashes and TTL cleanup for sessions/rate-limit windows.
 
-
 ## Password recovery and first sign-in
 
 SiteMapper uses administrator-assisted password recovery. It does not claim to send

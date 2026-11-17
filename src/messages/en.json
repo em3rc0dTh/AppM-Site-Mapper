@@ -205,6 +205,7 @@
     },
     "changePassword": {
       "eyebrow": "Identity / credential policy",
+      "firstAccess": "FIRST SIGN-IN",
       "title": "Create a new password",
       "forcedDescription": "First sign-in: replace the temporary password issued by the SuperAdmin before entering SiteMapper.",
       "description": "Update your password and revoke every existing session.",

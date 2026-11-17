@@ -250,7 +250,13 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
       topologyRepository,
       hub,
       { topicPrefix, maxPayloadBytes },
-      { configuredBindings: configuredBindings(process.env.MQTT_SOURCE_DEVICE_MAP) },
+      {
+        configuredBindings: configuredBindings(process.env.MQTT_SOURCE_DEVICE_MAP),
+        derivedEnergyMaxGapMs: positiveInt(
+          process.env.BFDB_DERIVED_ENERGY_MAX_GAP_MS,
+          120_000,
+        ),
+      },
       bindingRepository,
       historyStore ?? undefined,
     );

@@ -39,8 +39,11 @@ for (let attempt = 0; attempt < 35; attempt++) {
   voltage = registers.readFloatBE(9);
   if (Math.abs(voltage - 13.79) < 0.001) {
     assert.ok(Math.abs(registers.readFloatBE(13) - 9.91) < 0.001);
-    assert.ok(Math.abs(registers.readFloatBE(17) - 0.13672) < 0.00001);
-    assert.ok(Math.abs(registers.readFloatBE(21) - 0.4155) < 0.0001);
+    // Site Mapper is authoritative for BFDB P/E: 13.79 V * 9.91 A =
+    // 136.6589 W = 0.1366589 kW. The first derived-energy sample starts at 0
+    // and must not adopt the raw gateway EP1=0.4155 counter.
+    assert.ok(Math.abs(registers.readFloatBE(17) - 0.1366589) < 0.00001);
+    assert.ok(Math.abs(registers.readFloatBE(21) - 0) < 0.0001);
     break;
   }
   await new Promise((resolve) => setTimeout(resolve, 500));
@@ -49,5 +52,5 @@ assert.ok(Math.abs(voltage - 13.79) < 0.001, 'MQTT reading not exported to Modbu
 const other = await read(2, 0, 8);
 assert.equal(other.readFloatBE(9), 0, 'Second BFDB Unit ID leaked first BFDB voltage');
 console.log(
-  '[PASS] MQTT -> Site Mapper accepted breaker -> Modbus FC04 TCP FLOAT32, 4 metrics, isolated Unit IDs',
+  '[PASS] MQTT V/I -> Site Mapper derived P/E -> Modbus FC04 TCP FLOAT32, 4 metrics, isolated Unit IDs',
 );

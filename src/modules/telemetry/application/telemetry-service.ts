@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { AutomaticBfdbBindingReconciler } from './automatic-bfdb-binding-reconciler';
+import { BfdbDerivedElectricalEngine } from './bfdb-derived-electrical';
 import { TelemetryIdentityResolver } from './telemetry-identity-resolver';
 import type { TelemetryBindingRepository } from '@/modules/telemetry/application/telemetry-binding-repository';
 import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
@@ -29,6 +30,8 @@ export type TelemetryIngestError =
 
 export interface TelemetryIntegrationOptions {
   readonly configuredBindings?: readonly TelemetryBinding[];
+  /** Maximum real receive gap eligible for BFDB derived-energy integration. */
+  readonly derivedEnergyMaxGapMs?: number;
 }
 
 interface ResolvedTarget {
@@ -37,6 +40,8 @@ interface ResolvedTarget {
 }
 
 export class TelemetryService {
+  private readonly electricalDerivation: BfdbDerivedElectricalEngine;
+
   constructor(
     private readonly topologyRepository: TopologyRepository,
     private readonly hub: TelemetryHub,
@@ -44,7 +49,12 @@ export class TelemetryService {
     private readonly integrationOptions: TelemetryIntegrationOptions = {},
     private readonly bindingRepository?: TelemetryBindingRepository,
     private readonly historyWriter?: TelemetryHistoryWriter,
-  ) {}
+  ) {
+    this.electricalDerivation = new BfdbDerivedElectricalEngine(
+      historyWriter,
+      integrationOptions.derivedEnergyMaxGapMs,
+    );
+  }
 
   async ingest(
     topic: string,
@@ -181,6 +191,16 @@ export class TelemetryService {
       }
     }
 
+    if (normalized.value.protocol === 'BFDB' && breakerReadings.readings.length) {
+      breakerReadings = {
+        ...breakerReadings,
+        readings: await this.electricalDerivation.applyBreakerReadings(
+          breakerReadings.readings,
+          normalized.value.messageId,
+        ),
+      };
+    }
+
     const sample: TelemetrySample = {
       bindingId: sourceBinding.id,
       targetId: target.id,
@@ -275,13 +295,16 @@ export class TelemetryService {
           if (position <= 0) continue;
           physicalLocations.set(id, { panelLabel: panel.name, position });
         }
-        for (const own of buildBoundBfdbEquipmentPatches(
-          normalized.value,
-          bindings,
-          verified,
-          physicalLocations,
-          wireProfileResolution?.effective,
-        )) {
+        const ownPatches = await this.electricalDerivation.applyEquipmentSamples(
+          buildBoundBfdbEquipmentPatches(
+            normalized.value,
+            bindings,
+            verified,
+            physicalLocations,
+            wireProfileResolution?.effective,
+          ),
+        );
+        for (const own of ownPatches) {
           this.hub.publish(own);
           void this.captureHistory(own);
         }

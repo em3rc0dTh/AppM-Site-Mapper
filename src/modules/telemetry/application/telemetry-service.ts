@@ -7,7 +7,7 @@ import type { TelemetryHistoryWriter } from '@/modules/telemetry/application/tel
 import { BdfbProjectionService } from '@/modules/power/application/bdfb-projection-service';
 import { buildBfdbBreakerReadings } from '@/modules/telemetry/domain/bfdb';
 import { buildBoundBfdbEquipmentPatches } from '@/modules/telemetry/domain/bfdb-bound-point';
-import { resolveBdfbWireProfile } from '@/modules/telemetry/domain/bfdb-wire-layout';
+import { resolveBfdbWireProfile } from '@/modules/telemetry/domain/bfdb-wire-layout';
 import type {
   TelemetryBinding,
   TelemetrySample,
@@ -166,7 +166,7 @@ export class TelemetryService {
 
     const wireProfileResolution =
       normalized.value.protocol === 'BFDB'
-        ? resolveBdfbWireProfile(normalized.value.reported, bindings)
+        ? resolveBfdbWireProfile(normalized.value.reported, bindings)
         : null;
 
     if (target.type === 'DEVICE' || target.type === 'EQUIPMENT') {

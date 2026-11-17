@@ -35,7 +35,10 @@ export function buildBoundBfdbEquipmentPatches(
   eligibleBreakerIds: ReadonlySet<string>,
   // Runtime supplies the canonical physical location; never trust a stale
   // sourcePointId as evidence that a breaker belongs to that meter.
-  physicalLocations?: ReadonlyMap<string, { readonly panelLabel: string; readonly position: number }>,
+  physicalLocations?: ReadonlyMap<
+    string,
+    { readonly panelLabel: string; readonly position: number }
+  >,
   wireProfile?: BfdbWireProfile,
 ): readonly TelemetrySample[] {
   if (message.protocol !== 'BFDB') return [];
@@ -68,7 +71,8 @@ export function buildBoundBfdbEquipmentPatches(
           !assigned ||
           assigned.panelLabel !== point.panelLabel ||
           assigned.position !== point.panelPosition
-        ) continue;
+        )
+          continue;
       }
 
       // A channel-qualified point may not be attributed to two breakers or

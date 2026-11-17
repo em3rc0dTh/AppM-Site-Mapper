@@ -202,9 +202,9 @@ export function buildBfdbBreakerReadings(
       if (
         !resolved ||
         (profile === 'FIELD_DUAL_12' &&
-          (resolved.panelLabel !== point.panelLabel ||
-            resolved.position !== point.panelPosition))
-      ) continue;
+          (resolved.panelLabel !== point.panelLabel || resolved.position !== point.panelPosition))
+      )
+        continue;
 
       const accepts = (name: BfdbMetric) => mapping.metrics.has(name);
       const voltageV = accepts('VOLTAGE')

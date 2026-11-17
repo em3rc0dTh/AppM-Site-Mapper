@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { buildBoundBfdbEquipmentPatches } from '@/modules/telemetry/domain/bfdb-bound-point';
-import type { NormalizedTelemetryMessage, TelemetryBinding } from '@/modules/telemetry/domain/entities';
+import type {
+  NormalizedTelemetryMessage,
+  TelemetryBinding,
+} from '@/modules/telemetry/domain/entities';
 
 const time = '2026-11-16T20:50:00.000Z';
 const metrics = (point: string): TelemetryBinding[] =>

@@ -11,11 +11,11 @@ change cannot resolve the ownership problem.
 The canonical **field** meter map is:
 
 | Panel | RS485 meter slave | Raw MQTT group | Positions |
-| --- | ---: | --- | --- |
-| A3 | 1 | 0_1_N | 1..24 |
-| A2 | 3 | 0_3_N | 1..24 |
-| B3 | 5 | 0_5_N | 1..24 |
-| B2 | 7 | 0_7_N | 1..24 |
+| ----- | ----------------: | -------------- | --------- |
+| A3    |                 1 | 0_1_N          | 1..24     |
+| A2    |                 3 | 0_3_N          | 1..24     |
+| B3    |                 5 | 0_5_N          | 1..24     |
+| B2    |                 7 | 0_7_N          | 1..24     |
 
 For the FIELD_DUAL_12 wire profile, raw objects 1..12 contain two independent
 channels: #1 maps to panel positions 1..12 and #2 to positions 13..24.
@@ -40,19 +40,19 @@ workbooks, MQTT secrets or database exports.
 
 ## Read-only audit on the MongoDB host
 
-Use the *private* S05 manifest already held in .runtime; it must include all three
+Use the _private_ S05 manifest already held in .runtime; it must include all three
 QDFs and each meter's physical address and identity.
 
 Do not paste the URI or the private manifest into Git, logs or chat.
 
-~~~bash
+```bash
 # From the Site Mapper repository root, with MONGODB_URI already exported
 node scripts/operations/reconcile-field-mqtt-bindings.mjs \
   --manifest .runtime/s05-commissioning-reference.json \
   --database seed-01 \
   --expected-qdfs 3 \
   > .runtime/field-binding-plan.json
-~~~
+```
 
 Check the plan for every panel and every installed breaker. Possible results:
 
@@ -70,11 +70,11 @@ for actual voltage readings.
 
 ## Operator-controlled APPLY
 
-Run a full MongoDB backup through the approved backup workflow *before* APPLY.
+Run a full MongoDB backup through the approved backup workflow _before_ APPLY.
 Review the private plan and the meter configurations. Only when the plan has no
 BLOCK_* findings, explicitly request the atomic change:
 
-~~~bash
+```bash
 node scripts/operations/reconcile-field-mqtt-bindings.mjs \
   --manifest .runtime/s05-commissioning-reference.json \
   --database seed-01 \
@@ -82,7 +82,7 @@ node scripts/operations/reconcile-field-mqtt-bindings.mjs \
   --apply \
   --ack RECONCILE_FIELD_BINDINGS \
   --backup .runtime/field-bindings-before-apply.json
-~~~
+```
 
 - Backup snapshot is created with exclusive creation and restrictive permissions.
 - APPLY refuses FIELD-verified/operator-confirmed mappings and conflicts; they
@@ -115,7 +115,6 @@ transactional procedure.
 
 Do not conflate an MQTT ONLINE state with valid VIPE electrical measurements.
 
-
 ## Field validation result — 2026-11-16
 
 The controlled TFARM04 correction was executed against the live Site Mapper
@@ -145,11 +144,11 @@ Observed result:
 For `FIELD_DUAL_12`, code, reconciliation and future commissioning must preserve:
 
 | Physical panel | Meter slave | MQTT raw family |
-| --- | ---: | --- |
-| A3 | 1 | `0_1_N` |
-| A2 | 3 | `0_3_N` |
-| B3 | 5 | `0_5_N` |
-| B2 | 7 | `0_7_N` |
+| -------------- | ----------: | --------------- |
+| A3             |           1 | `0_1_N`         |
+| A2             |           3 | `0_3_N`         |
+| B3             |           5 | `0_5_N`         |
+| B2             |           7 | `0_7_N`         |
 
 A breaker may be reported LIVE only when the resolved physical panel/position
 matches the raw meter group/channel. A stale persisted binding is not sufficient

@@ -1,4 +1,3 @@
-import { normalizePowerToWatts } from './power-unit-contract';
 import {
   bindingPointIdsForWirePoint,
   detectBfdbWireProfile,
@@ -100,14 +99,15 @@ export function buildBoundBfdbEquipmentPatches(
       const reported: Record<string, unknown> = {};
       for (const link of links) {
         const metricName = link.metric.toUpperCase() as MetricName;
+        // Device-reported P/EP are retained in the parent raw MQTT payload only.
+        // Point LIVE state is built from authoritative voltage/current and the
+        // application derivation layer supplies power/energy.
+        if (metricName !== 'VOLTAGE' && metricName !== 'CURRENT') continue;
         const field = METRICS[metricName];
         const wireField = wireByMetric[metricName];
-        const value =
-          metricName === 'POWER'
-            ? normalizePowerToWatts(rawFields[wireField], link.unit)
-            : numeric(rawFields[wireField]);
+        const value = numeric(rawFields[wireField]);
         if (value !== undefined) {
-          reported[field.key] = { value, unit: field.unit, observedAt };
+          reported[field.key] = { value, unit: field.unit, observedAt, origin: 'SOURCE' };
         }
       }
       if (
@@ -129,7 +129,9 @@ export function buildBoundBfdbEquipmentPatches(
         entityKind: 'EQUIPMENT',
         sourceIdentity: message.sourceIdentity,
         receivedAt: message.receivedAt,
+        protocol: 'BFDB',
         reported,
+        ...(message.messageId ? { messageId: message.messageId } : {}),
         ...(message.sourceObservedAt ? { sourceObservedAt: message.sourceObservedAt } : {}),
         ...(message.sourceSentAt ? { sourceSentAt: message.sourceSentAt } : {}),
       });

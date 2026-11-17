@@ -98,7 +98,7 @@ async function bootstrapAndLogin() {
   if (!mqttOnly) {
     const seed = await fetch(`${baseUrl}/api/dev/seed-demo`, {
       method: 'POST',
-      headers: { cookie },
+      headers: { cookie, origin: baseUrl },
     });
     if (!seed.ok) throw new Error(`Demo seed failed with HTTP ${seed.status}.`);
   }
@@ -106,7 +106,7 @@ async function bootstrapAndLogin() {
   if (mqttLab) {
     const lab = await fetch(`${baseUrl}/api/dev/seed-bfdb-emulator`, {
       method: 'POST',
-      headers: { cookie },
+      headers: { cookie, origin: baseUrl },
     });
     if (!lab.ok) {
       throw new Error(`Emulator lab seed failed with HTTP ${lab.status}: ${await lab.text()}`);

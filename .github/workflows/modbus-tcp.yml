@@ -13,6 +13,7 @@ on:
       - 'docker-compose.telemetry.yml'
   pull_request:
     paths:
+      - '.github/uat-verification.json'
       - 'infra/modbus-tcp/**'
       - 'scripts/operations/generate-metasys-register-map.mjs'
       - 'docs/telemetry/metasys-register-map.csv'

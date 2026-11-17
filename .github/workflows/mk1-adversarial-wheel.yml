@@ -2,6 +2,7 @@ name: MK1 adversarial wheel (isolated)
 on:
   pull_request:
     paths:
+      - '.github/uat-verification.json'
       - '.github/workflows/mk1-adversarial-wheel.yml'
       - '.github/workflows/operational-http-e2e.yml'
       - 'scripts/ci/mk1-adversarial-http.mjs'

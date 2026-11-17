@@ -1,4 +1,4 @@
-import { renderToStaticMarkup } from 'react-dom/server';
+import { renderWithIntl as renderToStaticMarkup } from '../helpers/render-with-intl';
 import { describe, expect, it } from 'vitest';
 
 import { EquipmentContractViews } from '@/components/equipment/equipment-contract-views';
@@ -108,7 +108,9 @@ describe('Equipment Composition SCREEN 12', () => {
       <EquipmentContractViews root={breakerA} equipmentById={byId} readings={readings} />,
     );
     expect(markup).toContain('MQTT source');
-    expect(markup).toContain('120.00');
+    // Contractual UI power is kW; the source stores 120 W.
+    expect(markup).toContain('<strong>0.120</strong><small>kW</small>');
+    expect(markup).toContain('Power · kW');
     expect(markup).toContain('LIVE');
     expect(markup).not.toContain('Breaker B');
   });

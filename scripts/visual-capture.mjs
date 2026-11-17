@@ -17,6 +17,7 @@ const context = await browser.newContext({
   viewport: { width: 1672, height: 941 },
   deviceScaleFactor: 1,
 });
+context.setDefaultTimeout(30_000);
 const page = await context.newPage();
 
 async function snap(name) {
@@ -30,7 +31,7 @@ async function go(path) {
 }
 
 async function search(term, kind) {
-  return page.evaluate(
+  const href = await page.evaluate(
     async ({ term, kind }) => {
       const response = await fetch('/api/search?q=' + encodeURIComponent(term));
       const data = await response.json();
@@ -38,14 +39,27 @@ async function search(term, kind) {
     },
     { term, kind },
   );
+  assert.ok(href, `Required seeded visual fixture missing: ${term} (${kind})`);
+  return href;
 }
 
 await go('/login');
 await snap('00-login');
-await page.getByLabel('Email').fill(email);
-await page.getByLabel('Password').fill(password);
+await page.waitForFunction(() => document.querySelector('button.auth-submit')?.disabled === false);
+await page.locator('input[name="email"]').fill(email);
+await page.locator('input[name="password"]').fill(password);
+assert.ok(
+  await page.locator('form.auth-form').evaluate((form) => form.checkValidity()),
+  'Seeded login form must be valid before submit',
+);
 await page.getByRole('button', { name: 'SIGN IN' }).click();
-await page.waitForURL(/\/workspace|\/network|\/topology/);
+await page
+  .waitForURL(/\/(?:workspace|network|topology|blueprint|rack|device|power)(?:\/|\?|$)/)
+  .catch(async (error) => {
+    console.error('Login failure', await page.locator('.auth-error').allTextContents());
+    await snap('00-login-failure');
+    throw error;
+  });
 await page.waitForTimeout(450);
 await snap('14-operations');
 
@@ -68,19 +82,19 @@ if (siteLink) {
   await snap('02-site');
 }
 
-const structureLink = await search('Building A', 'STRUCTURE');
+const structureLink = await search('Data Center A', 'STRUCTURE');
 if (structureLink) {
   await go(structureLink);
   await snap('03-structure');
 }
 
-const levelLink = await search('Level 02', 'LEVEL');
+const levelLink = await search('Level 01', 'LEVEL');
 if (levelLink) {
   await go(levelLink);
   await snap('04-level');
 }
 
-const roomLink = await search('Room 202', 'ROOM_SUBSTRUCTURE');
+const roomLink = await search('Data Hall 01', 'ROOM_SUBSTRUCTURE');
 if (roomLink) {
   await go(roomLink);
 
@@ -144,7 +158,7 @@ if (roomLink) {
   await page.keyboard.press('Escape');
 }
 
-const rackLink = await search('R-023', 'CONTAINER_RACK');
+const rackLink = await search('RACK-A01', 'CONTAINER_RACK');
 if (rackLink) {
   const focus = rackLink.endsWith('/focus')
     ? rackLink
@@ -193,7 +207,7 @@ if (rackLink) {
   await snap('08-rack-elevation');
 }
 
-const deviceLink = await search('SERVER-01', 'DEVICE');
+const deviceLink = await search('Compute Node 01', 'DEVICE');
 if (deviceLink) {
   await go(deviceLink);
   await snap('09-device-focus');

@@ -1,6 +1,10 @@
 name: Visual parity capture
 
 on:
+  pull_request:
+    paths:
+      - '.github/uat-verification.json'
+      - '.github/workflows/visual-parity.yml'
   workflow_dispatch:
 
 permissions:
@@ -37,6 +41,8 @@ jobs:
           done
           cat /tmp/site-mapper.log
           exit 1
+      - name: Verify detached Power Trace, absent feed, reconciliation and Print/PDF
+        run: NODE_PATH="$(npm root --global)" node scripts/ci/uat-power-trace-browser.mjs
       - name: Capture approved view family
         run: NODE_PATH="$(npm root --global)" node scripts/visual-capture.mjs
       - uses: actions/upload-artifact@v4

@@ -1,4 +1,4 @@
-import { renderToStaticMarkup } from 'react-dom/server';
+import { renderWithIntl as renderToStaticMarkup } from '../helpers/render-with-intl';
 import { describe, expect, it } from 'vitest';
 
 import { PhysicalEquipmentDiagram } from '@/components/equipment/physical-equipment-diagram';

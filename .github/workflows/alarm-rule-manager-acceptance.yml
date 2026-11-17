@@ -1,6 +1,10 @@
 name: Alarm Rule Manager MK1 acceptance
 
 on:
+  pull_request:
+    paths:
+      - '.github/uat-verification.json'
+      - '.github/workflows/alarm-rule-manager-acceptance.yml'
   push:
     branches:
       - feat/alarm-rule-manager-dc48v-mk1
@@ -134,6 +138,18 @@ jobs:
         run: |
           npm run local:dev -- --no-open > /tmp/alarm-rule-manager-next.log 2>&1 &
           echo $! > /tmp/alarm-rule-manager-next.pid
+          for attempt in $(seq 1 120); do
+            if grep -q 'Site Mapper local demo is ready.' /tmp/alarm-rule-manager-next.log; then
+              exit 0
+            fi
+            if ! kill -0 "$(cat /tmp/alarm-rule-manager-next.pid)" 2>/dev/null; then
+              echo 'Seeded Site Mapper exited before readiness' >&2
+              exit 1
+            fi
+            sleep 1
+          done
+          echo 'Seeded Site Mapper readiness timeout' >&2
+          exit 1
       - name: Authenticated HTTP/RBAC/draft/publish/disable acceptance
         run: node scripts/ci/alarm-rule-manager-http-smoke.mjs
       - name: Chromium catalog/profile/history/alarm-center screenshots

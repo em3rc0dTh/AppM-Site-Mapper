@@ -10,6 +10,7 @@ on:
       - .github/workflows/s02-alarm-acceptance.yml
   pull_request:
     paths:
+      - '.github/uat-verification.json'
       - tests/integration/s02-alarm-acceptance-mongo.test.ts
       - tests/integration/automatic-operational-commissioning-mongo.test.ts
       - .github/workflows/s02-alarm-acceptance.yml

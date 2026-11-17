@@ -1,5 +1,5 @@
 import { createElement } from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
+import { renderWithIntl as renderToStaticMarkup } from '../helpers/render-with-intl';
 import { describe, expect, it } from 'vitest';
 
 import { PolygonEditor } from '@/components/spatial/polygon-editor';

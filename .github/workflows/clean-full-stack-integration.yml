@@ -3,6 +3,7 @@ name: Clean full-stack integration
 on:
   pull_request:
     paths:
+      - '.github/uat-verification.json'
       - 'docker-compose.telemetry.yml'
       - 'docker-compose.integration.yml'
       - 'infra/integration/**'
@@ -30,7 +31,9 @@ permissions:
 jobs:
   clean-stack:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 40
+    env:
+      COMPOSE_PROJECT_NAME: uat-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v7
 
@@ -278,6 +281,18 @@ jobs:
           '
 
           dc ps
+
+      - name: Record release, restart and isolated backup restore evidence
+        run: bash scripts/ci/uat-full-stack-evidence.sh --isolated-lab
+
+      - name: Preserve technical LAB evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: uat-full-stack-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/uat-lab/
+          retention-days: 30
+          if-no-files-found: warn
 
       - name: Diagnostics on failure
         if: failure()

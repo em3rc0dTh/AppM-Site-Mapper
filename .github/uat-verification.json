@@ -1,0 +1,29 @@
+{
+  "campaign": "UAT-LAB-2026-11-17-R4",
+  "application_baseline": "c701a60b604756a8fc1ad112009d086141a0aaff",
+  "environment": "disposable GitHub Actions LAB; synthetic sources only",
+  "workflows": [
+    "ci.yml",
+    "alarm-rule-manager-acceptance.yml",
+    "bfdb-mqtt-integration.yml",
+    "bfdb-snmp-config4-docker.yml",
+    "clean-full-stack-integration.yml",
+    "industrial-lab-operator-safety.yml",
+    "mk1-adversarial-wheel.yml",
+    "mk1-infrastructure-chaos.yml",
+    "modbus-tcp.yml",
+    "operational-http-e2e.yml",
+    "s02-alarm-acceptance.yml",
+    "s05-commissioning-observability.yml",
+    "s06-static-contract.yml",
+    "security-owasp-3000.yml",
+    "snmp-adversarial-security.yml",
+    "snmp-atomic-durability.yml",
+    "snmp-chaos-stress.yml",
+    "visual-parity.yml"
+  ],
+  "exclusions": {
+    "operational-console.yml": "retired component; manual source checks only"
+  },
+  "acceptance_boundary": "Technical LAB evidence only; customer UAT and FIELD/SAT require case execution and signatures."
+}

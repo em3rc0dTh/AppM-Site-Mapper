@@ -433,6 +433,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
           {node.kind === 'EQUIPMENT' ? (
             <Front01StageTabs
               label={t('views')}
+              headingActions={<FullPowerTraceModal entityId={node.id} />}
               physical={
                 <>
                   <EquipmentCompositionEditor

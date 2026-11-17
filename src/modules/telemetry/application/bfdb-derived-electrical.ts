@@ -102,8 +102,10 @@ export class BfdbDerivedElectricalEngine {
         messageId,
       );
       if (!derived) {
-        const { powerW: _sourcePower, energyKwh: _sourceEnergy, ...sourceMetrics } =
-          reading.metrics;
+        const sourceMetrics = {
+          ...(reading.metrics.voltageV ? { voltageV: reading.metrics.voltageV } : {}),
+          ...(reading.metrics.currentA ? { currentA: reading.metrics.currentA } : {}),
+        };
         return { ...reading, metrics: sourceMetrics };
       }
       return {

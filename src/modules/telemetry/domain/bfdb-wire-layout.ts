@@ -181,7 +181,6 @@ export function findBfdbWirePointByBindingId(
   return null;
 }
 
-
 function asBfdbWireProfile(value: unknown): BfdbWireProfile | null {
   return value === 'FIELD_DUAL_12' || value === 'LEGACY_SINGLE_24' ? value : null;
 }

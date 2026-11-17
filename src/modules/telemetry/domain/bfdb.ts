@@ -13,7 +13,6 @@ import {
   isFieldStatusOnlyPoint,
   type BfdbWireProfile,
 } from '@/modules/telemetry/domain/bfdb-wire-layout';
-import { normalizePowerToWatts } from '@/modules/telemetry/domain/power-unit-contract';
 
 interface ResolvedBreaker {
   readonly shelfId: string;
@@ -46,16 +45,9 @@ function finiteNumber(value: unknown): number | null {
 
 function metric(value: unknown, observedAt: string): TelemetryMetricValue | undefined {
   const numeric = finiteNumber(value);
-  return numeric === null ? undefined : { value: numeric, observedAt };
-}
-
-function powerMetric(
-  value: unknown,
-  observedAt: string,
-  sourceUnit?: string,
-): TelemetryMetricValue | undefined {
-  const watts = normalizePowerToWatts(value, sourceUnit);
-  return watts === undefined ? undefined : { value: watts, observedAt };
+  return numeric === null
+    ? undefined
+    : { value: numeric, observedAt, origin: 'SOURCE', quality: 'GOOD' };
 }
 
 function breakerMap(presentation: BdfbPresentation): ReadonlyMap<string, ResolvedBreaker> {
@@ -148,15 +140,11 @@ export function buildBfdbBreakerReadings(
           const accepts = (name: BfdbMetric) => mapping.metrics.has(name);
           const voltageV = accepts('VOLTAGE') ? metric(rawPoint.U1, observedAt) : undefined;
           const currentA = accepts('CURRENT') ? metric(rawPoint.I1, observedAt) : undefined;
-          const powerW = accepts('POWER')
-            ? powerMetric(rawPoint.P1, observedAt, mapping.metrics.get('POWER')?.unit)
-            : undefined;
-          const energyKwh = accepts('ENERGY') ? metric(rawPoint.EP1, observedAt) : undefined;
+          // Source P/EP remain preserved in the raw MQTT envelope but are not
+          // operationally authoritative. Site Mapper derives power/energy from V/I.
           const metrics: BreakerTelemetryMetrics = {
             ...(voltageV ? { voltageV } : {}),
             ...(currentA ? { currentA } : {}),
-            ...(powerW ? { powerW } : {}),
-            ...(energyKwh ? { energyKwh } : {}),
           };
           const state =
             rawPoint.state === undefined
@@ -213,17 +201,11 @@ export function buildBfdbBreakerReadings(
       const currentA = accepts('CURRENT')
         ? metric(rawPoint[point.fields.current], observedAt)
         : undefined;
-      const powerW = accepts('POWER')
-        ? powerMetric(rawPoint[point.fields.power], observedAt, mapping.metrics.get('POWER')?.unit)
-        : undefined;
-      const energyKwh = accepts('ENERGY')
-        ? metric(rawPoint[point.fields.energy], observedAt)
-        : undefined;
+      // Source P/EP remain preserved in the raw MQTT envelope but are not
+      // operationally authoritative. Site Mapper derives power/energy from V/I.
       const metrics: BreakerTelemetryMetrics = {
         ...(voltageV ? { voltageV } : {}),
         ...(currentA ? { currentA } : {}),
-        ...(powerW ? { powerW } : {}),
-        ...(energyKwh ? { energyKwh } : {}),
       };
       if (!Object.keys(metrics).length) continue;
 

@@ -44,7 +44,7 @@ const binding = (
 });
 
 describe('explicit BFDB breaker Equipment projection', () => {
-  it('uses verified binding identities, not BDFB power port or panel position', () => {
+  it('uses verified binding identities and keeps device P/EP out of operational state', () => {
     const bindings = ['VOLTAGE', 'CURRENT', 'POWER', 'ENERGY'].map((m) => binding(m));
     const result = buildBoundBfdbEquipmentPatches(message, bindings, new Set(['breaker-01']));
     expect(result).toHaveLength(1);
@@ -52,14 +52,15 @@ describe('explicit BFDB breaker Equipment projection', () => {
       targetId: 'breaker-01',
       sourceIdentity: 'EMU-BFDB-03',
       sourcePointId: '0_1_1',
+      protocol: 'BFDB',
       reported: {
-        voltageV: { value: 13.78, unit: 'V' },
-        currentA: { value: 1.93, unit: 'A' },
-        powerW: { value: 26.64, unit: 'W' },
-        energyKwh: { value: 0.2795, unit: 'kWh' },
+        voltageV: { value: 13.78, unit: 'V', origin: 'SOURCE' },
+        currentA: { value: 1.93, unit: 'A', origin: 'SOURCE' },
         state: 'ONLINE',
       },
     });
+    expect(result[0]?.reported).not.toHaveProperty('powerW');
+    expect(result[0]?.reported).not.toHaveProperty('energyKwh');
     expect(result[0]?.metricBindingIds).toHaveLength(4);
   });
 
@@ -90,12 +91,12 @@ describe('explicit BFDB breaker Equipment projection', () => {
     expect(rawResult[0]).toMatchObject({
       sourcePointId: '0_1_1',
       reported: {
-        voltageV: { value: 13.79, unit: 'V' },
-        currentA: { value: 9.91, unit: 'A' },
-        powerW: { value: 136.72, unit: 'W' },
-        energyKwh: { value: 0.4155, unit: 'kWh' },
+        voltageV: { value: 13.79, unit: 'V', origin: 'SOURCE' },
+        currentA: { value: 9.91, unit: 'A', origin: 'SOURCE' },
       },
     });
+    expect(rawResult[0]?.reported).not.toHaveProperty('powerW');
+    expect(rawResult[0]?.reported).not.toHaveProperty('energyKwh');
 
     const channel2Bindings = ['VOLTAGE', 'CURRENT', 'POWER', 'ENERGY'].map((m) =>
       binding(m, 'breaker-02', '0_1_1#2'),
@@ -109,50 +110,22 @@ describe('explicit BFDB breaker Equipment projection', () => {
     expect(channel2Result[0]).toMatchObject({
       sourcePointId: '0_1_1#2',
       reported: {
-        voltageV: { value: 12.11, unit: 'V' },
-        currentA: { value: 2.22, unit: 'A' },
-        powerW: { value: 26.88, unit: 'W' },
-        energyKwh: { value: 0.9999, unit: 'kWh' },
+        voltageV: { value: 12.11, unit: 'V', origin: 'SOURCE' },
+        currentA: { value: 2.22, unit: 'A', origin: 'SOURCE' },
       },
     });
   });
 
-  it('normalizes an explicitly declared kW source to canonical internal watts', () => {
-    const kwMessage: NormalizedTelemetryMessage = {
-      ...message,
-      reported: {
-        '0_1_1': {
-          state: 'ONLINE',
-          U1: '13.78',
-          I1: '1.93',
-          P1: '0.02664',
-          EP1: '0.2795',
-        },
-      },
-    };
+  it('keeps source P/EP raw-only regardless of declared source power unit', () => {
     const bindings = [
       binding('VOLTAGE'),
       binding('CURRENT'),
       binding('POWER', 'breaker-01', '0_1_1', 'kW'),
       binding('ENERGY'),
     ];
-    const result = buildBoundBfdbEquipmentPatches(kwMessage, bindings, new Set(['breaker-01']));
-    expect(result[0]?.reported.powerW).toEqual({
-      value: 26.64,
-      unit: 'W',
-      observedAt: receivedAt,
-    });
-  });
-
-  it('fails only the power metric closed when a source declares an unsupported power unit', () => {
-    const bindings = [
-      binding('VOLTAGE'),
-      binding('CURRENT'),
-      binding('POWER', 'breaker-01', '0_1_1', 'MW'),
-      binding('ENERGY'),
-    ];
     const result = buildBoundBfdbEquipmentPatches(message, bindings, new Set(['breaker-01']));
     expect(result[0]?.reported).not.toHaveProperty('powerW');
+    expect(result[0]?.reported).not.toHaveProperty('energyKwh');
     expect(result[0]?.reported).toHaveProperty('voltageV');
     expect(result[0]?.reported).toHaveProperty('currentA');
   });
@@ -197,7 +170,7 @@ describe('explicit BFDB breaker Equipment projection', () => {
       new Set(['breaker-01']),
     );
     expect(result[0]?.reported).toEqual({
-      voltageV: { value: 0, unit: 'V', observedAt: receivedAt },
+      voltageV: { value: 0, unit: 'V', observedAt: receivedAt, origin: 'SOURCE' },
     });
   });
 

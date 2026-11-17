@@ -97,27 +97,22 @@ describe('BFDB telemetry binding', () => {
 
     expect(result.readings).toHaveLength(1);
     expect(result.readings[0]?.metrics.currentA?.value).toBe(0);
-    expect(result.readings[0]?.metrics.powerW?.value).toBe(0);
+    expect(result.readings[0]?.metrics.powerW).toBeUndefined();
+    expect(result.readings[0]?.metrics.energyKwh).toBeUndefined();
     expect(result.readings[0]?.state?.value).toBe('ONLINE');
   });
 
-  it('uses W as the BFDB v1 default and accepts an explicit kW binding override', () => {
-    const wattResult = buildBfdbBreakerReadings(
+  it('does not project source P/EP into operational breaker metrics', () => {
+    const result = buildBfdbBreakerReadings(
       presentation,
-      message({ '0_9_9': { P1: '55.62' } }),
+      message({ '0_9_9': { U1: '13.82', I1: '4.00', P1: '9999', EP1: '9999' } }),
       bindings('0_9_9', 'breaker-a1'),
     );
-    expect(wattResult.readings[0]?.metrics.powerW?.value).toBe(55.62);
-
-    const kwBindings = bindings('0_9_9', 'breaker-a1').map((binding) =>
-      binding.metric === 'POWER' ? { ...binding, unit: 'kW' } : binding,
-    );
-    const kwResult = buildBfdbBreakerReadings(
-      presentation,
-      message({ '0_9_9': { P1: '0.05562' } }),
-      kwBindings,
-    );
-    expect(kwResult.readings[0]?.metrics.powerW?.value).toBeCloseTo(55.62, 10);
+    expect(result.readings).toHaveLength(1);
+    expect(result.readings[0]?.metrics.voltageV?.value).toBe(13.82);
+    expect(result.readings[0]?.metrics.currentA?.value).toBe(4);
+    expect(result.readings[0]?.metrics.powerW).toBeUndefined();
+    expect(result.readings[0]?.metrics.energyKwh).toBeUndefined();
   });
 
   it('reports points without an unambiguous binding as unmapped', () => {

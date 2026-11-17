@@ -250,7 +250,10 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
       topologyRepository,
       hub,
       { topicPrefix, maxPayloadBytes },
-      { configuredBindings: configuredBindings(process.env.MQTT_SOURCE_DEVICE_MAP) },
+      {
+        configuredBindings: configuredBindings(process.env.MQTT_SOURCE_DEVICE_MAP),
+        derivedEnergyMaxGapMs: positiveInt(process.env.BFDB_DERIVED_ENERGY_MAX_GAP_MS, 120_000),
+      },
       bindingRepository,
       historyStore ?? undefined,
     );
@@ -395,12 +398,14 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
                 rawPointId: string;
                 receivedAt: string;
                 metrics: unknown;
-              }> = [...(result.value.breakerReadings ?? [])].map((reading) => ({
-                sourceIdentity: reading.sourceIdentity,
-                rawPointId: reading.modbusPointId ?? reading.rawPointId,
-                receivedAt: reading.receivedAt,
-                metrics: reading.metrics,
-              }));
+              }> = [...(result.value.breakerReadings ?? [])]
+                .filter((reading) => reading.receivedAt === result.value.receivedAt)
+                .map((reading) => ({
+                  sourceIdentity: reading.sourceIdentity,
+                  rawPointId: reading.modbusPointId ?? reading.rawPointId,
+                  receivedAt: reading.receivedAt,
+                  metrics: reading.metrics,
+                }));
               // A physically configured breaker may have point-level Equipment
               // bindings without a legacy BDFB shelf/frame projection.
               // Read only accepted exact-target patches, never raw unbound points.
@@ -428,21 +433,16 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
                 const sourcePointId = item.sourcePointId!;
                 const point = findBfdbWirePointByBindingId(sourcePointId, freshPoints, wireProfile);
                 if (!point) continue;
-                const raw = freshPoints[point.rawPointId];
-                if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
-                const source = raw as Record<string, unknown>;
-                const fields = [
-                  [point.fields.voltage, 'voltageV'],
-                  [point.fields.current, 'currentA'],
-                  [point.fields.power, 'powerW'],
-                  [point.fields.energy, 'energyKwh'],
-                ] as const;
                 const metrics: Record<string, { value: number }> = {};
-                for (const [wire, normalized] of fields) {
-                  // Direct Equipment sample contains only commissioned metric
-                  // fields; require it before forwarding fresh raw values.
-                  if (!(normalized in item.reported)) continue;
-                  const rawValue = source[wire];
+                for (const normalized of ['voltageV', 'currentA', 'powerW', 'energyKwh'] as const) {
+                  // Forward the canonical Equipment metric. In BFDB mode power
+                  // and energy may be Site Mapper-derived and must never be
+                  // overwritten by untrusted raw P/EP fields from the gateway.
+                  const canonical = item.reported[normalized];
+                  const rawValue =
+                    canonical && typeof canonical === 'object' && !Array.isArray(canonical)
+                      ? (canonical as { value?: unknown }).value
+                      : canonical;
                   const numeric =
                     typeof rawValue === 'number'
                       ? rawValue

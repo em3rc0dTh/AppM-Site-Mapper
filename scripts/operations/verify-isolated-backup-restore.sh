@@ -99,8 +99,12 @@ docker run -d --rm --name "$PG" \
   -e POSTGRES_DB=site_mapper_telemetry \
   "$TIMESCALE_IMAGE" >/dev/null
 
+# The image entrypoint starts a temporary Unix-socket-only PostgreSQL during
+# first-time initialization and then shuts it down before starting the final
+# server. Waiting on TCP prevents us from mistaking that transient init server
+# for the restore target.
 i=0
-until docker exec "$PG" pg_isready -U site_mapper -d site_mapper_telemetry >/dev/null 2>&1; do
+until docker exec "$PG" pg_isready -h 127.0.0.1 -U site_mapper -d site_mapper_telemetry >/dev/null 2>&1; do
   i=$((i + 1))
   [ "$i" -lt 90 ] || { echo "Temporary TimescaleDB did not become ready" >&2; exit 4; }
   sleep 1
@@ -131,7 +135,7 @@ PRE_RESTORE_RC=$?
 set -e
 
 i=0
-until docker exec "$PG" pg_isready -U site_mapper -d site_mapper_telemetry >/dev/null 2>&1; do
+until docker exec "$PG" pg_isready -h 127.0.0.1 -U site_mapper -d site_mapper_telemetry >/dev/null 2>&1; do
   i=$((i + 1))
   [ "$i" -lt 60 ] || {
     echo "TimescaleDB did not recover readiness after pre_restore (rc=$PRE_RESTORE_RC)" >&2
@@ -161,7 +165,7 @@ case "$RESTORING" in
     set -e
 
     i=0
-    until docker exec "$PG" pg_isready -U site_mapper -d site_mapper_telemetry >/dev/null 2>&1; do
+    until docker exec "$PG" pg_isready -h 127.0.0.1 -U site_mapper -d site_mapper_telemetry >/dev/null 2>&1; do
       i=$((i + 1))
       [ "$i" -lt 60 ] || {
         echo "TimescaleDB did not recover after guarded pre_restore retry (rc=$PRE_RESTORE_RETRY_RC)" >&2

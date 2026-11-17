@@ -157,10 +157,18 @@ describe('TelemetryService', () => {
       reported: {
         voltageV: { value: 13.78, unit: 'V' },
         currentA: { value: 1.93, unit: 'A' },
-        powerW: { value: 26.64, unit: 'W' },
-        energyKwh: { value: 0.2795, unit: 'kWh' },
+        powerW: { unit: 'W', origin: 'DERIVED', formula: 'DC_V_X_I' },
+        energyKwh: {
+          value: 0,
+          unit: 'kWh',
+          origin: 'DERIVED',
+          formula: 'TRAPEZOIDAL_DC_POWER',
+        },
       },
     });
+    const directPower = service.latest(breaker.id)?.reported.powerW as
+      { value?: number } | undefined;
+    expect(directPower?.value).toBeCloseTo(26.5954, 10);
     expect(service.latest(breakers[1]!.id)).toBeNull();
   });
 
@@ -237,8 +245,13 @@ describe('TelemetryService', () => {
       reported: {
         voltageV: { value: 13.79, unit: 'V' },
         currentA: { value: 9.91, unit: 'A' },
-        powerW: { value: 136.72, unit: 'W' },
-        energyKwh: { value: 0.4155, unit: 'kWh' },
+        powerW: { value: 136.6589, unit: 'W', origin: 'DERIVED', formula: 'DC_V_X_I' },
+        energyKwh: {
+          value: 0,
+          unit: 'kWh',
+          origin: 'DERIVED',
+          formula: 'TRAPEZOIDAL_DC_POWER',
+        },
       },
     });
   });
@@ -345,7 +358,15 @@ describe('TelemetryService', () => {
         method: 'update',
         sn: 'AUTO-QDF-4',
         timestamp: 1_790_580_002,
-        reported: { '0_1_2': { state: 'ONLINE', U1: '12.24', I1: '4.82' } },
+        reported: {
+          '0_1_2': {
+            state: 'ONLINE',
+            U1: '12.24',
+            I1: '4.82',
+            P1: '9999',
+            EP1: '9999',
+          },
+        },
       }),
     );
     expect(
@@ -356,15 +377,26 @@ describe('TelemetryService', () => {
     expect(service.latest(created.value.id)?.reported).toMatchObject({
       voltageV: { value: 12.24, unit: 'V' },
       currentA: { value: 4.82, unit: 'A' },
+      powerW: { unit: 'W', origin: 'DERIVED', formula: 'DC_V_X_I' },
+      energyKwh: {
+        value: 0,
+        unit: 'kWh',
+        origin: 'DERIVED',
+        formula: 'TRAPEZOIDAL_DC_POWER',
+      },
     });
-    expect(service.latest(created.value.id)?.reported).not.toHaveProperty('powerW');
-    expect(service.latest(created.value.id)?.reported).not.toHaveProperty('energyKwh');
+
+    const autoPower = service.latest(created.value.id)?.reported.powerW as
+      { value?: number } | undefined;
+    expect(autoPower?.value).toBeCloseTo(58.9968, 10);
 
     // Replaying the same packet is idempotent: one binding per reported metric.
     await service.ingest('data/dev/AUTO-QDF-4', voltageAndCurrent, '2026-09-22T00:00:03.000Z');
     pointBindings = (await bindings.listForSource('MQTT', 'AUTO-QDF-4')).filter(
       (item) => item.sourcePointId === '0_1_2',
     );
+    // Raw device P/EP may be present and unreliable; automatic commissioning
+    // still creates only authoritative V/I source bindings.
     expect(pointBindings.map((item) => item.metric).sort()).toEqual(['CURRENT', 'VOLTAGE']);
   });
 
@@ -512,8 +544,8 @@ describe('TelemetryService', () => {
     const reading = service.latest(bdfb.id)?.breakerReadings?.[0];
     expect(reading?.metrics.voltageV?.value).toBe(13.82);
     expect(reading?.metrics.currentA?.value).toBe(3.46);
-    expect(reading?.metrics.powerW?.value).toBe(47.83);
-    expect(reading?.metrics.energyKwh?.value).toBe(0.5074);
+    expect(reading?.metrics.powerW?.value).toBeCloseTo(47.8172, 10);
+    expect(reading?.metrics.energyKwh?.value).toBe(0);
     expect(reading?.state?.value).toBe('ONLINE');
   });
 

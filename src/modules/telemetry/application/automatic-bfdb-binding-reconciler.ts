@@ -17,8 +17,6 @@ import type { EquipmentNode, TopologyNode } from '@/modules/topology/domain/enti
 const METRICS = {
   VOLTAGE: { unit: 'V' },
   CURRENT: { unit: 'A' },
-  POWER: { unit: 'W' },
-  ENERGY: { unit: 'kWh' },
 } as const;
 
 function numeric(value: unknown): number | null {
@@ -51,6 +49,9 @@ function uniqueNodes(nodes: readonly TopologyNode[]): readonly TopologyNode[] {
  *
  * This reconciler NEVER creates Device/Equipment topology. MQTT is observation
  * input, not physical-inventory authority.
+ *
+ * Only VOLTAGE/CURRENT source bindings are auto-created. Device P/EP remain
+ * raw evidence; canonical POWER/ENERGY are derived by Site Mapper after binding.
  */
 export class AutomaticBfdbBindingReconciler {
   constructor(
@@ -123,8 +124,6 @@ export class AutomaticBfdbBindingReconciler {
         const wireByMetric = {
           VOLTAGE: point.fields.voltage,
           CURRENT: point.fields.current,
-          POWER: point.fields.power,
-          ENERGY: point.fields.energy,
         } as const;
 
         for (const [metric, definition] of Object.entries(METRICS)) {

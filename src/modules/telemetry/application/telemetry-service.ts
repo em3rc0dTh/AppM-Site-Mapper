@@ -172,7 +172,12 @@ export class TelemetryService {
     if (target.type === 'DEVICE' || target.type === 'EQUIPMENT') {
       const projection = await new BdfbProjectionService(this.topologyRepository).get(ownerId);
       if (projection) {
-        breakerReadings = buildBfdbBreakerReadings(projection, normalized.value, bindings);
+        breakerReadings = buildBfdbBreakerReadings(
+          projection,
+          normalized.value,
+          bindings,
+          wireProfileResolution?.effective,
+        );
       }
     }
 

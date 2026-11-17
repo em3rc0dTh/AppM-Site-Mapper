@@ -80,8 +80,13 @@ describe('BFDB emulator three-source contract', () => {
       expect(
         service
           .latest(device.deviceId)
+          ?.breakerReadings?.find((item) => item.rawPointId === '0_1_1')?.metrics.powerW?.value,
+      ).toBe(0);
+      expect(
+        service
+          .latest(device.deviceId)
           ?.breakerReadings?.find((item) => item.rawPointId === '0_1_1')?.metrics.energyKwh?.value,
-      ).toBe(1.2345);
+      ).toBe(0);
     }
 
     expect(

@@ -133,21 +133,29 @@ describe('BFDB telemetry binding', () => {
   it('does not attribute a field slave-3 reading to a physical B3 breaker', () => {
     const physical = {
       ...presentation,
-      shelves: [{
-        ...presentation.shelves[0]!,
-        frames: [{
-          ...presentation.shelves[0]!.frames[0]!,
-          panels: [{
-            id: 'panel-b3',
-            label: 'B3',
-            positions: [{
-              id: 'breaker-b3-01',
-              label: 'B3-01',
-              accessPortId: 'breaker-b3-01:power-out',
-            }],
-          }],
-        }],
-      }],
+      shelves: [
+        {
+          ...presentation.shelves[0]!,
+          frames: [
+            {
+              ...presentation.shelves[0]!.frames[0]!,
+              panels: [
+                {
+                  id: 'panel-b3',
+                  label: 'B3',
+                  positions: [
+                    {
+                      id: 'breaker-b3-01',
+                      label: 'B3-01',
+                      accessPortId: 'breaker-b3-01:power-out',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
     } satisfies BdfbPresentation;
 
     const stale = buildBfdbBreakerReadings(
@@ -167,5 +175,4 @@ describe('BFDB telemetry binding', () => {
     expect(correct.readings[0]?.panelLabel).toBe('B3');
     expect(correct.readings[0]?.metrics.voltageV?.value).toBe(14.29);
   });
-
 });

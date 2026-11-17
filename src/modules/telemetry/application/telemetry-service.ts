@@ -268,9 +268,7 @@ export class TelemetryService {
           // Legacy packets remain eligible without a positional panel.
           // FIELD_DUAL_12 is guarded separately using physicalLocations.
           verified.add(id);
-          const panel = breaker.parentEquipmentId
-            ? byId.get(breaker.parentEquipmentId)
-            : undefined;
+          const panel = breaker.parentEquipmentId ? byId.get(breaker.parentEquipmentId) : undefined;
           if (!panel || panel.equipmentType !== 'PANEL' || panel.childMode !== 'POSITIONAL')
             continue;
           const position = panel.children.indexOf(breaker.id) + 1;

@@ -1,6 +1,6 @@
 # UAT LAB — ejecución reproducible y corroboración del cliente
 
-Fecha: 2026-11-17 · Campaña: `UAT-LAB-2026-11-17-R3` · PR #240.
+Fecha: 2026-11-17 · Campaña: `UAT-LAB-2026-11-17-R4` · PR #240.
 
 Este procedimiento produce evidencia técnica de laboratorio. La aceptación contractual
 sigue los 18 [ACC](03-TEST-PROCEDURES.md) y los 33 [UAT](10-UAT-MK1-V2-PLAN.md).
@@ -16,7 +16,8 @@ El PR añade pruebas de recuperación y habilita las pruebas TSX previamente exc
 además corrige el Origin de los seeders de desarrollo, la leyenda W/kW de Equipment,
 la sincronización de bootstrap y los selectores/fixtures del recorrido visual. R2 expone Rastreo de Ruta como acción visible en Equipment y exige un launcher realmente visible.
 R3 alinea el redirect post-login de los recorridos visuales con `isWorkspaceHref` (incluye
-`blueprint`, `rack`, `device` y `power`), preservando la reanudación de contexto. Se aplica
+`blueprint`, `rack`, `device` y `power`), preservando la reanudación de contexto. R4
+normaliza esos scripts con el formatter contractual antes de la campaña final. Se aplica
 el parche Next.js 16.4.6 por el aviso GHSA-mfr8-8qww-v76h; package-lock fija dependencias.
 Por tanto, el candidato del PR requiere su propia evidencia y revisión de impacto.
 

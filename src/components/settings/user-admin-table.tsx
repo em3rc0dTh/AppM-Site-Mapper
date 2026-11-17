@@ -109,12 +109,7 @@ export function UserAdminTable({
                       <form onSubmit={(event) => resetPassword(event, user.id)}>
                         <label>
                           {t('temporaryPassword')}
-                          <input
-                            minLength={12}
-                            name="temporaryPassword"
-                            required
-                            type="password"
-                          />
+                          <input minLength={12} name="temporaryPassword" required type="password" />
                         </label>
                         <button disabled={pendingId === user.id} type="submit">
                           {pendingId === user.id ? t('resetting') : t('assignTemporary')}

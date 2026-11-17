@@ -60,6 +60,13 @@ function metric(sample: TelemetrySample, key: string): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
+function metricOrigin(sample: TelemetrySample, key: string): string | null {
+  const raw = sample.reported[key];
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const origin = (raw as { origin?: unknown }).origin;
+  return typeof origin === 'string' ? origin : null;
+}
+
 function reportedState(sample: TelemetrySample): string | null {
   const value = sample.reported.state;
   if (typeof value !== 'string' && typeof value !== 'number') return null;
@@ -1050,7 +1057,14 @@ export class TelemetryAlarmEvaluator {
     const delta = last ? energyKwh - last.value : null;
     this.lastEnergyReading.set(policy.id, { value: energyKwh, at });
 
-    if (policy.energyCounterReset && delta !== null) {
+    // A Site Mapper derived accumulator may legitimately decrease when the
+    // authoritative DC current is signed (reverse flow). Counter-reset semantics
+    // apply only to an external/source counter, never to our own integral.
+    if (
+      policy.energyCounterReset &&
+      delta !== null &&
+      metricOrigin(sample, 'energyKwh') !== 'DERIVED'
+    ) {
       const r = policy.energyCounterReset;
       await this.evaluateBooleanRule(
         policy,

@@ -31,7 +31,9 @@ try {
     'Seeded login form must be valid before submit',
   );
   await page.getByRole('button', { name: 'SIGN IN' }).click();
-  await page.waitForURL(/\/workspace|\/network|\/topology/).catch(async (error) => {
+  await page
+  .waitForURL(/\/(?:workspace|network|topology|blueprint|rack|device|power)(?:\/|\?|$)/)
+  .catch(async (error) => {
     console.error('Login failure', await page.locator('.auth-error').allTextContents());
     await page.screenshot({ path: `${out}/uat-trace-login-failure.png` });
     throw error;

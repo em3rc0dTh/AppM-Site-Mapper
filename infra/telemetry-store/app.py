@@ -298,13 +298,19 @@ def query_latest_entity_samples(target_ids, target_type):
     if not target_ids or len(target_ids) > 64:
         raise ValueError("invalid target ids")
     with psycopg.connect(DSN) as conn:
-        rows = conn.execute("""SELECT sample FROM (
-           SELECT sample, target_id, received_at,
-             ROW_NUMBER() OVER (PARTITION BY target_id ORDER BY received_at DESC) AS idx
-           FROM telemetry_entity_samples
-           WHERE target_type = %s AND target_id = ANY(%s)
-             AND received_at >= NOW() - INTERVAL '7 days'
-        ) recent WHERE idx <= 4 ORDER BY received_at ASC""",
+        rows = conn.execute("""SELECT recent.sample
+        FROM (SELECT %s::text AS target_type) cfg
+        CROSS JOIN unnest(%s::text[]) AS requested(target_id)
+        CROSS JOIN LATERAL (
+          SELECT s.sample, s.received_at
+          FROM telemetry_entity_samples AS s
+          WHERE s.target_type = cfg.target_type
+            AND s.target_id = requested.target_id
+            AND s.received_at >= NOW() - INTERVAL '7 days'
+          ORDER BY s.received_at DESC
+          LIMIT 4
+        ) recent
+        ORDER BY recent.received_at ASC""",
             (target_type, target_ids)).fetchall()
     return [row[0] for row in rows]
 

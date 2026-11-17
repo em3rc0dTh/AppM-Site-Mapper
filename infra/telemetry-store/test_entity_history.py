@@ -83,9 +83,11 @@ class EntityHistoryQueryTests(unittest.TestCase):
         self.app.query_latest_entity_samples(["feed-A", "feed-B"], "ACCESS_PORT")
         sql, params = self.connection.executed[-1]
         self.assertEqual(params, ("ACCESS_PORT", ["feed-A", "feed-B"]))
-        self.assertIn("ROW_NUMBER() OVER (PARTITION BY target_id", sql)
-        self.assertIn("target_id = ANY(%s)", sql)
-        self.assertIn("idx <= 4", sql)
+        self.assertNotIn("ROW_NUMBER()", sql)
+        self.assertIn("unnest(%s::text[])", sql)
+        self.assertIn("CROSS JOIN LATERAL", sql)
+        self.assertIn("s.target_id = requested.target_id", sql)
+        self.assertIn("LIMIT 4", sql)
 
 
     def test_snmp_series_queries_raw_paired_current_voltage_and_bounded_energy(self):

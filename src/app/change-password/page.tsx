@@ -24,6 +24,11 @@ export default async function ChangePasswordPage() {
       showProviderBrand
       heritageBrand
     >
+      <div className="auth-flow-heading">
+        {user.mustChangePassword ? <span>{t('firstAccess')}</span> : null}
+        <h2>{t('title')}</h2>
+        <p>{user.mustChangePassword ? t('forcedDescription') : t('description')}</p>
+      </div>
       <div className="auth-account">
         <span>{t('signedInAs')}</span>
         <strong>{user.displayName}</strong>

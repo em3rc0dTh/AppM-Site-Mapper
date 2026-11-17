@@ -68,6 +68,10 @@ export interface TelemetrySample {
   readonly entityId: string;
   readonly entityKind: TelemetryTargetType;
   readonly sourceIdentity: string;
+  /** Original MQTT topic accepted by the normalizer. */
+  readonly topic?: string;
+  /** Human-readable topology target name captured at ingest time for operator diagnostics. */
+  readonly targetName?: string;
   readonly reported: Readonly<Record<string, unknown>>;
   readonly receivedAt: string;
   readonly protocol?: 'GENERIC' | 'BFDB' | 'SNMP';

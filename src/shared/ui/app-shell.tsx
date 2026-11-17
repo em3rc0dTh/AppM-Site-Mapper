@@ -54,6 +54,53 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [pathname]);
 
   useEffect(() => {
+    if (
+      pathname === '/login' ||
+      pathname === '/change-password' ||
+      pathname === '/forgot-password' ||
+      pathname.startsWith('/live-inspector')
+    )
+      return;
+
+    const listener = (event: KeyboardEvent) => {
+      if (
+        !(event.ctrlKey || event.metaKey) ||
+        event.altKey ||
+        event.shiftKey ||
+        event.key.toLowerCase() !== 'm'
+      )
+        return;
+
+      event.preventDefault();
+      const url = new URL('/live-inspector', window.location.origin);
+      url.searchParams.set('from', pathname);
+
+      const width = Math.min(1480, Math.max(1080, window.screen.availWidth - 120));
+      const height = Math.min(980, Math.max(760, window.screen.availHeight - 120));
+      const left = Math.max(0, window.screenX + Math.round((window.outerWidth - width) / 2));
+      const top = Math.max(0, window.screenY + 40);
+
+      const opened = window.open(
+        url.toString(),
+        'site-mapper-live-inspector',
+        [
+          'popup=yes',
+          `width=${width}`,
+          `height=${height}`,
+          `left=${left}`,
+          `top=${top}`,
+          'resizable=yes',
+          'scrollbars=yes',
+        ].join(','),
+      );
+      opened?.focus();
+    };
+
+    window.addEventListener('keydown', listener);
+    return () => window.removeEventListener('keydown', listener);
+  }, [pathname]);
+
+  useEffect(() => {
     const shell = shellRef.current;
     const brand = brandRef.current;
     const actions = actionsRef.current;
@@ -81,7 +128,8 @@ export function AppShell({ children }: { children: ReactNode }) {
     pathname === '/login' ||
     pathname === '/change-password' ||
     pathname === '/forgot-password' ||
-    pathname.startsWith('/workbench')
+    pathname.startsWith('/workbench') ||
+    pathname.startsWith('/live-inspector')
   )
     return children;
 

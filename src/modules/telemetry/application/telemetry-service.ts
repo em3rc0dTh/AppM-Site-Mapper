@@ -208,6 +208,8 @@ export class TelemetryService {
       entityId: target.id,
       entityKind: target.type,
       sourceIdentity: normalized.value.sourceIdentity,
+      topic: normalized.value.topic,
+      ...(sourceNode?.name ? { targetName: sourceNode.name } : {}),
       reported: normalized.value.reported,
       receivedAt: normalized.value.receivedAt,
       protocol: normalized.value.protocol,

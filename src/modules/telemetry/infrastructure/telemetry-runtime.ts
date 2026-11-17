@@ -43,6 +43,10 @@ export interface TelemetrySourceDiagnostic {
   readonly pointCount: number;
   readonly mappedBreakerCount: number;
   readonly unmappedPointCount: number;
+  readonly wireProfile: 'FIELD_DUAL_12' | 'LEGACY_SINGLE_24' | null;
+  readonly wireProfileSource: 'DECLARED' | 'DETECTED' | null;
+  readonly wireProfileMismatch: boolean;
+  readonly wireProfileDeclarationConflict: boolean;
   readonly freshness: 'LIVE' | 'STALE' | 'OFFLINE';
 }
 
@@ -419,7 +423,8 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
                 rawReported && typeof rawReported === 'object' && !Array.isArray(rawReported)
                   ? (rawReported as Record<string, unknown>)
                   : {};
-              const wireProfile = detectBfdbWireProfile(freshPoints);
+              const wireProfile =
+                result.value.wireProfile ?? detectBfdbWireProfile(freshPoints);
               for (const item of directSamples) {
                 const sourcePointId = item.sourcePointId!;
                 const point = findBfdbWirePointByBindingId(sourcePointId, freshPoints, wireProfile);
@@ -553,6 +558,10 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
               pointCount: sample ? Object.keys(sample.reported).length : 0,
               mappedBreakerCount: sample?.breakerReadings?.length ?? 0,
               unmappedPointCount: sample?.unmappedPointIds?.length ?? 0,
+              wireProfile: sample?.wireProfile ?? null,
+              wireProfileSource: sample?.wireProfileSource ?? null,
+              wireProfileMismatch: sample?.wireProfileMismatch === true,
+              wireProfileDeclarationConflict: sample?.wireProfileDeclarationConflict === true,
               freshness:
                 !sample || age > BFDB_OFFLINE_AFTER_MS
                   ? 'OFFLINE'

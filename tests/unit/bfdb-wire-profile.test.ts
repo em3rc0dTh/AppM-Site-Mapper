@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   detectBfdbWireProfile,
-  resolveBdfbWireProfile,
+  resolveBfdbWireProfile,
 } from '@/modules/telemetry/domain/bfdb-wire-layout';
 import type { TelemetryBinding } from '@/modules/telemetry/domain/entities';
 
@@ -42,7 +42,7 @@ describe('BFDB wire profile resolution', () => {
   it('preserves payload detection for existing bindings without declarations', () => {
     expect(detectBfdbWireProfile(ambiguousDualPayload)).toBe('FIELD_DUAL_12');
 
-    expect(resolveBdfbWireProfile(ambiguousDualPayload, [binding()])).toEqual({
+    expect(resolveBfdbWireProfile(ambiguousDualPayload, [binding()])).toEqual({
       effective: 'FIELD_DUAL_12',
       detected: 'FIELD_DUAL_12',
       declared: null,
@@ -53,7 +53,7 @@ describe('BFDB wire profile resolution', () => {
   });
 
   it('uses an explicit legacy declaration without weakening field detection globally', () => {
-    expect(resolveBdfbWireProfile(ambiguousDualPayload, [binding('LEGACY_SINGLE_24')])).toEqual({
+    expect(resolveBfdbWireProfile(ambiguousDualPayload, [binding('LEGACY_SINGLE_24')])).toEqual({
       effective: 'LEGACY_SINGLE_24',
       detected: 'FIELD_DUAL_12',
       declared: 'LEGACY_SINGLE_24',
@@ -67,7 +67,7 @@ describe('BFDB wire profile resolution', () => {
     const field = {
       '0_5_1': { U1: 14.29, U2: 0, I1: 0, I2: 0, state: 'ONLINE' },
     };
-    expect(resolveBdfbWireProfile(field, [binding('FIELD_DUAL_12')])).toMatchObject({
+    expect(resolveBfdbWireProfile(field, [binding('FIELD_DUAL_12')])).toMatchObject({
       effective: 'FIELD_DUAL_12',
       declared: 'FIELD_DUAL_12',
       source: 'DECLARED',
@@ -76,7 +76,7 @@ describe('BFDB wire profile resolution', () => {
   });
 
   it('falls back to detection when declarations conflict instead of silently choosing one', () => {
-    const resolved = resolveBdfbWireProfile(ambiguousDualPayload, [
+    const resolved = resolveBfdbWireProfile(ambiguousDualPayload, [
       binding('FIELD_DUAL_12'),
       { ...binding('LEGACY_SINGLE_24'), id: 'binding-legacy-2', metric: 'CURRENT' },
     ]);

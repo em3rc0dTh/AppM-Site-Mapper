@@ -891,7 +891,7 @@
     "metrics": "Telemetry metric legend",
     "voltage": "Voltage · V",
     "current": "Current · A",
-    "power": "Power · W",
+    "power": "Power · kW",
     "energy": "Accumulated energy counter · kWh",
     "noChildren": "No installed child Equipment",
     "livePositions": "positions with readings",

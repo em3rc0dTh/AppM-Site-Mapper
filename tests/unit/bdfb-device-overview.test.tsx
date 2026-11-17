@@ -1,4 +1,4 @@
-import { renderToStaticMarkup } from 'react-dom/server';
+import { renderWithIntl as renderToStaticMarkup } from '../helpers/render-with-intl';
 import { describe, expect, it } from 'vitest';
 
 import { BdfbChassis } from '../../src/components/power/bdfb-chassis';
@@ -62,23 +62,29 @@ const presentation: BdfbPresentation = {
 };
 
 describe('BDFB device hierarchy overview', () => {
-  it('shows Device → Equipment hierarchy without breaker detail at device level', () => {
+  it('shows the physical hierarchy with inventory for only the selected panel', () => {
     const markup = renderToStaticMarkup(
       <BdfbChassis device={device} presentation={presentation} />,
     );
 
-    expect(markup).toContain('DEVICE');
+    expect(markup).toContain('Device → Chassis → Shelf → Frame → Panel → Equipment');
     expect(markup).toContain('Main Shelf');
     expect(markup).toContain('Frame A');
     expect(markup).toContain('Frame B');
     expect(markup).toContain('Panel A1');
     expect(markup).toContain('Panel B3');
-    expect(markup).toContain('2 FRAMES');
-    expect(markup).toContain('6 PANELS');
+    expect(markup).toContain('2 frames');
+    expect(markup).toContain('6 panels');
 
-    expect(markup).not.toContain('Breaker 2');
+    expect(markup.match(/class="sm-bdfb-panel-focus"/g)).toHaveLength(1);
+    expect(markup.match(/class="sm-breaker-position-trigger"/g)).toHaveLength(1);
+    expect(markup).toContain('href="/device/a1-breaker-2"');
+    expect(markup).not.toContain('href="/device/b3-breaker-2"');
+    expect(markup).toContain('not live current readings or a wiring certificate');
     expect(markup).not.toContain('BUS A');
     expect(markup).not.toContain('BUS B');
-    expect(markup.match(/Open Panel [AB][123] breaker detail/g)).toHaveLength(6);
+    expect(
+      markup.match(/aria-label="Inspect panel Panel [AB][123], 1 breakers installed"/g),
+    ).toHaveLength(6);
   });
 });

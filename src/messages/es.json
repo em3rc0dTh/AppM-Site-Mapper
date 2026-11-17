@@ -891,7 +891,7 @@
     "metrics": "Leyenda de métricas de telemetría",
     "voltage": "Voltaje · V",
     "current": "Corriente · A",
-    "power": "Potencia · W",
+    "power": "Potencia · kW",
     "energy": "Contador de energía acumulada · kWh",
     "noChildren": "No hay Equipment secundario instalado",
     "livePositions": "posiciones con lecturas",

@@ -47,6 +47,16 @@ jobs:
         run: npm ci --no-audit --no-fund
       - name: Test Metasys Eltek 17-point Site Mapper projection
         run: npx vitest run tests/unit/metasys-eltek-modbus-projection.test.ts
+      - name: Lint Metasys Eltek projection changes
+        run: |
+          npx eslint             src/modules/telemetry/application/metasys-eltek-modbus-projection.ts             src/modules/telemetry/infrastructure/industrial/publication.ts             src/modules/telemetry/infrastructure/http-telemetry-store.ts             src/app/api/telemetry/industrial/projection/route.ts             tests/unit/metasys-eltek-modbus-projection.test.ts
+      - name: Format-check Metasys Eltek contract changes
+        run: |
+          npx prettier --check             .github/workflows/modbus-tcp.yml             config/industrial/modbus-points.metasys-eltek-v1.2.json             docs/telemetry/modbus-tcp-output.md             infra/modbus-tcp/point-registry.mjs             infra/modbus-tcp/point-registry.test.mjs             src/modules/telemetry/application/metasys-eltek-modbus-projection.ts             src/modules/telemetry/infrastructure/industrial/publication.ts             src/modules/telemetry/infrastructure/http-telemetry-store.ts             src/app/api/telemetry/industrial/projection/route.ts             tests/unit/metasys-eltek-modbus-projection.test.ts
+      - name: Test durable incremental SNMP energy projection
+        run: |
+          python3 -m py_compile infra/telemetry-store/app.py
+          python3 -m unittest discover -s infra/telemetry-store -p 'test_entity_history.py'
       - name: Test 96 circuits, FLOAT32, UINT16 extensions, 3 Unit IDs and real TCP reader
         run: node --test infra/modbus-tcp/server.test.mjs
       - name: Check committed Metasys register table against runtime map

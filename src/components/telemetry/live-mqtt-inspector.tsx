@@ -1,11 +1,10 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import type {
-  BreakerTelemetryReading,
-  TelemetrySample,
-} from '@/modules/telemetry/domain/entities';
+import type { BreakerTelemetryReading, TelemetrySample } from '@/modules/telemetry/domain/entities';
 
 import styles from './live-mqtt-inspector.module.css';
 
@@ -53,9 +52,13 @@ function displaySource(sample: TelemetrySample): string {
 }
 
 function readingMatchesContext(reading: BreakerTelemetryReading, context: string): boolean {
-  return [reading.deviceId, reading.shelfId, reading.frameId, reading.panelId, reading.breakerId].some(
-    (id) => id && context.includes(id),
-  );
+  return [
+    reading.deviceId,
+    reading.shelfId,
+    reading.frameId,
+    reading.panelId,
+    reading.breakerId,
+  ].some((id) => id && context.includes(id));
 }
 
 function sourceMatchesContext(sample: TelemetrySample, context: string): boolean {
@@ -74,9 +77,7 @@ function panelFromContext(sample: TelemetrySample, context: string): string | nu
 function panelNames(sample: TelemetrySample | null): string[] {
   if (!sample) return [];
   return [
-    ...new Set(
-      (sample.breakerReadings ?? []).map((reading) => reading.panelLabel).filter(Boolean),
-    ),
+    ...new Set((sample.breakerReadings ?? []).map((reading) => reading.panelLabel).filter(Boolean)),
   ].sort((left, right) => left.localeCompare(right, undefined, { numeric: true }));
 }
 
@@ -163,6 +164,8 @@ function CubeMark() {
 }
 
 export function LiveMqttInspector() {
+  const t = useTranslations('liveMqttInspector');
+  const locale = useLocale();
   const [samples, setSamples] = useState<readonly TelemetrySample[]>([]);
   const [selectedSource, setSelectedSource] = useState('');
   const [selectedPanel, setSelectedPanel] = useState('ALL');
@@ -252,15 +255,10 @@ export function LiveMqttInspector() {
     packets.find((candidate) => candidate.sourceIdentity === selectedSource) ?? packets[0] ?? null;
   const panels = panelNames(packet);
 
-  useEffect(() => {
-    if (selectedPanel !== 'ALL' && !panels.includes(selectedPanel)) setSelectedPanel('ALL');
-  }, [panels, selectedPanel]);
+  const activePanel = panels.includes(selectedPanel) ? selectedPanel : 'ALL';
 
   const raw = useMemo(() => rawPayload(packet), [packet]);
-  const normalized = useMemo(
-    () => normalizedPayload(packet, selectedPanel),
-    [packet, selectedPanel],
-  );
+  const normalized = useMemo(() => normalizedPayload(packet, activePanel), [packet, activePanel]);
 
   async function copy(value: unknown) {
     if (!value) return;
@@ -273,7 +271,9 @@ export function LiveMqttInspector() {
         <div className={styles.identity}>
           <CubeMark />
           <span className={styles.divider} aria-hidden="true" />
-          <h1><span>Live</span> Inspector</h1>
+          <h1>
+            <span>{t('live')}</span> {t('inspector')}
+          </h1>
         </div>
 
         <div className={styles.liveArea}>
@@ -284,10 +284,10 @@ export function LiveMqttInspector() {
             ].join(' ')}
           >
             <i aria-hidden="true" />
-            {paused ? 'PAUSED' : streamState === 'live' ? 'LIVE' : streamState.toUpperCase()}
+            {paused ? t('paused') : streamState === 'live' ? t('liveStatus') : t(streamState)}
           </span>
           <label className={styles.toggle}>
-            <span>Actualización automática</span>
+            <span>{t('autoUpdate')}</span>
             <input
               type="checkbox"
               checked={!paused}
@@ -298,9 +298,9 @@ export function LiveMqttInspector() {
         </div>
       </header>
 
-      <section className={styles.toolbar} aria-label="Live inspector scope">
+      <section className={styles.toolbar} aria-label={t('scopeLabel')}>
         <label>
-          <span>Fuente</span>
+          <span>{t('source')}</span>
           <select
             value={packet?.sourceIdentity ?? ''}
             onChange={(event) => {
@@ -317,79 +317,81 @@ export function LiveMqttInspector() {
         </label>
 
         <label>
-          <span>Alcance</span>
-          <select value={selectedPanel} onChange={(event) => setSelectedPanel(event.target.value)}>
-            <option value="ALL">ALL</option>
+          <span>{t('scope')}</span>
+          <select value={activePanel} onChange={(event) => setSelectedPanel(event.target.value)}>
+            <option value="ALL">{t('all')}</option>
             {panels.map((panel) => (
-              <option key={panel} value={panel}>{panel}</option>
+              <option key={panel} value={panel}>
+                {panel}
+              </option>
             ))}
           </select>
         </label>
 
         <div className={styles.packetMeta}>
           <div>
-            <span>Último paquete</span>
-            <strong>{packet?.receivedAt ? new Date(packet.receivedAt).toLocaleString() : '—'}</strong>
+            <span>{t('lastPacket')}</span>
+            <strong>
+              {packet?.receivedAt ? new Date(packet.receivedAt).toLocaleString(locale) : '—'}
+            </strong>
           </div>
           <div>
-            <span>Hace</span>
+            <span>{t('age')}</span>
             <strong className={styles.fresh}>{ageLabel(packet?.receivedAt, now)}</strong>
           </div>
           <div>
-            <span>Mensaje</span>
+            <span>{t('message')}</span>
             <strong>{packet?.messageId ?? '—'}</strong>
           </div>
           <div>
-            <span>Wire profile</span>
+            <span>{t('wireProfile')}</span>
             <strong>{packet?.wireProfile ?? '—'}</strong>
           </div>
         </div>
       </section>
 
-      <nav className={styles.tabs} aria-label="Inspector view">
-        <button
-          className={mode === 'raw' ? styles.activeTab : ''}
-          onClick={() => setMode('raw')}
-        >
-          RAW MQTT
+      <nav className={styles.tabs} aria-label={t('viewLabel')}>
+        <button className={mode === 'raw' ? styles.activeTab : ''} onClick={() => setMode('raw')}>
+          {t('raw')}
         </button>
         <button
           className={mode === 'normalized' ? styles.activeTab : ''}
           onClick={() => setMode('normalized')}
         >
-          NORMALIZADO
+          {t('normalized')}
         </button>
         <button
           className={mode === 'split' ? styles.activeTab : ''}
           onClick={() => setMode('split')}
         >
-          VISTA DIVIDIDA
+          {t('split')}
         </button>
       </nav>
 
       {!packet ? (
         <section className={styles.empty}>
-          <strong>{streamState === 'reconnecting' ? 'Reconectando telemetría…' : 'Esperando MQTT…'}</strong>
-          <span>El inspector mostrará el último paquete BFDB aceptado por Site Mapper.</span>
+          <strong>
+            {streamState === 'reconnecting' ? t('reconnectingTelemetry') : t('waiting')}
+          </strong>
+          <span>{t('empty')}</span>
         </section>
       ) : (
         <section
-          className={[
-            styles.content,
-            mode === 'split' ? styles.split : styles.single,
-          ].join(' ')}
+          className={[styles.content, mode === 'split' ? styles.split : styles.single].join(' ')}
         >
           {mode !== 'normalized' ? (
             <article className={styles.panel}>
               <header>
                 <div>
-                  <span className={styles.panelGlyph} aria-hidden="true">⌁</span>
+                  <span className={styles.panelGlyph} aria-hidden="true">
+                    ⌁
+                  </span>
                   <div>
-                    <strong>Paquete MQTT recibido</strong>
-                    <small>{packet.topic ?? 'topic no disponible'}</small>
+                    <strong>{t('received')}</strong>
+                    <small>{packet.topic ?? t('noTopic')}</small>
                   </div>
                 </div>
-                <button onClick={() => void copy(raw)}>Copiar</button>
+                <button onClick={() => void copy(raw)}>{t('copy')}</button>
               </header>
               <pre>{JSON.stringify(raw, null, 2)}</pre>
             </article>
@@ -399,13 +401,15 @@ export function LiveMqttInspector() {
             <article className={styles.panel}>
               <header>
                 <div>
-                  <span className={styles.panelGlyph} aria-hidden="true">◇</span>
+                  <span className={styles.panelGlyph} aria-hidden="true">
+                    ◇
+                  </span>
                   <div>
-                    <strong>Site Mapper · transformación</strong>
-                    <small>V/A fuente · kW/kWh derivados por Site Mapper</small>
+                    <strong>{t('transformation')}</strong>
+                    <small>{t('derivedSummary')}</small>
                   </div>
                 </div>
-                <button onClick={() => void copy(normalized)}>Copiar</button>
+                <button onClick={() => void copy(normalized)}>{t('copy')}</button>
               </header>
               <pre>{JSON.stringify(normalized, null, 2)}</pre>
             </article>
@@ -415,13 +419,21 @@ export function LiveMqttInspector() {
 
       <footer className={styles.footer}>
         <div className={styles.rules}>
-          <span><b>V</b> fuente primaria</span>
-          <span><b>A</b> fuente primaria</span>
-          <span><b>kW</b> derivado V × A</span>
-          <span><b>kWh</b> energía derivada Site Mapper</span>
+          <span>
+            <b>V</b> {t('primary')}
+          </span>
+          <span>
+            <b>{'A'}</b> {t('primary')}
+          </span>
+          <span>
+            <b>kW</b> {t('derivedPower')}
+          </span>
+          <span>
+            <b>{'kWh'}</b> {t('derivedEnergy')}
+          </span>
         </div>
         <button className={styles.pause} onClick={() => setPaused((value) => !value)}>
-          {paused ? '▶ Reanudar' : 'Ⅱ Pausar'}
+          {paused ? t('resume') : t('pause')}
         </button>
       </footer>
     </main>

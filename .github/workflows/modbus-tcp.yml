@@ -52,25 +52,7 @@ jobs:
           npx eslint             src/modules/telemetry/application/metasys-eltek-modbus-projection.ts             src/modules/telemetry/infrastructure/industrial/publication.ts             src/modules/telemetry/infrastructure/http-telemetry-store.ts             src/app/api/telemetry/industrial/projection/route.ts             tests/unit/metasys-eltek-modbus-projection.test.ts
       - name: Format-check Metasys Eltek contract changes
         run: |
-          files=(
-            docs/telemetry/modbus-tcp-output.md
-            infra/modbus-tcp/point-registry.mjs
-            infra/modbus-tcp/point-registry.test.mjs
-            src/modules/telemetry/application/metasys-eltek-modbus-projection.ts
-            src/app/api/telemetry/industrial/projection/route.ts
-          )
-          npx prettier --write "${files[@]}"
-          changed=0
-          for file in "${files[@]}"; do
-            if ! git diff --quiet -- "$file"; then
-              changed=1
-              echo "__PRETTIER_FILE_BEGIN__:$file"
-              base64 -w0 "$file"
-              echo
-              echo "__PRETTIER_FILE_END__:$file"
-            fi
-          done
-          test "$changed" -eq 0
+          npx prettier --check             .github/workflows/modbus-tcp.yml             config/industrial/modbus-points.metasys-eltek-v1.2.json             docs/telemetry/modbus-tcp-output.md             infra/modbus-tcp/point-registry.mjs             infra/modbus-tcp/point-registry.test.mjs             src/modules/telemetry/application/metasys-eltek-modbus-projection.ts             src/modules/telemetry/infrastructure/industrial/publication.ts             src/modules/telemetry/infrastructure/http-telemetry-store.ts             src/app/api/telemetry/industrial/projection/route.ts             tests/unit/metasys-eltek-modbus-projection.test.ts
       - name: Test durable incremental SNMP energy projection
         run: |
           python3 -m py_compile infra/telemetry-store/app.py

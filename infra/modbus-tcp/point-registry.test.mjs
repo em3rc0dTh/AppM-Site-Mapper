@@ -106,3 +106,42 @@ test('independent TCP client reads extension and extension and approved base add
     await bridge.close();
   }
 });
+
+test('UINT16 status points occupy one Input Register and publish integer codes', () => {
+  const statusPoint = {
+    signalId: 'b'.repeat(64),
+    logicalPointId: 'QDF/QDF-2/COMMUNICATION_STATUS',
+    unitId: 1,
+    address: 1072,
+    dataType: 'UINT16',
+    unit: '',
+    description: 'SNMP communication status',
+  };
+  const mixed = { version: 1, points: [point, statusPoint] };
+  const state = new ExtensionState(mixed);
+  const now = Date.now();
+  assert.equal(
+    state.apply({
+      id: statusPoint.signalId,
+      receivedAt: new Date(now).toISOString(),
+      observedAt: new Date(now).toISOString(),
+      staleMs: 10000,
+      quality: 'VALID',
+      kind: 'state',
+      unit: '',
+      value: 3,
+    }),
+    true,
+  );
+  assert.deepEqual(state.read(1, 1072, 1, now), [3]);
+  assert.equal(state.read(1, 1072, 2, now), null);
+  assert.throws(
+    () =>
+      validateRegistry({
+        version: 1,
+        points: [statusPoint, { ...statusPoint, signalId: 'c'.repeat(64), address: 1072 }],
+      }),
+    /Overlapping/,
+  );
+  assert.match(registryCsv(mixed), /"UINT16"/);
+});

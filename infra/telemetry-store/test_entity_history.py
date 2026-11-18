@@ -17,6 +17,7 @@ from unittest.mock import patch
 class FakeConnection:
     def __init__(self):
         self.executed = []
+        self.fetchone_results = []
 
     def __enter__(self):
         return self
@@ -30,6 +31,9 @@ class FakeConnection:
 
     def fetchall(self):
         return [({"sourceIdentity": "EMU-BFDB-03"},)]
+
+    def fetchone(self):
+        return self.fetchone_results.pop(0) if self.fetchone_results else None
 
 
 class EntityHistoryQueryTests(unittest.TestCase):
@@ -59,6 +63,7 @@ class EntityHistoryQueryTests(unittest.TestCase):
 
     def setUp(self):
         self.connection.executed.clear()
+        self.connection.fetchone_results.clear()
 
     def test_all_history_windows_use_a_single_bucket_expression(self):
         for window, (range_interval, bucket_interval) in self.app.WINDOWS.items():
@@ -114,6 +119,38 @@ class EntityHistoryQueryTests(unittest.TestCase):
         self.assertIn("ABS(voltage_v)", sql)
         self.assertIn("time_bucket(%s::interval, received_at)", sql)
         self.assertIn("paired_count", sql)
+
+    def test_durable_snmp_energy_reads_seeded_state_without_history_scan(self):
+        now = datetime(2026, 11, 18, 19, 0, 0, tzinfo=timezone.utc)
+        self.connection.fetchone_results[:] = [(now, 2.75, 3600.0, 120)]
+        result = self.app.query_snmp_feed_total_energy("feed-A", "ELTEK-QDF-2")
+        self.assertEqual(result["estimatedEnergyKwh"], 2.75)
+        self.assertEqual(result["integratedIntervals"], 120)
+        self.assertEqual(len(self.connection.executed), 1)
+        sql, params = self.connection.executed[0]
+        self.assertIn("FROM snmp_feed_energy_state", sql)
+        self.assertNotIn("telemetry_entity_samples", sql)
+        self.assertEqual(params, ("feed-A", "ELTEK-QDF-2"))
+
+    def test_incremental_snmp_energy_uses_trapezoid_and_bounded_gap(self):
+        previous = datetime(2026, 11, 18, 19, 0, 0, tzinfo=timezone.utc)
+        received = datetime(2026, 11, 18, 19, 0, 30, tzinfo=timezone.utc)
+        self.connection.fetchone_results[:] = [(previous, 1000.0, 1.0, 60.0, 2)]
+        self.app.update_existing_snmp_energy_state(
+            self.connection,
+            "feed-A",
+            "ELTEK-QDF-2",
+            received,
+            {
+                "currentA": {"value": 20.0},
+                "voltageV": {"value": -50.0},
+            },
+        )
+        update_sql, params = self.connection.executed[-1]
+        self.assertIn("UPDATE snmp_feed_energy_state", update_sql)
+        self.assertAlmostEqual(params[2], 1.0 + (1000.0 * 30.0 / 3600000.0))
+        self.assertEqual(params[3], 90.0)
+        self.assertEqual(params[4], 3)
 
     def test_distinct_on_does_not_order_by_separately_bound_bucket_expression(self):
         self.app.query_entity_history("device-01", "DEVICE", "24h")

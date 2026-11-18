@@ -25,9 +25,74 @@ The Modbus server does not query TimescaleDB or MongoDB when answering a Modbus 
 - The breaker block remains exactly 0–767. Client circuit **00** occupies 768–775: Voltage 768, Current 770, Power 772 and Energy 774 (each FLOAT32/two registers). Governed industrial extensions still begin at address **1024** and remain opt-in.
 - Function codes other than FC04 return illegal-function exception. Malformed/out-of-range FC04 requests return exception, not out-of-bounds data.
 
+## Metasys Eltek v1.2 customer extension
+
+The approved customer manifest is
+[`config/industrial/modbus-points.metasys-eltek-v1.2.json`](../../config/industrial/modbus-points.metasys-eltek-v1.2.json).
+It is additive: the legacy 0–775 map is preserved and these points begin at 1024. The customer
+manifest uses a dedicated pinned registry path, `/data/modbus-registry-metasys-eltek-v1.2.json`, so
+previously published extension registries are not mutated.
+
+QDF ownership is fixed by the handoff workbook:
+
+- QDF-2 → Unit ID 1
+- QDF-4 → Unit ID 2
+- QDF-5 → Unit ID 3
+
+Each Unit ID publishes the same extension layout:
+
+| Start | Point                  | Type    | Unit |
+| ----: | ---------------------- | ------- | ---- |
+|  1024 | Input A Rated Current  | FLOAT32 | A    |
+|  1027 | Input A Voltage        | FLOAT32 | V    |
+|  1030 | Input A Current        | FLOAT32 | A    |
+|  1033 | Input A Power          | FLOAT32 | kW   |
+|  1039 | Input B Rated Current  | FLOAT32 | A    |
+|  1042 | Input B Voltage        | FLOAT32 | V    |
+|  1045 | Input B Current        | FLOAT32 | A    |
+|  1048 | Input B Power          | FLOAT32 | kW   |
+|  1054 | Total Current          | FLOAT32 | A    |
+|  1057 | Bus A Voltage          | FLOAT32 | V    |
+|  1060 | Bus B Voltage          | FLOAT32 | V    |
+|  1063 | Total Voltage          | FLOAT32 | V    |
+|  1066 | Total Power            | FLOAT32 | kW   |
+|  1069 | Total Energy           | FLOAT32 | kWh  |
+|  1072 | Communication Status   | UINT16  | —    |
+|  1073 | Controller Alarm State | UINT16  | —    |
+|  1074 | Alarm Severity         | UINT16  | —    |
+
+FLOAT32 extension points retain the bridge's adjacent internal quality register, so their start
+addresses advance by three even though the customer workbook documents only the two value registers.
+The three status points are true one-register UINT16 values and have no engineering unit.
+
+Status codes are:
+
+```text
+Communication Status:   0 OFFLINE, 1 LIVE, 2 STALE, 3 ERROR
+Controller Alarm State: 0 RESOLVED/CLEAR, 1 ACTIVE
+Alarm Severity:         0 NONE, 1 INFO, 2 WARNING, 3 CRITICAL
+```
+
+The projection source is Site Mapper, not raw SNMP-to-Modbus passthrough:
+
+- Rated Current comes from commissioned AccessPort configuration.
+- Input A/B Voltage and Current come from accepted SNMP poll observations.
+- Input A/B Power is derived as `I × abs(V)` and published in kW.
+- Total Current, Bus A/B Voltage, Total Voltage and Total Power use the operational QDF projection
+  and require complete, time-coherent expected inputs.
+- Total Energy is a Site Mapper-derived cumulative value over retained durable SNMP history using
+  trapezoidal integration between paired V/I samples. Gaps over 120 seconds are not interpolated;
+  this is not claimed to be a native Eltek meter counter.
+- Communication Status is derived from the commissioned SNMP source/feed health.
+- Controller Alarm State and Alarm Severity are derived from active Alarm Engine occurrences on the
+  canonical controller Equipment; raw trap payloads and OIDs are not exported.
+
+The four `TOTAL_*` extension points set `legacyTotalMirror=false`. Therefore polling the new customer
+contract cannot overwrite the legacy QDF Total registers at 768–775.
+
 ## Local deployment
 
-Set an **independent, private** random `MODBUS_BRIDGE_TOKEN` of at least 24 characters and the approved source map.
+Set an **independent, private** random `MODBUS_BRIDGE_TOKEN` of at least 24 characters, a private `INDUSTRIAL_PROJECTION_TOKEN`, and the approved source map. The projection token is shared only between the Modbus sidecar and the Site Mapper internal projection endpoint.
 
 For Docker Compose `docker-compose.telemetry.yml`, start the sidecar along with TimescaleDB. This compose profile publishes the TCP Modbus and internal HTTP ingestion ports on **127.0.0.1 only**. Do not expose HTTP ingestion publicly.
 
@@ -69,9 +134,10 @@ CONFIDENCE  0 none, 1 suspected, 2 confirmed
 QUALITY     1 governed projection valid
 ```
 
-For compatibility with the existing extension registry, each logical alarm value currently uses the
-same FLOAT32 + adjacent quality-register slot already supported by the bridge. A future UINT16
-transport is not silently substituted because published Modbus addresses and datatypes are immutable.
+Generic pre-existing alarm publication registries remain backward-compatible: points that omit
+`dataType` still default to FLOAT32 + adjacent quality. The Metasys Eltek v1.2 customer registry is a
+new registry identity and explicitly declares its three customer status fields as UINT16; it does not
+silently mutate any previously published alarm address or datatype.
 
 These points remain **unassigned until commissioning explicitly adds them to the publication
 registry**. No alarm address is guessed from topology, panel position, MQTT point, or SNMP OID.

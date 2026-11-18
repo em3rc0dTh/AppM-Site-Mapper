@@ -94,7 +94,7 @@ services:
       MODBUS_BRIDGE_TOKEN: '${MODBUS_BRIDGE_TOKEN:?Set a private Modbus bridge token}'
       MODBUS_SOURCE_UNITS_JSON: '${MODBUS_SOURCE_UNITS_JSON:?Set the approved serial-to-unit map}'
       INDUSTRIAL_MODBUS_POINTS_FILE: /app/config/industrial/modbus-points.metasys-eltek-v1.2.json
-      INDUSTRIAL_PROJECTION_TOKEN: '${INDUSTRIAL_PROJECTION_TOKEN:?Set a private industrial projection token}'
+      INDUSTRIAL_PROJECTION_TOKEN: '${INDUSTRIAL_PROJECTION_TOKEN:-}'
     ports:
       - '127.0.0.1:3000:3000'
     depends_on:
@@ -133,7 +133,7 @@ services:
       MODBUS_POINTS_FILE: /opt/site-mapper/modbus-points.metasys-eltek-v1.2.json
       MODBUS_REGISTRY_PATH: /data/modbus-registry-metasys-eltek-v1.2.json
       INDUSTRIAL_PROJECTION_URL: http://site-mapper:3000/api/telemetry/industrial/projection
-      INDUSTRIAL_PROJECTION_TOKEN: '${INDUSTRIAL_PROJECTION_TOKEN:?Set a private industrial projection token}'
+      INDUSTRIAL_PROJECTION_TOKEN: '${INDUSTRIAL_PROJECTION_TOKEN:-}'
       MODBUS_BIND_HOST: 0.0.0.0
       MODBUS_BIND_PORT: '1502'
       MODBUS_INGEST_HOST: 0.0.0.0

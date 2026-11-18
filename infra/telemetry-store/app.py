@@ -184,6 +184,50 @@ class SnmpBatchOutOfOrder(Exception):
     pass
 
 
+def snmp_feed_power_w(normalized):
+    current = normalized.get("currentA")
+    voltage = normalized.get("voltageV")
+    if current is None or voltage is None:
+        return None
+    return float(current["value"]) * abs(float(voltage["value"]))
+
+
+def update_existing_snmp_energy_state(conn, target_id, source_identity, received_at, normalized):
+    """Advance an already-seeded durable energy accumulator in the SNMP batch transaction."""
+    row = conn.execute("""
+      SELECT last_received_at, last_power_w, energy_kwh,
+        covered_seconds, integrated_intervals
+      FROM snmp_feed_energy_state
+      WHERE target_id = %s AND source_identity = %s
+      FOR UPDATE
+    """, (target_id, source_identity)).fetchone()
+    if row is None or received_at <= row[0]:
+        return
+
+    power_w = snmp_feed_power_w(normalized)
+    energy_kwh = float(row[2])
+    covered_seconds = float(row[3])
+    intervals = int(row[4])
+    delta_seconds = (received_at - row[0]).total_seconds()
+    if (
+        row[1] is not None and power_w is not None
+        and 0 < delta_seconds <= 120
+    ):
+        energy_kwh += (float(row[1]) + power_w) / 2 * delta_seconds / 3600000.0
+        covered_seconds += delta_seconds
+        intervals += 1
+
+    conn.execute("""
+      UPDATE snmp_feed_energy_state
+      SET last_received_at = %s, last_power_w = %s, energy_kwh = %s,
+        covered_seconds = %s, integrated_intervals = %s, updated_at = NOW()
+      WHERE target_id = %s AND source_identity = %s
+    """, (
+        received_at, power_w, energy_kwh, covered_seconds, intervals,
+        target_id, source_identity,
+    ))
+
+
 def insert_snmp_batch(payload):
     """Serialize one controller's whole poll in durable storage.
 
@@ -275,12 +319,15 @@ def insert_snmp_batch(payload):
             return {"status": "already_committed", "acceptedFeeds": len(checked)}
         if observed <= cursor[0]:
             raise SnmpBatchOutOfOrder("OUT_OF_ORDER_SNMP_SAMPLE")
-        for target, binding, received, sample, _ in checked:
+        for target, binding, received, sample, normalized in checked:
             conn.execute("""
               INSERT INTO telemetry_entity_samples
                 (target_id, target_type, source_identity, binding_id, received_at, sample)
               VALUES (%s, 'ACCESS_PORT', %s, %s, %s, %s)
             """, (target, source, binding, received, Jsonb(sample)))
+            update_existing_snmp_energy_state(
+                conn, target, source, received, normalized
+            )
         conn.execute("""
           INSERT INTO snmp_ingest_batches
           (source_identity, observed_at, payload_hash, feed_count)
@@ -411,73 +458,127 @@ def query_snmp_feed_series(target_id, source_identity, window):
 
 
 def query_snmp_feed_total_energy(target_id, source_identity):
-    """Integrate all durable paired SNMP V/I observations for one commissioned feed.
+    """Read a durable cumulative Site Mapper energy counter for one SNMP feed.
 
-    This is a Site Mapper derived counter over retained durable history. It is not
-    a native Eltek energy counter. Gaps over 120 seconds are intentionally not
-    interpolated.
+    Existing installations are backfilled once from retained raw history under
+    the same source lock used by SNMP ingestion. Subsequent polls are O(1):
+    insert_snmp_batch advances the accumulator transactionally.
     """
-    query = """
-      WITH observations AS (
-        SELECT received_at,
-          (sample->'reported'->'currentA'->>'value')::double precision AS current_a,
-          (sample->'reported'->'voltageV'->>'value')::double precision AS voltage_v
-        FROM telemetry_entity_samples
-        WHERE target_id = %s AND target_type = 'ACCESS_PORT'
-          AND source_identity = %s
-          AND sample->>'protocol' = 'SNMP'
-      ), measured AS (
-        SELECT received_at,
-          CASE WHEN current_a >= 0 AND voltage_v IS NOT NULL
-            THEN current_a * ABS(voltage_v) ELSE NULL END AS power_w
-        FROM observations
-      ), intervals AS (
-        SELECT received_at, power_w,
-          LAG(received_at) OVER (ORDER BY received_at) AS previous_at,
-          LAG(power_w) OVER (ORDER BY received_at) AS previous_power_w
-        FROM measured
-      )
-      SELECT MAX(received_at),
-        COALESCE(SUM(
-          CASE WHEN previous_at IS NOT NULL AND power_w IS NOT NULL
-            AND previous_power_w IS NOT NULL
-            AND EXTRACT(EPOCH FROM (received_at - previous_at)) > 0
-            AND EXTRACT(EPOCH FROM (received_at - previous_at)) <= 120
-          THEN (power_w + previous_power_w) / 2 *
-            EXTRACT(EPOCH FROM (received_at - previous_at)) / 3600000.0
-          ELSE 0 END
-        ), 0) AS estimated_energy_kwh,
-        COALESCE(SUM(
-          CASE WHEN previous_at IS NOT NULL AND power_w IS NOT NULL
-            AND previous_power_w IS NOT NULL
-            AND EXTRACT(EPOCH FROM (received_at - previous_at)) > 0
-            AND EXTRACT(EPOCH FROM (received_at - previous_at)) <= 120
-          THEN EXTRACT(EPOCH FROM (received_at - previous_at))
-          ELSE 0 END
-        ), 0) AS covered_seconds,
-        COUNT(*) FILTER (
-          WHERE previous_at IS NOT NULL AND power_w IS NOT NULL
-            AND previous_power_w IS NOT NULL
-            AND EXTRACT(EPOCH FROM (received_at - previous_at)) > 0
-            AND EXTRACT(EPOCH FROM (received_at - previous_at)) <= 120
-        ) AS integrated_intervals
-      FROM intervals
+    select_state = """
+      SELECT last_received_at, energy_kwh, covered_seconds, integrated_intervals
+      FROM snmp_feed_energy_state
+      WHERE target_id = %s AND source_identity = %s
     """
     with psycopg.connect(DSN) as conn:
-        row = conn.execute(query, (target_id, source_identity)).fetchone()
-    if not row or row[0] is None:
+        state = conn.execute(select_state, (target_id, source_identity)).fetchone()
+        if state is not None:
+            return {
+                "observedAt": state[0].isoformat(),
+                "estimatedEnergyKwh": float(state[1]),
+                "coveredSeconds": float(state[2]),
+                "integratedIntervals": int(state[3]),
+            }
+
+        # Serialize one-time backfill against live ingestion for this controller.
+        conn.execute("""
+          INSERT INTO snmp_source_progress (source_identity, last_observed_at)
+          VALUES (%s, 'epoch'::timestamptz) ON CONFLICT DO NOTHING
+        """, (source_identity,))
+        conn.execute("""
+          SELECT last_observed_at FROM snmp_source_progress
+          WHERE source_identity = %s FOR UPDATE
+        """, (source_identity,)).fetchone()
+
+        state = conn.execute(select_state, (target_id, source_identity)).fetchone()
+        if state is not None:
+            return {
+                "observedAt": state[0].isoformat(),
+                "estimatedEnergyKwh": float(state[1]),
+                "coveredSeconds": float(state[2]),
+                "integratedIntervals": int(state[3]),
+            }
+
+        row = conn.execute("""
+          WITH observations AS (
+            SELECT received_at,
+              (sample->'reported'->'currentA'->>'value')::double precision AS current_a,
+              (sample->'reported'->'voltageV'->>'value')::double precision AS voltage_v
+            FROM telemetry_entity_samples
+            WHERE target_id = %s AND target_type = 'ACCESS_PORT'
+              AND source_identity = %s
+              AND sample->>'protocol' = 'SNMP'
+          ), measured AS (
+            SELECT received_at,
+              CASE WHEN current_a >= 0 AND voltage_v IS NOT NULL
+                THEN current_a * ABS(voltage_v) ELSE NULL END AS power_w
+            FROM observations
+          ), intervals AS (
+            SELECT received_at, power_w,
+              LAG(received_at) OVER (ORDER BY received_at) AS previous_at,
+              LAG(power_w) OVER (ORDER BY received_at) AS previous_power_w
+            FROM measured
+          ), summary AS (
+            SELECT
+              COALESCE(SUM(
+                CASE WHEN previous_at IS NOT NULL AND power_w IS NOT NULL
+                  AND previous_power_w IS NOT NULL
+                  AND EXTRACT(EPOCH FROM (received_at - previous_at)) > 0
+                  AND EXTRACT(EPOCH FROM (received_at - previous_at)) <= 120
+                THEN (power_w + previous_power_w) / 2 *
+                  EXTRACT(EPOCH FROM (received_at - previous_at)) / 3600000.0
+                ELSE 0 END
+              ), 0) AS energy_kwh,
+              COALESCE(SUM(
+                CASE WHEN previous_at IS NOT NULL AND power_w IS NOT NULL
+                  AND previous_power_w IS NOT NULL
+                  AND EXTRACT(EPOCH FROM (received_at - previous_at)) > 0
+                  AND EXTRACT(EPOCH FROM (received_at - previous_at)) <= 120
+                THEN EXTRACT(EPOCH FROM (received_at - previous_at))
+                ELSE 0 END
+              ), 0) AS covered_seconds,
+              COUNT(*) FILTER (
+                WHERE previous_at IS NOT NULL AND power_w IS NOT NULL
+                  AND previous_power_w IS NOT NULL
+                  AND EXTRACT(EPOCH FROM (received_at - previous_at)) > 0
+                  AND EXTRACT(EPOCH FROM (received_at - previous_at)) <= 120
+              ) AS integrated_intervals
+            FROM intervals
+          ), latest AS (
+            SELECT received_at, power_w
+            FROM measured ORDER BY received_at DESC LIMIT 1
+          )
+          SELECT latest.received_at, latest.power_w, summary.energy_kwh,
+            summary.covered_seconds, summary.integrated_intervals
+          FROM latest CROSS JOIN summary
+        """, (target_id, source_identity)).fetchone()
+
+        if row is None:
+            return {
+                "observedAt": None,
+                "estimatedEnergyKwh": None,
+                "coveredSeconds": 0.0,
+                "integratedIntervals": 0,
+            }
+
+        conn.execute("""
+          INSERT INTO snmp_feed_energy_state
+            (target_id, source_identity, last_received_at, last_power_w,
+             energy_kwh, covered_seconds, integrated_intervals)
+          VALUES (%s, %s, %s, %s, %s, %s, %s)
+          ON CONFLICT (target_id, source_identity) DO NOTHING
+        """, (
+            target_id, source_identity, row[0], row[1], float(row[2]),
+            float(row[3]), int(row[4]),
+        ))
+        state = conn.execute(select_state, (target_id, source_identity)).fetchone()
+        if state is None:
+            raise RuntimeError("SNMP energy state backfill failed")
         return {
-            "observedAt": None,
-            "estimatedEnergyKwh": None,
-            "coveredSeconds": 0.0,
-            "integratedIntervals": 0,
+            "observedAt": state[0].isoformat(),
+            "estimatedEnergyKwh": float(state[1]),
+            "coveredSeconds": float(state[2]),
+            "integratedIntervals": int(state[3]),
         }
-    return {
-        "observedAt": row[0].isoformat(),
-        "estimatedEnergyKwh": float(row[1]) if row[3] > 0 else None,
-        "coveredSeconds": float(row[2]),
-        "integratedIntervals": int(row[3]),
-    }
 
 
 def query_history(serial, window, raw_point_ids):
@@ -722,6 +823,7 @@ if __name__ == "__main__":
         conn.execute(Path(__file__).with_name("002-entity-telemetry.sql").read_text())
         conn.execute(Path(__file__).with_name("003-snmp-atomic-batches.sql").read_text())
         conn.execute(Path(__file__).with_name("004-industrial-observations.sql").read_text())
+        conn.execute(Path(__file__).with_name("005-snmp-feed-energy.sql").read_text())
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print(f"SITE_MAPPER_TELEMETRY_STORE_READY host={HOST} port={PORT}", flush=True)
     server.serve_forever()

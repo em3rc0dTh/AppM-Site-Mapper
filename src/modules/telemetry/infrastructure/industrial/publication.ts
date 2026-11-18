@@ -11,6 +11,7 @@ export interface PublishedPoint {
   unit: string;
   description: string;
   dataType?: PublishedPointDataType;
+  legacyTotalMirror?: boolean;
 }
 
 export interface PublicationManifest {
@@ -66,6 +67,7 @@ export async function publicationManifest(): Promise<PublicationManifest | null>
       typeof p.unit !== 'string' ||
       typeof p.description !== 'string' ||
       !['FLOAT32', 'UINT16'].includes(dataType) ||
+      (p.legacyTotalMirror !== undefined && typeof p.legacyTotalMirror !== 'boolean') ||
       (p.logicalPointId !== undefined &&
         (typeof p.logicalPointId !== 'string' ||
           !/^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,199}$/.test(p.logicalPointId)))

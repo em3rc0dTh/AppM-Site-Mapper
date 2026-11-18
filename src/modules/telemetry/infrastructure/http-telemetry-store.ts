@@ -99,6 +99,13 @@ export interface SnmpHistoricalBucket {
   readonly pairedSampleCount?: number;
 }
 
+export interface SnmpFeedTotalEnergy {
+  readonly observedAt: string | null;
+  readonly estimatedEnergyKwh: number | null;
+  readonly coveredSeconds: number;
+  readonly integratedIntervals: number;
+}
+
 export class HttpTelemetryStore implements TelemetryHistoryWriter {
   private writes = 0;
   private rowsAccepted = 0;
@@ -258,6 +265,40 @@ export class HttpTelemetryStore implements TelemetryHistoryWriter {
     if (!response.ok) throw new Error(`SNMP_HISTORY_HTTP_${response.status}`);
     const body = (await response.json()) as { points?: SnmpHistoricalBucket[] };
     return Array.isArray(body.points) ? body.points : [];
+  }
+
+  async querySnmpFeedTotalEnergy(
+    targetId: string,
+    sourceIdentity: string,
+  ): Promise<SnmpFeedTotalEnergy> {
+    const url = new URL(`${this.baseUrl.replace(/\/$/, '')}/snmp-feed-energy-total`);
+    url.searchParams.set('targetId', targetId);
+    url.searchParams.set('sourceIdentity', sourceIdentity);
+    const response = await fetch(url, {
+      headers: this.accessToken ? { authorization: `Bearer ${this.accessToken}` } : {},
+      cache: 'no-store',
+      signal: AbortSignal.timeout(this.timeoutMs),
+    });
+    if (!response.ok) throw new Error(`SNMP_ENERGY_TOTAL_HTTP_${response.status}`);
+    const body = (await response.json()) as Partial<SnmpFeedTotalEnergy>;
+    return {
+      observedAt:
+        typeof body.observedAt === 'string' && Number.isFinite(Date.parse(body.observedAt))
+          ? body.observedAt
+          : null,
+      estimatedEnergyKwh:
+        typeof body.estimatedEnergyKwh === 'number' && Number.isFinite(body.estimatedEnergyKwh)
+          ? body.estimatedEnergyKwh
+          : null,
+      coveredSeconds:
+        typeof body.coveredSeconds === 'number' && Number.isFinite(body.coveredSeconds)
+          ? body.coveredSeconds
+          : 0,
+      integratedIntervals:
+        Number.isInteger(body.integratedIntervals) && Number(body.integratedIntervals) >= 0
+          ? Number(body.integratedIntervals)
+          : 0,
+    };
   }
 
   async queryEntity(

@@ -51,10 +51,7 @@ export interface MetasysEltekHistory {
     targetIds: readonly string[],
     targetType: TelemetrySample['targetType'],
   ): Promise<readonly TelemetrySample[]>;
-  querySnmpFeedTotalEnergy(
-    targetId: string,
-    sourceIdentity: string,
-  ): Promise<SnmpFeedTotalEnergy>;
+  querySnmpFeedTotalEnergy(targetId: string, sourceIdentity: string): Promise<SnmpFeedTotalEnergy>;
 }
 
 const POINTS = new Set<string>(METASYS_ELTEK_POINTS);
@@ -77,11 +74,7 @@ async function resolveQdf(
   topology: TopologyRepository,
 ): Promise<DeviceNode | null> {
   const direct = await topology.getById(qdfRef);
-  if (
-    direct?.kind === 'DEVICE' &&
-    direct.lifecycle === 'ACTIVE' &&
-    direct.deviceType === 'BDFB'
-  )
+  if (direct?.kind === 'DEVICE' && direct.lifecycle === 'ACTIVE' && direct.deviceType === 'BDFB')
     return direct;
 
   const normalized = qdfRef.toUpperCase().replace(/^BDFB\s+/, '');
@@ -102,8 +95,7 @@ function unavailableQuality(load: SnmpBdfbLoadView | null): Signal['quality'] {
   if (load.feeds.some((feed) => feed.status === 'CONFLICT')) return 'INVALID';
   if (load.feeds.some((feed) => feed.status === 'STALE')) return 'STALE';
   if (load.feeds.some((feed) => feed.status === 'NO_DATA')) return 'UNOBSERVED';
-  if (load.feeds.some((feed) => ['UNMAPPED', 'UNVERIFIED'].includes(feed.status)))
-    return 'INVALID';
+  if (load.feeds.some((feed) => ['UNMAPPED', 'UNVERIFIED'].includes(feed.status))) return 'INVALID';
   return 'UNKNOWN';
 }
 
@@ -121,7 +113,6 @@ function communicationCode(load: SnmpBdfbLoadView | null): number {
   if (live > 0 || statuses.has('STALE')) return 2;
   return 0;
 }
-
 
 function measurementSignal(input: {
   request: MetasysEltekPublicationRequest;
@@ -178,10 +169,9 @@ function stateSignal(input: {
     publicationSignalId: input.request.signalId,
     authoritative: true,
     key: input.request.logicalPointId,
-    sourceIdentity:
-      input.request.logicalPointId.endsWith('/COMMUNICATION_STATUS')
-        ? 'SITE_MAPPER_SNMP_HEALTH'
-        : 'ALARM_ENGINE',
+    sourceIdentity: input.request.logicalPointId.endsWith('/COMMUNICATION_STATUS')
+      ? 'SITE_MAPPER_SNMP_HEALTH'
+      : 'ALARM_ENGINE',
     protocol: input.request.logicalPointId.endsWith('/COMMUNICATION_STATUS') ? 'SNMP' : 'ALARM',
     targetId: input.targetId,
     kind: input.alarmState ? 'alarm' : 'state',
@@ -249,7 +239,8 @@ export async function projectMetasysEltekSignals(
     if (feedPorts.length) {
       try {
         for (const sample of await history.queryLatestEntities(feedPorts, 'ACCESS_PORT')) {
-          if (sample.protocol === 'SNMP' && feedPorts.includes(sample.targetId)) hub.publish(sample);
+          if (sample.protocol === 'SNMP' && feedPorts.includes(sample.targetId))
+            hub.publish(sample);
         }
       } catch {
         // Projection fails individual values closed below; status still exposes OFFLINE/ERROR semantics.
@@ -316,7 +307,11 @@ export async function projectMetasysEltekSignals(
 
     for (const request of qdfRequests) {
       const point = parseMetasysEltekLogicalPoint(request.logicalPointId)!.point;
-      const feed = point.startsWith('INPUT_A_') ? feedA : point.startsWith('INPUT_B_') ? feedB : null;
+      const feed = point.startsWith('INPUT_A_')
+        ? feedA
+        : point.startsWith('INPUT_B_')
+          ? feedB
+          : null;
       const feedIsLive = liveFeed(feed);
       const observedAt = feed?.observedAt ?? nowIso;
       const quality: Signal['quality'] = feedIsLive ? 'VALID' : fallbackQuality;

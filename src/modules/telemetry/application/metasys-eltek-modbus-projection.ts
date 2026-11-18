@@ -7,6 +7,11 @@ import {
   type SnmpBdfbFeedView,
   type SnmpBdfbLoadView,
 } from '@/modules/telemetry/application/snmp-feed-service';
+import {
+  projectOperationalLiveTotalCurrent,
+  projectOperationalLiveTotalPower,
+  projectOperationalQdfVoltage,
+} from '@/modules/telemetry/application/qdf-operational-projection';
 import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 import type { Signal } from '@/modules/telemetry/domain/industrial/observations';
@@ -117,12 +122,6 @@ function communicationCode(load: SnmpBdfbLoadView | null): number {
   return 0;
 }
 
-function configuredVoltageTolerance(device: DeviceNode): number | null {
-  const value = device.attributes?.qdfVoltageToleranceV;
-  return typeof value === 'number' && Number.isFinite(value) && value > 0 && value <= 20
-    ? value
-    : null;
-}
 
 function measurementSignal(input: {
   request: MetasysEltekPublicationRequest;
@@ -269,24 +268,28 @@ export async function projectMetasysEltekSignals(
     const sideB = load?.feeds.filter((feed) => feed.side === 'B') ?? [];
     const feedA = sideA.length === 1 ? sideA[0]! : null;
     const feedB = sideB.length === 1 ? sideB[0]! : null;
-    const bothLive = liveFeed(feedA) && liveFeed(feedB);
     const fallbackQuality = unavailableQuality(load);
-
-    const totalCurrentA = bothLive ? feedA.currentA! + feedB.currentA! : null;
-    const totalPowerKw =
-      bothLive && feedA.estimatedPowerW !== null && feedB.estimatedPowerW !== null
-        ? (feedA.estimatedPowerW + feedB.estimatedPowerW) / 1000
-        : null;
-    const busAV = liveFeed(feedA) ? feedA.voltageV : null;
-    const busBV = liveFeed(feedB) ? feedB.voltageV : null;
-    const tolerance = configuredVoltageTolerance(device);
-    const totalVoltageV =
-      busAV !== null &&
-      busBV !== null &&
-      tolerance !== null &&
-      Math.abs(busAV - busBV) <= tolerance
-        ? (busAV + busBV) / 2
-        : null;
+    const totalCurrent = load ? projectOperationalLiveTotalCurrent(load) : null;
+    const totalPower = load ? projectOperationalLiveTotalPower(load) : null;
+    const voltage = load
+      ? projectOperationalQdfVoltage(
+          load.feeds.map((feed) => ({
+            accessPortId: feed.accessPortId,
+            side: feed.side === 'A' || feed.side === 'B' ? feed.side : null,
+            position: feed.feedPosition ?? feed.side,
+            verified: feed.status === 'LIVE',
+            sourceMode: feed.status === 'LAB_LIVE' ? 'SYNTHETIC_LAB_ONLY' : 'FIELD',
+            voltageV: liveFeed(feed) ? feed.voltageV : null,
+            observedAt: liveFeed(feed) ? feed.observedAt : null,
+          })),
+          load.expectedFeedCount,
+        )
+      : { busA: null, busB: null, total: null };
+    const totalCurrentA = totalCurrent?.currentA ?? null;
+    const totalPowerKw = totalPower?.powerKw ?? null;
+    const busAV = voltage.busA?.voltageV ?? null;
+    const busBV = voltage.busB?.voltageV ?? null;
+    const totalVoltageV = voltage.total?.voltageV ?? null;
 
     let totalEnergyKwh: number | null = null;
     if (feedA && feedB) {
@@ -388,12 +391,12 @@ export async function projectMetasysEltekSignals(
             value: totalCurrentA,
             unit: 'A',
             quality: totalCurrentA !== null ? 'VALID' : fallbackQuality,
-            observedAt: newest([feedA?.observedAt ?? null, feedB?.observedAt ?? null], nowIso),
+            observedAt: totalCurrent?.observedAt ?? nowIso,
             now: nowIso,
           }),
         );
       } else if (point === 'BUS_A_VOLTAGE' || point === 'BUS_B_VOLTAGE') {
-        const selected = point === 'BUS_A_VOLTAGE' ? feedA : feedB;
+        const selected = point === 'BUS_A_VOLTAGE' ? voltage.busA : voltage.busB;
         const value = point === 'BUS_A_VOLTAGE' ? busAV : busBV;
         output.push(
           measurementSignal({
@@ -414,7 +417,7 @@ export async function projectMetasysEltekSignals(
             value: totalVoltageV,
             unit: 'V',
             quality: totalVoltageV !== null ? 'VALID' : 'INVALID',
-            observedAt: newest([feedA?.observedAt ?? null, feedB?.observedAt ?? null], nowIso),
+            observedAt: voltage.total?.observedAt ?? nowIso,
             now: nowIso,
           }),
         );
@@ -426,7 +429,7 @@ export async function projectMetasysEltekSignals(
             value: totalPowerKw,
             unit: 'kW',
             quality: totalPowerKw !== null ? 'VALID' : fallbackQuality,
-            observedAt: newest([feedA?.observedAt ?? null, feedB?.observedAt ?? null], nowIso),
+            observedAt: totalPower?.observedAt ?? nowIso,
             now: nowIso,
           }),
         );

@@ -81,7 +81,8 @@
       "address": 1054,
       "dataType": "FLOAT32",
       "unit": "A",
-      "description": "QDF-2 Total Current"
+      "description": "QDF-2 Total Current",
+      "legacyTotalMirror": false
     },
     {
       "signalId": "36136e24d3e2e458a8b7338f5197fcb731b8f718e31018a02548e3d8092c56a5",
@@ -108,7 +109,8 @@
       "address": 1063,
       "dataType": "FLOAT32",
       "unit": "V",
-      "description": "QDF-2 Total Voltage"
+      "description": "QDF-2 Total Voltage",
+      "legacyTotalMirror": false
     },
     {
       "signalId": "4748c9e377df441c40d7fb4d4d72188bf2b79a9c14c7c41f6df9d5e4cc0e72ee",
@@ -117,7 +119,8 @@
       "address": 1066,
       "dataType": "FLOAT32",
       "unit": "kW",
-      "description": "QDF-2 Total Power"
+      "description": "QDF-2 Total Power",
+      "legacyTotalMirror": false
     },
     {
       "signalId": "abba009fd24562f8e9e86b073dd46932e4720df3b1521432b83ea633cbc6ec61",
@@ -126,7 +129,8 @@
       "address": 1069,
       "dataType": "FLOAT32",
       "unit": "kWh",
-      "description": "QDF-2 Total Energy"
+      "description": "QDF-2 Total Energy",
+      "legacyTotalMirror": false
     },
     {
       "signalId": "7796eb34efafd8dc7f60c8f1cf157a09a5a56040cac12f731f50c32f4de110d8",
@@ -234,7 +238,8 @@
       "address": 1054,
       "dataType": "FLOAT32",
       "unit": "A",
-      "description": "QDF-4 Total Current"
+      "description": "QDF-4 Total Current",
+      "legacyTotalMirror": false
     },
     {
       "signalId": "1946807c7d66f6d0f8902d8a960f68819063c25e09cb3e50e75b3bedebc62063",
@@ -261,7 +266,8 @@
       "address": 1063,
       "dataType": "FLOAT32",
       "unit": "V",
-      "description": "QDF-4 Total Voltage"
+      "description": "QDF-4 Total Voltage",
+      "legacyTotalMirror": false
     },
     {
       "signalId": "6020911b2a0fe3b831bef991e0b12620c356319347b7e8b98c09011316ff6195",
@@ -270,7 +276,8 @@
       "address": 1066,
       "dataType": "FLOAT32",
       "unit": "kW",
-      "description": "QDF-4 Total Power"
+      "description": "QDF-4 Total Power",
+      "legacyTotalMirror": false
     },
     {
       "signalId": "3ca1c838977ca7a7c0f89ccbf1ba93ad0629817ac9fb58f204161dd43c101216",
@@ -279,7 +286,8 @@
       "address": 1069,
       "dataType": "FLOAT32",
       "unit": "kWh",
-      "description": "QDF-4 Total Energy"
+      "description": "QDF-4 Total Energy",
+      "legacyTotalMirror": false
     },
     {
       "signalId": "3f41575d9cfc334cdff2722ba5ed73d15b586a1b5de16d9fc667a98c6949d1e8",
@@ -387,7 +395,8 @@
       "address": 1054,
       "dataType": "FLOAT32",
       "unit": "A",
-      "description": "QDF-5 Total Current"
+      "description": "QDF-5 Total Current",
+      "legacyTotalMirror": false
     },
     {
       "signalId": "f8d2dbcf06a4f9fb148eb4bdc68ddaebf23d1bf2e7703432f31d97790b5c4d8a",
@@ -414,7 +423,8 @@
       "address": 1063,
       "dataType": "FLOAT32",
       "unit": "V",
-      "description": "QDF-5 Total Voltage"
+      "description": "QDF-5 Total Voltage",
+      "legacyTotalMirror": false
     },
     {
       "signalId": "22ac0f6292ddde6b3142429cc8ccec3a929ac2a477e4c17dcbc7b1a675cf197b",
@@ -423,7 +433,8 @@
       "address": 1066,
       "dataType": "FLOAT32",
       "unit": "kW",
-      "description": "QDF-5 Total Power"
+      "description": "QDF-5 Total Power",
+      "legacyTotalMirror": false
     },
     {
       "signalId": "09c2f22654deafe05a785d34b8e589c35fca9c9256fbafbaabe6ca0822238cf6",
@@ -432,7 +443,8 @@
       "address": 1069,
       "dataType": "FLOAT32",
       "unit": "kWh",
-      "description": "QDF-5 Total Energy"
+      "description": "QDF-5 Total Energy",
+      "legacyTotalMirror": false
     },
     {
       "signalId": "32fb620940af6519ffa3bc0668f991d5d940386bad1d7a7f763e7e802dc6dd4a",

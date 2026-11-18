@@ -47,6 +47,7 @@ export function validateRegistry(registry, previous) {
       typeof p.description !== 'string' ||
       typeof p.unit !== 'string' ||
       !DATA_TYPES.includes(dataType) ||
+      (p.legacyTotalMirror !== undefined && typeof p.legacyTotalMirror !== 'boolean') ||
       (p.logicalPointId !== undefined &&
         (typeof p.logicalPointId !== 'string' ||
           !/^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,199}$/.test(p.logicalPointId)))

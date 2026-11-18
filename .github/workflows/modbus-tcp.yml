@@ -2,7 +2,7 @@ name: Site Mapper Modbus TCP certification
 on:
   push:
     branches:
-      - 'feat/modbus-tcp-site-mapper-sidecar'
+      - 'feat/**'
       - main
     paths:
       - 'infra/modbus-tcp/**'

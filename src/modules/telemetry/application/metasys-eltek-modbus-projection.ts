@@ -203,13 +203,6 @@ function stateSignal(input: {
   };
 }
 
-function newest(values: readonly (string | null)[], fallback: string): string {
-  const timestamps = values
-    .filter((value): value is string => Boolean(value) && Number.isFinite(Date.parse(value!)))
-    .sort((left, right) => Date.parse(right) - Date.parse(left));
-  return timestamps[0] ?? fallback;
-}
-
 async function feedEnergy(
   feed: SnmpBdfbFeedView,
   history: MetasysEltekHistory,

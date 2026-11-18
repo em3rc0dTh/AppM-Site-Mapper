@@ -184,11 +184,7 @@ export class ExtensionState {
       if (quality !== 'VALID' && !knownAlarm) value = NaN;
 
       if (dataType === 'UINT16') {
-        values.push(
-          Number.isInteger(value) && value >= 0 && value <= 0xffff
-            ? value
-            : 0,
-        );
+        values.push(Number.isInteger(value) && value >= 0 && value <= 0xffff ? value : 0);
         continue;
       }
 
@@ -245,9 +241,7 @@ export function registryCsv(registry) {
         dataType === 'FLOAT32' ? p.address + 2 : '',
         p.unit,
         p.description,
-        dataType === 'FLOAT32'
-          ? '0=UNOBSERVED;1=VALID;2=STALE;3=INVALID;4=UNKNOWN;5=OFFLINE'
-          : '',
+        dataType === 'FLOAT32' ? '0=UNOBSERVED;1=VALID;2=STALE;3=INVALID;4=UNKNOWN;5=OFFLINE' : '',
         'Known alarm state retained as ACTIVE=1 or RESOLVED=0; UINT16 status points publish the integer value directly',
       ];
     }),

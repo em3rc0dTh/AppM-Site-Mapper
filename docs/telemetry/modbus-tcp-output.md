@@ -41,25 +41,25 @@ QDF ownership is fixed by the handoff workbook:
 
 Each Unit ID publishes the same extension layout:
 
-| Start | Point | Type | Unit |
-| ---: | --- | --- | --- |
-| 1024 | Input A Rated Current | FLOAT32 | A |
-| 1027 | Input A Voltage | FLOAT32 | V |
-| 1030 | Input A Current | FLOAT32 | A |
-| 1033 | Input A Power | FLOAT32 | kW |
-| 1039 | Input B Rated Current | FLOAT32 | A |
-| 1042 | Input B Voltage | FLOAT32 | V |
-| 1045 | Input B Current | FLOAT32 | A |
-| 1048 | Input B Power | FLOAT32 | kW |
-| 1054 | Total Current | FLOAT32 | A |
-| 1057 | Bus A Voltage | FLOAT32 | V |
-| 1060 | Bus B Voltage | FLOAT32 | V |
-| 1063 | Total Voltage | FLOAT32 | V |
-| 1066 | Total Power | FLOAT32 | kW |
-| 1069 | Total Energy | FLOAT32 | kWh |
-| 1072 | Communication Status | UINT16 | — |
-| 1073 | Controller Alarm State | UINT16 | — |
-| 1074 | Alarm Severity | UINT16 | — |
+| Start | Point                  | Type    | Unit |
+| ----: | ---------------------- | ------- | ---- |
+|  1024 | Input A Rated Current  | FLOAT32 | A    |
+|  1027 | Input A Voltage        | FLOAT32 | V    |
+|  1030 | Input A Current        | FLOAT32 | A    |
+|  1033 | Input A Power          | FLOAT32 | kW   |
+|  1039 | Input B Rated Current  | FLOAT32 | A    |
+|  1042 | Input B Voltage        | FLOAT32 | V    |
+|  1045 | Input B Current        | FLOAT32 | A    |
+|  1048 | Input B Power          | FLOAT32 | kW   |
+|  1054 | Total Current          | FLOAT32 | A    |
+|  1057 | Bus A Voltage          | FLOAT32 | V    |
+|  1060 | Bus B Voltage          | FLOAT32 | V    |
+|  1063 | Total Voltage          | FLOAT32 | V    |
+|  1066 | Total Power            | FLOAT32 | kW   |
+|  1069 | Total Energy           | FLOAT32 | kWh  |
+|  1072 | Communication Status   | UINT16  | —    |
+|  1073 | Controller Alarm State | UINT16  | —    |
+|  1074 | Alarm Severity         | UINT16  | —    |
 
 FLOAT32 extension points retain the bridge's adjacent internal quality register, so their start
 addresses advance by three even though the customer workbook documents only the two value registers.

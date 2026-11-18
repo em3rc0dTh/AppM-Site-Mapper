@@ -409,6 +409,77 @@ def query_snmp_feed_series(target_id, source_identity, window):
         "pairedSampleCount": row[8]
     } for row in rows]
 
+
+def query_snmp_feed_total_energy(target_id, source_identity):
+    """Integrate all durable paired SNMP V/I observations for one commissioned feed.
+
+    This is a Site Mapper derived counter over retained durable history. It is not
+    a native Eltek energy counter. Gaps over 120 seconds are intentionally not
+    interpolated.
+    """
+    query = """
+      WITH observations AS (
+        SELECT received_at,
+          (sample->'reported'->'currentA'->>'value')::double precision AS current_a,
+          (sample->'reported'->'voltageV'->>'value')::double precision AS voltage_v
+        FROM telemetry_entity_samples
+        WHERE target_id = %s AND target_type = 'ACCESS_PORT'
+          AND source_identity = %s
+          AND sample->>'protocol' = 'SNMP'
+      ), measured AS (
+        SELECT received_at,
+          CASE WHEN current_a >= 0 AND voltage_v IS NOT NULL
+            THEN current_a * ABS(voltage_v) ELSE NULL END AS power_w
+        FROM observations
+      ), intervals AS (
+        SELECT received_at, power_w,
+          LAG(received_at) OVER (ORDER BY received_at) AS previous_at,
+          LAG(power_w) OVER (ORDER BY received_at) AS previous_power_w
+        FROM measured
+      )
+      SELECT MAX(received_at),
+        COALESCE(SUM(
+          CASE WHEN previous_at IS NOT NULL AND power_w IS NOT NULL
+            AND previous_power_w IS NOT NULL
+            AND EXTRACT(EPOCH FROM (received_at - previous_at)) > 0
+            AND EXTRACT(EPOCH FROM (received_at - previous_at)) <= 120
+          THEN (power_w + previous_power_w) / 2 *
+            EXTRACT(EPOCH FROM (received_at - previous_at)) / 3600000.0
+          ELSE 0 END
+        ), 0) AS estimated_energy_kwh,
+        COALESCE(SUM(
+          CASE WHEN previous_at IS NOT NULL AND power_w IS NOT NULL
+            AND previous_power_w IS NOT NULL
+            AND EXTRACT(EPOCH FROM (received_at - previous_at)) > 0
+            AND EXTRACT(EPOCH FROM (received_at - previous_at)) <= 120
+          THEN EXTRACT(EPOCH FROM (received_at - previous_at))
+          ELSE 0 END
+        ), 0) AS covered_seconds,
+        COUNT(*) FILTER (
+          WHERE previous_at IS NOT NULL AND power_w IS NOT NULL
+            AND previous_power_w IS NOT NULL
+            AND EXTRACT(EPOCH FROM (received_at - previous_at)) > 0
+            AND EXTRACT(EPOCH FROM (received_at - previous_at)) <= 120
+        ) AS integrated_intervals
+      FROM intervals
+    """
+    with psycopg.connect(DSN) as conn:
+        row = conn.execute(query, (target_id, source_identity)).fetchone()
+    if not row or row[0] is None:
+        return {
+            "observedAt": None,
+            "estimatedEnergyKwh": None,
+            "coveredSeconds": 0.0,
+            "integratedIntervals": 0,
+        }
+    return {
+        "observedAt": row[0].isoformat(),
+        "estimatedEnergyKwh": float(row[1]) if row[3] > 0 else None,
+        "coveredSeconds": float(row[2]),
+        "integratedIntervals": int(row[3]),
+    }
+
+
 def query_history(serial, window, raw_point_ids):
     if window not in WINDOWS:
         raise ValueError("unsupported window")
@@ -497,7 +568,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(HTTPStatus.SERVICE_UNAVAILABLE, {"status": "unavailable"})
             return
 
-        if parsed.path in ("/history", "/entity-history", "/entity-latest", "/snmp-feed-series", "/industrial-history") and not self.authorized():
+        if parsed.path in ("/history", "/entity-history", "/entity-latest", "/snmp-feed-series", "/snmp-feed-energy-total", "/industrial-history") and not self.authorized():
             self.send_json(HTTPStatus.UNAUTHORIZED, {"error": "unauthorized"})
             return
 
@@ -525,6 +596,25 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(HTTPStatus.SERVICE_UNAVAILABLE, {"error": "entity latest query failed"})
             return
 
+
+        if parsed.path == "/snmp-feed-energy-total":
+            query = parse_qs(parsed.query)
+            target_id = text_value(query.get("targetId", [None])[0])
+            source = text_value(query.get("sourceIdentity", [None])[0])
+            if not target_id or len(target_id) > 128 or not source or len(source) > 120:
+                self.send_json(HTTPStatus.BAD_REQUEST, {"error": "invalid SNMP energy query"})
+                return
+            try:
+                self.send_json(
+                    HTTPStatus.OK,
+                    query_snmp_feed_total_energy(target_id, source),
+                )
+            except Exception:
+                self.send_json(
+                    HTTPStatus.SERVICE_UNAVAILABLE,
+                    {"error": "SNMP energy total unavailable"},
+                )
+            return
 
         if parsed.path == "/snmp-feed-series":
             query = parse_qs(parsed.query)

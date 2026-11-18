@@ -107,7 +107,6 @@ test('independent TCP client reads extension and extension and approved base add
   }
 });
 
-
 test('UINT16 status points occupy one Input Register and publish integer codes', () => {
   const statusPoint = {
     signalId: 'b'.repeat(64),

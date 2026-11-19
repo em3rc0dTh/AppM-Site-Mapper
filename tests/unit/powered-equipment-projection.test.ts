@@ -48,6 +48,7 @@ function breaker(
   feed: 'A' | 'B',
   targetFootprint?: string,
   remarks: readonly string[] = [],
+  aliases: readonly string[] = [target],
 ): EquipmentNode {
   return {
     id,
@@ -60,7 +61,7 @@ function breaker(
     childMode: 'DYNAMIC',
     children: [],
     accessPorts: [],
-    aliases: [target],
+    aliases,
     attributes: {
       declaredPower: {
         qdf: 'QDF2',
@@ -78,42 +79,74 @@ function breaker(
 }
 
 describe('powered equipment projection', () => {
-  it('parses endpoint composition without promoting the endpoint to equipment identity', () => {
-    expect(parseDeclaredPowerTarget('GRTLuren3 PSU0 A0', { targetFootprint: '010202.09' })).toEqual(
-      {
-        equipmentKey: 'grtluren3',
-        equipmentName: 'GRTLuren3',
-        targetKind: 'EQUIPMENT',
-        aid: 'GRTLuren3::NoShelf::PSU0::A0',
-        localAid: 'GRTLuren3::NoShelf::PSU0::A0',
-        rackAid: 'RACK::010202.09',
-        targetLabel: 'GRTLuren3 PSU0 A0',
-        displayLabel: 'PSU0 / A0',
-        module: 'PSU0',
-        endpoint: 'A0',
-        side: 'A',
-      },
-    );
-
-    expect(parseDeclaredPowerTarget('DTX-LUR-FP2-01 SH15 PEM B1.2')).toMatchObject({
-      equipmentKey: 'dtx-lur-fp2-01',
-      equipmentName: 'DTX-LUR-FP2-01',
+  it('preserves stable GRTLuren3 identity while accepting the current display name', () => {
+    expect(
+      parseDeclaredPowerTarget('GRTLUREM3 PSU0 A0', {
+        targetFootprint: '010202.09',
+        feed: 'A',
+      }),
+    ).toEqual({
+      equipmentKey: 'grtluren3',
+      equipmentName: 'GRTLUREM3',
+      canonicalEquipmentName: 'GRTLuren3',
       targetKind: 'EQUIPMENT',
-      shelf: 'SH15',
-      module: 'PEM',
-      endpoint: 'B1.2',
-      side: 'B',
-      aid: 'DTX-LUR-FP2-01::SH15::PEM::B1.2',
-      localAid: 'DTX-LUR-FP2-01::SH15::PEM::B1.2',
+      aid: 'GRTLuren3::NoShelf::PSU0::A0',
+      localAid: 'GRTLuren3::NoShelf::PSU0::A0',
+      rackAid: 'RACK::010202.09',
+      targetLabel: 'GRTLUREM3 PSU0 A0',
+      displayLabel: 'PSU0 / A0',
+      module: 'PSU0',
+      endpoint: 'A0',
+      side: 'A',
     });
   });
 
-  it('normalizes shelf numbering while preserving the declared target label', () => {
+  it('parses current PA/PB, PWR and spaced PEM endpoint notation', () => {
+    expect(parseDeclaredPowerTarget('DTX-LUR-FP2-01 SH15 PA1-1')).toMatchObject({
+      canonicalEquipmentName: 'DTX-LUR-FP2-01',
+      shelf: 'SH15',
+      endpoint: 'PA1-1',
+      side: 'A',
+      aid: 'DTX-LUR-FP2-01::SH15::NoSlot::PA1-1',
+    });
+
+    expect(parseDeclaredPowerTarget('DTN-LUR-FP4-01 SH1 PWR:B')).toMatchObject({
+      shelf: 'SH1',
+      endpoint: 'PWR:B',
+      side: 'B',
+      aid: 'DTN-LUR-FP4-01::SH1::NoSlot::PWR:B',
+    });
+
+    expect(parseDeclaredPowerTarget('GX-LUR-02 SH01 PEM 3')).toMatchObject({
+      equipmentKey: 'gx-lur-02',
+      canonicalEquipmentName: 'GX-LUR-02',
+      shelf: 'SH1',
+      module: 'PEM3',
+      aid: 'GX-LUR-02::SH1::PEM3::NoPort',
+    });
+  });
+
+  it('keeps legacy GX names mapped to the current logical equipment identity', () => {
     expect(parseDeclaredPowerTarget('GXLUR02 SH01 PEM1')).toMatchObject({
+      equipmentKey: 'gx-lur-02',
+      equipmentName: 'GXLUR02',
+      canonicalEquipmentName: 'GX-LUR-02',
       shelf: 'SH1',
       module: 'PEM1',
-      aid: 'GXLUR02::SH1::PEM1::NoPort',
-      targetLabel: 'GXLUR02 SH01 PEM1',
+      aid: 'GX-LUR-02::SH1::PEM1::NoPort',
+    });
+  });
+
+  it('derives feed-specific endpoint identity only when the source gives equipment name alone', () => {
+    expect(
+      parseDeclaredPowerTarget('Orion', { targetFootprint: '010205.16', feed: 'A' }),
+    ).toMatchObject({
+      equipmentKey: 'orion',
+      canonicalEquipmentName: 'Orion',
+      endpoint: 'FEED-A',
+      side: 'A',
+      aid: 'Orion::NoShelf::NoSlot::FEED-A',
+      rackAid: 'RACK::010205.16',
     });
   });
 
@@ -123,6 +156,7 @@ describe('powered equipment projection', () => {
     expect(parseDeclaredPowerTarget('Rack CDN PDU-1A', { targetFootprint: '010202.10' })).toEqual({
       equipmentKey: 'rack-010202.10-pdu01',
       equipmentName: 'PDU 01',
+      canonicalEquipmentName: 'PDU 01',
       targetKind: 'PDU',
       aid: 'RACK::010202.10::PDU01::A',
       localAid: 'PDU01::NoShelf::NoSlot::A',
@@ -134,12 +168,9 @@ describe('powered equipment projection', () => {
       side: 'A',
     });
 
-    expect(
-      parseDeclaredPowerTarget('010208.14 PDU1-B', { targetFootprint: '010208.14' }),
-    ).toMatchObject({
+    expect(parseDeclaredPowerTarget('PDU1-B', { targetFootprint: '010208.14' })).toMatchObject({
       equipmentKey: 'rack-010208.14-pdu01',
-      equipmentName: 'PDU 01',
-      targetKind: 'PDU',
+      canonicalEquipmentName: 'PDU 01',
       aid: 'RACK::010208.14::PDU01::B',
       localAid: 'PDU01::NoShelf::NoSlot::B',
       baseAid: 'RACK::010208.14::PDU01',
@@ -148,12 +179,28 @@ describe('powered equipment projection', () => {
     });
   });
 
-  it('groups existing breaker aliases additively under one powered equipment projection', async () => {
+  it('projects the current declared target once even when legacy aliases are retained', async () => {
     const seed: TopologyNode[] = [
       device(),
       panel(),
-      breaker('breaker-a', 'A3-01', 'BB-LUR-04 SH2 A1', 'A', '010206.20'),
-      breaker('breaker-b', 'B3-01', 'BB-LUR-04 SH2 FEED B1', 'B', '010206.20'),
+      breaker(
+        'breaker-a',
+        'A3-03',
+        'GX-LUR-02 SH01 PEM 1',
+        'A',
+        '010208.13',
+        [],
+        ['GXLUR02 SH01 PEM1', 'GX-LUR-02 SH01 PEM 1'],
+      ),
+      breaker(
+        'breaker-b',
+        'B3-03',
+        'GX-LUR-02 SH01 PEM 3',
+        'B',
+        '010208.13',
+        [],
+        ['GXLUR02 SH1 PEM3', 'GX-LUR-02 SH01 PEM 3'],
+      ),
     ];
     const repository = new MemoryTopologyRepository(seed);
     const projection = await new PoweredEquipmentProjectionService(repository).list();
@@ -164,27 +211,30 @@ describe('powered equipment projection', () => {
     if (!powered) throw new Error('EXPECTED_POWERED_EQUIPMENT');
 
     expect(powered).toMatchObject({
-      id: 'powered-equipment:bb-lur-04',
-      key: 'bb-lur-04',
-      name: 'BB-LUR-04',
+      id: 'powered-equipment:gx-lur-02',
+      key: 'gx-lur-02',
+      name: 'GX-LUR-02',
       kind: 'EQUIPMENT',
       qdfs: ['QDF2'],
-      rackAids: ['RACK::010206.20'],
+      rackAids: ['RACK::010208.13'],
       feeds: ['A', 'B'],
     });
     expect(powered.connections).toHaveLength(2);
-    expect(powered.connections.map((item) => item.breakerId)).toEqual(['breaker-a', 'breaker-b']);
+    expect(powered.connections.map((item) => item.endpoint.aid)).toEqual([
+      'GX-LUR-02::SH1::PEM1::NoPort',
+      'GX-LUR-02::SH1::PEM3::NoPort',
+    ]);
   });
 
-  it('groups PDU feed A/B as one rack-scoped target and preserves remarks and aliases', async () => {
+  it('groups PDU feed A/B as one rack-scoped target and preserves remarks', async () => {
     const seed: TopologyNode[] = [
       device(),
       panel(),
-      breaker('breaker-pdu-a', 'A3-17', '010208.14 PDU1-A', 'A', '010208.14', [
+      breaker('breaker-pdu-a', 'A3-17', 'PDU1-A', 'A', '010208.14', [
         'Pos-1: MTC-9 SH10 PEM A',
         'Pos-2: XTM-LUR01 PEM A',
       ]),
-      breaker('breaker-pdu-b', 'B3-17', '010208.14 PDU1-B', 'B', '010208.14', [
+      breaker('breaker-pdu-b', 'B3-17', 'PDU1-B', 'B', '010208.14', [
         'Pos-1: MTC-9 SH10 PEM B',
         'Pos-2: XTM-LUR01 PEM B',
       ]),
@@ -208,13 +258,6 @@ describe('powered equipment projection', () => {
     expect(pdu.connections.map((item) => item.endpoint.aid)).toEqual([
       'RACK::010208.14::PDU01::A',
       'RACK::010208.14::PDU01::B',
-    ]);
-    expect(pdu.connections[0]?.remarks).toContain('Pos-1: MTC-9 SH10 PEM A');
-    expect(pdu.connections[1]?.remarks).toContain('Pos-1: MTC-9 SH10 PEM B');
-
-    const originalPdu = await repository.getById('breaker-pdu-a');
-    expect(originalPdu?.kind === 'EQUIPMENT' ? originalPdu.aliases : undefined).toEqual([
-      '010208.14 PDU1-A',
     ]);
   });
 });

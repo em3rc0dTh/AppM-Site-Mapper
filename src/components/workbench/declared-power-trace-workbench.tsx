@@ -128,8 +128,10 @@ function BreakerFeedCard({
 
 export function DeclaredPowerTraceWorkbench({
   trace,
+  canReadTelemetry,
 }: Readonly<{
   trace: DeclaredPowerTrace;
+  canReadTelemetry: boolean;
 }>) {
   const t = useTranslations('powerTraceWorkbench');
   const locale = useLocale();
@@ -145,6 +147,7 @@ export function DeclaredPowerTraceWorkbench({
     let timer: ReturnType<typeof setTimeout>;
 
     async function load() {
+      if (!canReadTelemetry) return;
       const entries = await Promise.all(
         feeds.map(async (feed) => {
           try {
@@ -175,7 +178,7 @@ export function DeclaredPowerTraceWorkbench({
       controller.abort();
       clearTimeout(timer);
     };
-  }, [feeds]);
+  }, [canReadTelemetry, feeds]);
 
   const selectedFeed =
     trace.feedA?.breakerId === trace.selectedBreakerId
@@ -265,33 +268,35 @@ export function DeclaredPowerTraceWorkbench({
         />
       </div>
 
-      <section className="sm-trace-section">
-        <header>
-          <h2>{t('telemetry')}</h2>
-          <small>{t('updatedAt', { time: formatTime(latestReceivedAt, locale) })}</small>
-        </header>
-        <div className="sm-trace-declared-telemetry">
-          {feeds.map((feed) => {
-            const live = telemetry[feed.breakerId];
-            return (
-              <article key={feed.breakerId} data-feed={feed.feed}>
-                <header>
-                  <strong>
-                    {t('feedTitle', { feed: feed.feed })} · {feed.breakerName}
-                  </strong>
-                  <span>{live?.status ?? 'NO_DATA'}</span>
-                </header>
-                <div>
-                  <b>{metric(live?.voltageV, 'V', 1)}</b>
-                  <b>{metric(live?.currentA, 'A')}</b>
-                  <b>{metric(live?.powerW, 'W', 1)}</b>
-                  <b>{metric(live?.energyKwh, 'kWh', 3)}</b>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </section>
+      {canReadTelemetry ? (
+        <section className="sm-trace-section">
+          <header>
+            <h2>{t('telemetry')}</h2>
+            <small>{t('updatedAt', { time: formatTime(latestReceivedAt, locale) })}</small>
+          </header>
+          <div className="sm-trace-declared-telemetry">
+            {feeds.map((feed) => {
+              const live = telemetry[feed.breakerId];
+              return (
+                <article key={feed.breakerId} data-feed={feed.feed}>
+                  <header>
+                    <strong>
+                      {t('feedTitle', { feed: feed.feed })} · {feed.breakerName}
+                    </strong>
+                    <span>{live?.status ?? 'NO_DATA'}</span>
+                  </header>
+                  <div>
+                    <b>{metric(live?.voltageV, 'V', 1)}</b>
+                    <b>{metric(live?.currentA, 'A')}</b>
+                    <b>{metric(live?.powerW, 'W', 1)}</b>
+                    <b>{metric(live?.energyKwh, 'kWh', 3)}</b>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      ) : null>
 
       <section className="sm-trace-section">
         <header>

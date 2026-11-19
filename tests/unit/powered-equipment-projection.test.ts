@@ -2,11 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { PoweredEquipmentProjectionService } from '@/modules/power/application/powered-equipment-projection-service';
 import { parseDeclaredPowerTarget } from '@/modules/power/domain/powered-equipment';
-import type {
-  DeviceNode,
-  EquipmentNode,
-  TopologyNode,
-} from '@/modules/topology/domain/entities';
+import type { DeviceNode, EquipmentNode, TopologyNode } from '@/modules/topology/domain/entities';
 import { MemoryTopologyRepository } from '@/modules/topology/infrastructure/memory-topology-repository';
 
 const timestamp = '2026-11-19T00:00:00.000Z';
@@ -134,10 +130,7 @@ describe('powered equipment projection', () => {
       feeds: ['A', 'B'],
     });
     expect(powered.connections).toHaveLength(2);
-    expect(powered.connections.map((item) => item.breakerId)).toEqual([
-      'breaker-a',
-      'breaker-b',
-    ]);
+    expect(powered.connections.map((item) => item.breakerId)).toEqual(['breaker-a', 'breaker-b']);
 
     const originalPdu = await repository.getById('breaker-pdu');
     expect(originalPdu?.kind === 'EQUIPMENT' ? originalPdu.aliases : undefined).toEqual([

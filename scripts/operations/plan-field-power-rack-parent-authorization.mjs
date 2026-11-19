@@ -79,11 +79,7 @@ const shallowStrings = (value) => {
 };
 
 const rackTokens = (rack) =>
-  [
-    normalize(rack.id),
-    normalize(rack.name),
-    ...shallowStrings(rack.attributes),
-  ].filter(Boolean);
+  [normalize(rack.id), normalize(rack.name), ...shallowStrings(rack.attributes)].filter(Boolean);
 
 const deviceIdentityTokens = (device) =>
   [
@@ -110,9 +106,7 @@ try {
       node.equipmentType === 'CIRCUIT_BREAKER' &&
       qdfs.includes(node.attributes?.declaredPower?.qdf),
   );
-  const racks = nodes.filter(
-    (node) => node.kind === 'CONTAINER_RACK' && node.variant === 'RACK',
-  );
+  const racks = nodes.filter((node) => node.kind === 'CONTAINER_RACK' && node.variant === 'RACK');
   const devices = nodes.filter((node) => node.kind === 'DEVICE');
 
   if (breakers.length !== expectedBreakers) {
@@ -350,9 +344,8 @@ try {
       canonicalTargets: targetResults.length,
       declaredRacks: rackResults.length,
       rackMatches: rackResults.filter((rack) => rack.rackStatus === 'RACK_MATCH').length,
-      rackNotMaterialized: rackResults.filter(
-        (rack) => rack.rackStatus === 'RACK_NOT_MATERIALIZED',
-      ).length,
+      rackNotMaterialized: rackResults.filter((rack) => rack.rackStatus === 'RACK_NOT_MATERIALIZED')
+        .length,
       rackAmbiguous: rackResults.filter((rack) => rack.rackStatus === 'RACK_AMBIGUOUS').length,
       targetDeviceMatches: targetResults.filter(
         (target) => target.targetDeviceStatus === 'TARGET_DEVICE_MATCH',

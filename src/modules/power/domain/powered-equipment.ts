@@ -166,11 +166,7 @@ export function parseDeclaredPowerTarget(
   if (tokens[0]?.toUpperCase() === 'FEED') {
     tokens.shift();
     if (tokens.length) endpoint = `FEED-${tokens.join('-')}`;
-  } else if (
-    tokens[0]?.toUpperCase() === 'PEM' &&
-    tokens[1] &&
-    /^\d+$/.test(tokens[1])
-  ) {
+  } else if (tokens[0]?.toUpperCase() === 'PEM' && tokens[1] && /^\d+$/.test(tokens[1])) {
     moduleName = `PEM${Number(tokens[1])}`;
     tokens.splice(0, 2);
     if (tokens.length) endpoint = tokens.join('-');

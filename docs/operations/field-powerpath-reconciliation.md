@@ -47,8 +47,10 @@ never treated as a foreign key that authorizes creation of an Equipment.
 For each declared breaker:
 
 1. Resolve exactly one active external POWER OUTPUT on the existing breaker.
-2. Resolve exactly one existing non-breaker Equipment by exact normalized `name` or `aliases` against `targetLabel`.
-3. If more than one exact target exists, `targetFootprint` may only narrow candidates using already stored topology context. It cannot create or rename anything.
+2. Resolve exactly one existing non-breaker Equipment by exact normalized `name` or `aliases`
+   against `targetLabel`.
+3. If more than one exact target exists, `targetFootprint` may only narrow candidates using already
+   stored topology context. It cannot create or rename anything.
 4. Resolve the target POWER INPUT:
    - prefer an explicit `attributes.feed=A|B` or an exact feed-like port name;
    - if the exact target has only one active external POWER INPUT, that sole port may be used.
@@ -74,7 +76,8 @@ node scripts/operations/reconcile-field-power-paths.mjs \
   > .runtime/field-powerpath-plan.json
 ```
 
-The command refuses to continue when the declared QDF breaker inventory does not equal the expected 74 breakers.
+The command refuses to continue when the declared QDF breaker inventory does not equal the expected
+74 breakers.
 
 ## APPLY — PowerPath insertions only
 

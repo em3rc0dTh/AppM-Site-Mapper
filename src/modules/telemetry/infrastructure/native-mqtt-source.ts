@@ -21,7 +21,11 @@ export interface NativeMqttOptions {
   readonly keepAliveSeconds?: number;
 }
 
-export type MqttMessageHandler = (topic: string, payload: Uint8Array) => void | Promise<void>;
+export type MqttMessageHandler = (
+  topic: string,
+  payload: Uint8Array,
+  receivedAt: string,
+) => void | Promise<void>;
 export type MqttConnectionState =
   'idle' | 'connecting' | 'subscribing' | 'subscribed' | 'reconnecting' | 'stopped';
 
@@ -186,6 +190,7 @@ export class NativeMqttSource {
         if (packet.type === 3 && (this.state === 'subscribed' || this.state === 'subscribing')) {
           try {
             const publish = parsePublish(packet);
+            const receivedAt = new Date().toISOString();
             if (++pendingMessages > 128) {
               this.lastError = 'MQTT_CAPTURE_BACKPRESSURE';
               socket.destroy();
@@ -195,7 +200,7 @@ export class NativeMqttSource {
               .then(async () => {
                 if (socket.destroyed || this.socket !== socket || this.stopping) return;
                 // Await durable capture. A failed capture deliberately withholds PUBACK.
-                await this.onMessage(publish.topic, publish.payload);
+                await this.onMessage(publish.topic, publish.payload, receivedAt);
                 if (publish.qos === 1 && publish.packetId !== undefined && !socket.destroyed) {
                   socket.write(encodePubAck(publish.packetId));
                 }

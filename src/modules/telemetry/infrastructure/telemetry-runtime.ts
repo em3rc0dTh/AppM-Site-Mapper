@@ -291,8 +291,8 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
             : {}),
           ...(process.env.MQTT_PASSWORD?.trim() ? { password: process.env.MQTT_PASSWORD } : {}),
         },
-        async (topic, payload) => {
-          const now = new Date().toISOString();
+        async (topic, payload, receivedAt) => {
+          const now = receivedAt;
           const serial = topic.startsWith(topicPrefix)
             ? (topic.slice(topicPrefix.length).split('/')[0] ?? '')
             : '';
@@ -371,7 +371,7 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
             }
           }
 
-          const result = await service.ingest(topic, payload);
+          const result = await service.ingest(topic, payload, receivedAt);
           if (!result.ok) {
             rejectedMessages += 1;
             rejectionReasons[result.error] = (rejectionReasons[result.error] ?? 0) + 1;

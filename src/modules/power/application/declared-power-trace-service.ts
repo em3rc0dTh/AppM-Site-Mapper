@@ -41,6 +41,7 @@ type DeclaredPowerMetadata = {
     readonly breakerId: string;
     readonly feed: 'A' | 'B';
     readonly panel: string;
+    readonly position: number;
     readonly targetLabel: string;
   };
 };
@@ -67,11 +68,16 @@ function metadata(value: unknown): DeclaredPowerMetadata | null {
     const breakerId = stringValue(companion.breakerId);
     const panel = stringValue(companion.panel);
     const targetLabel = stringValue(companion.targetLabel);
-    if (companionFeedValue && breakerId && panel && targetLabel) {
+    const position =
+      typeof companion.position === 'number' && Number.isFinite(companion.position)
+        ? companion.position
+        : undefined;
+    if (companionFeedValue && breakerId && panel && position !== undefined && targetLabel) {
       companionFeed = {
         breakerId,
         feed: companionFeedValue,
         panel,
+        position,
         targetLabel,
       };
     }
@@ -136,7 +142,10 @@ export class DeclaredPowerTraceService {
     const fallbackCompanion: DeclaredPowerTraceFeed = {
       feed: selectedMetadata.companionFeed.feed,
       breakerId: selectedMetadata.companionFeed.breakerId,
-      breakerName: selectedMetadata.companionFeed.panel + '-' + selectedMetadata.companionFeed.breakerId,
+      breakerName:
+        selectedMetadata.companionFeed.panel +
+        '-' +
+        String(selectedMetadata.companionFeed.position).padStart(2, '0'),
       panelName: selectedMetadata.companionFeed.panel,
       qdfName: selectedMetadata.qdf ?? selected.deviceId,
       targetLabel: selectedMetadata.companionFeed.targetLabel,
@@ -147,8 +156,18 @@ export class DeclaredPowerTraceService {
         ? await this.feedView(companionNode, companionMetadata)
         : fallbackCompanion;
 
-    const feedA = selectedFeed.feed === 'A' ? selectedFeed : companionFeed.feed === 'A' ? companionFeed : undefined;
-    const feedB = selectedFeed.feed === 'B' ? selectedFeed : companionFeed.feed === 'B' ? companionFeed : undefined;
+    const feedA =
+      selectedFeed.feed === 'A'
+        ? selectedFeed
+        : companionFeed.feed === 'A'
+          ? companionFeed
+          : undefined;
+    const feedB =
+      selectedFeed.feed === 'B'
+        ? selectedFeed
+        : companionFeed.feed === 'B'
+          ? companionFeed
+          : undefined;
 
     const targetEntityName =
       selectedMetadata.targetEntityName ??

@@ -1,9 +1,20 @@
 import type { PowerFeed } from '@/modules/power/domain/entities';
 
+export type PoweredTargetKind = 'EQUIPMENT' | 'PDU';
+
+export interface DeclaredPowerTargetContext {
+  readonly targetFootprint?: string;
+  readonly rackAid?: string;
+}
+
 export interface PoweredEquipmentEndpoint {
   readonly equipmentKey: string;
   readonly equipmentName: string;
+  readonly targetKind: PoweredTargetKind;
   readonly aid: string;
+  readonly localAid: string;
+  readonly baseAid?: string;
+  readonly rackAid?: string;
   readonly targetLabel: string;
   readonly displayLabel: string;
   readonly shelf?: string;
@@ -42,16 +53,65 @@ function isModuleToken(token: string): boolean {
   return /^(?:PSU\d+|PEM\d*|PS\d+|L\d+)$/i.test(token);
 }
 
+function rackAidFromContext(context: DeclaredPowerTargetContext | undefined): string | undefined {
+  const explicit = context?.rackAid?.trim();
+  if (explicit) return explicit;
+  const footprint = context?.targetFootprint?.trim();
+  return footprint ? `RACK::${footprint}` : undefined;
+}
+
+function parsePduTarget(
+  targetLabel: string,
+  context: DeclaredPowerTargetContext | undefined,
+): PoweredEquipmentEndpoint | null {
+  const match = /\bPDU\s*[- ]?0*(\d+)\s*[- ]?([AB])\b/i.exec(targetLabel);
+  if (!match) return null;
+
+  const rackAid = rackAidFromContext(context);
+  if (!rackAid) return null;
+
+  const pduNumber = String(Number(match[1])).padStart(2, '0');
+  const side = match[2]!.toUpperCase() as PowerFeed;
+  const pduToken = `PDU${pduNumber}`;
+  const equipmentName = `PDU ${pduNumber}`;
+  const baseAid = `${rackAid}::${pduToken}`;
+  const aid = `${baseAid}::${side}`;
+  const localAid = `${pduToken}::NoShelf::NoSlot::${side}`;
+
+  return {
+    equipmentKey: normalizePoweredEquipmentKey(baseAid),
+    equipmentName,
+    targetKind: 'PDU',
+    aid,
+    localAid,
+    baseAid,
+    rackAid,
+    targetLabel,
+    displayLabel: `Feed ${side}`,
+    endpoint: side,
+    side,
+  };
+}
+
 /**
  * Parses declared electrical targets without mutating topology.
  *
- * PDU labels are deliberately excluded until their field semantics are confirmed.
- * The returned AID is a projection key for the electrical endpoint, not a Device/Equipment ID.
+ * The returned AID is documentary endpoint identity, not a canonical topology ID.
+ * PDU identity is rack-scoped because workbook "Hoja1" confirms that local names such
+ * as "PDU 01" may repeat in different racks.
  */
-export function parseDeclaredPowerTarget(value: string): PoweredEquipmentEndpoint | null {
+export function parseDeclaredPowerTarget(
+  value: string,
+  context?: DeclaredPowerTargetContext,
+): PoweredEquipmentEndpoint | null {
   const targetLabel = normalizeWhitespace(value);
-  if (!targetLabel || /\bPDU[\w.-]*/i.test(targetLabel)) return null;
+  if (!targetLabel) return null;
 
+  if (/\bPDU[\s\w.-]*/i.test(targetLabel)) {
+    return parsePduTarget(targetLabel, context);
+  }
+
+  const rackAid = rackAidFromContext(context);
   const tokens = targetLabel.split(' ');
   const equipmentName = tokens.shift();
   if (!equipmentName) return null;
@@ -88,6 +148,7 @@ export function parseDeclaredPowerTarget(value: string): PoweredEquipmentEndpoin
     moduleName ?? 'NoSlot',
     endpoint ?? 'NoPort',
   ].join('::');
+  const localAid = aid;
   const displayLabel =
     [shelf, moduleName, endpoint].filter((part): part is string => Boolean(part)).join(' / ') ||
     equipmentName;
@@ -95,7 +156,10 @@ export function parseDeclaredPowerTarget(value: string): PoweredEquipmentEndpoin
   return {
     equipmentKey,
     equipmentName,
+    targetKind: 'EQUIPMENT',
     aid,
+    localAid,
+    ...(rackAid ? { rackAid } : {}),
     targetLabel,
     displayLabel,
     ...(shelf ? { shelf } : {}),

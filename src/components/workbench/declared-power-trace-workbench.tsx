@@ -49,13 +49,13 @@ function liveMetrics(view: TelemetryView | null, breakerId: string): LiveMetrics
 }
 
 function metric(value: number | undefined, unit: string, digits = 2): string {
-  return value === undefined || !Number.isFinite(value) ? '—' : `${value.toFixed(digits)} ${unit}`;
+  return value === undefined || !Number.isFinite(value) ? 'â' : `${value.toFixed(digits)} ${unit}`;
 }
 
 function formatTime(value: string | undefined, locale: string): string {
-  if (!value) return '—';
+  if (!value) return 'â';
   const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return '—';
+  if (Number.isNaN(parsed.getTime())) return 'â';
   return parsed.toLocaleString(locale === 'es' ? 'es-PE' : 'en-US');
 }
 
@@ -79,14 +79,14 @@ function BreakerFeedCard({
       data-selected={selected ? 'true' : 'false'}
     >
       <header>
-        <strong>ϟ {t('feedTitle', { feed: side })}</strong>
+        <strong>Ï {t('feedTitle', { feed: side })}</strong>
         <span>{t('declaredFeed')}</span>
       </header>
 
       {feed ? (
         <>
           <div className="sm-trace-breaker-glyph" aria-hidden="true">
-            ϟ
+            Ï
           </div>
           <strong className="sm-trace-breaker-name">{feed.breakerName}</strong>
           <dl className="sm-trace-breaker-meta">
@@ -138,7 +138,8 @@ export function DeclaredPowerTraceWorkbench({
   const [telemetry, setTelemetry] = useState<Record<string, LiveMetrics>>({});
 
   const feeds = useMemo(
-    () => [trace.feedA, trace.feedB].filter((feed): feed is DeclaredPowerTraceFeed => Boolean(feed)),
+    () =>
+      [trace.feedA, trace.feedB].filter((feed): feed is DeclaredPowerTraceFeed => Boolean(feed)),
     [trace.feedA, trace.feedB],
   );
 
@@ -197,7 +198,7 @@ export function DeclaredPowerTraceWorkbench({
     <main className="sm-workbench sm-power-trace-workbench" aria-label={t('aria')}>
       <header className="sm-trace-header">
         <div className="sm-trace-heading">
-          <h1>ϟ {t('title')}</h1>
+          <h1>Ï {t('title')}</h1>
           <span className="sm-trace-version">{t('version')}</span>
         </div>
         <div className="sm-trace-header-actions">
@@ -219,7 +220,7 @@ export function DeclaredPowerTraceWorkbench({
           <span>{trace.targetKind}</span>
           <small>
             {trace.targetCanonicalEntityName}
-            {trace.targetRackAid ? ` · ${trace.targetRackAid}` : ''}
+            {trace.targetRackAid ? ` Â· ${trace.targetRackAid}` : ''}
           </small>
         </div>
         <p>{t('declaredCoverage', { count: feeds.length })}</p>
@@ -240,7 +241,7 @@ export function DeclaredPowerTraceWorkbench({
 
         <article className="sm-trace-destination sm-trace-declared-destination">
           <span className="sm-trace-server" aria-hidden="true">
-            ▤
+            â¤
           </span>
           <small>{t('poweredDestination')}</small>
           <strong className="sm-trace-destination-name">{trace.targetLabel}</strong>
@@ -249,12 +250,12 @@ export function DeclaredPowerTraceWorkbench({
           <div className="sm-trace-declared-endpoints">
             <div data-feed="A">
               <b>{t('feedTitle', { feed: 'A' })}</b>
-              <span>{trace.feedA?.targetLabel ?? '—'}</span>
+              <span>{trace.feedA?.targetLabel ?? 'â'}</span>
               {trace.feedA?.targetAid ? <code>{trace.feedA.targetAid}</code> : null}
             </div>
             <div data-feed="B">
               <b>{t('feedTitle', { feed: 'B' })}</b>
-              <span>{trace.feedB?.targetLabel ?? '—'}</span>
+              <span>{trace.feedB?.targetLabel ?? 'â'}</span>
               {trace.feedB?.targetAid ? <code>{trace.feedB.targetAid}</code> : null}
             </div>
           </div>
@@ -281,7 +282,7 @@ export function DeclaredPowerTraceWorkbench({
                 <article key={feed.breakerId} data-feed={feed.feed}>
                   <header>
                     <strong>
-                      {t('feedTitle', { feed: feed.feed })} · {feed.breakerName}
+                      {t('feedTitle', { feed: feed.feed })} Â· {feed.breakerName}
                     </strong>
                     <span>{live?.status ?? 'NO_DATA'}</span>
                   </header>
@@ -307,21 +308,21 @@ export function DeclaredPowerTraceWorkbench({
             <dt>{t('selectedBreaker')}</dt>
             <dd>
               {selectedFeed
-                ? `${selectedFeed} · ${selectedFeed === 'A' ? trace.feedA?.breakerName : trace.feedB?.breakerName}`
+                ? `${selectedFeed} Â· ${selectedFeed === 'A' ? trace.feedA?.breakerName : trace.feedB?.breakerName}`
                 : trace.selectedBreakerId}
             </dd>
           </div>
           <div>
             <dt>{t('pairId')}</dt>
-            <dd>{trace.pairId ?? '—'}</dd>
+            <dd>{trace.pairId ?? 'â'}</dd>
           </div>
           <div>
             <dt>{t('rackAid')}</dt>
-            <dd>{trace.targetRackAid ?? '—'}</dd>
+            <dd>{trace.targetRackAid ?? 'â'}</dd>
           </div>
           <div>
             <dt>{t('selectedAid')}</dt>
-            <dd>{trace.selectedTargetAid ?? '—'}</dd>
+            <dd>{trace.selectedTargetAid ?? 'â'}</dd>
           </div>
         </dl>
         <p className="sm-trace-document-note">{t('declaredNoPhysicalPath')}</p>

@@ -33,7 +33,7 @@ const qdfs = String(option('--qdfs', 'QDF-2,QDF-4,QDF-5'))
   .split(',')
   .map((value) => value.trim())
   .filter(Boolean);
-const expectedBreakers = Number(option('--expected-breakers', '74'));
+const expectedBreakers = Number(option('--expected-breakers', '76'));
 
 const fail = (reason) => {
   console.error('FIELD_POWERPATH_ERROR: ' + reason);
@@ -102,6 +102,27 @@ const identityTokens = (equipment) =>
     .map(normalize)
     .filter(Boolean);
 
+const stringValue = (value) => (typeof value === 'string' && value.trim() ? value.trim() : '');
+
+const uniqueNormalized = (values) => [
+  ...new Set(values.map((value) => normalize(value)).filter(Boolean)),
+];
+
+const portIdentityTokens = (port) => {
+  const attributes =
+    port?.attributes && typeof port.attributes === 'object' && !Array.isArray(port.attributes)
+      ? port.attributes
+      : {};
+  return uniqueNormalized([
+    port?.name,
+    attributes.aid,
+    attributes.localAid,
+    attributes.endpointAid,
+    attributes.targetAid,
+    attributes.targetLocalAid,
+  ]);
+};
+
 const portFeed = (port) => feedOf(port?.attributes?.feed) ?? feedFromPortName(port?.name);
 
 const { MongoClient } = await import('mongodb');
@@ -163,9 +184,9 @@ try {
     }
   }
 
-  const contextMatchesFootprint = (candidate, footprint) => {
-    const needle = normalize(footprint);
-    if (!needle) return false;
+  const contextMatchesIdentity = (candidate, contextHints) => {
+    const needles = uniqueNormalized(contextHints);
+    if (!needles.length) return false;
     let current = candidate;
     const visited = new Set();
     while (current && !visited.has(current.id)) {
@@ -175,8 +196,14 @@ try {
         ...(Array.isArray(current.aliases) ? current.aliases.map(normalize) : []),
         normalize(current.category),
         ...shallowStrings(current.attributes),
-      ];
-      if (strings.some((value) => value === needle || value.includes(needle))) return true;
+      ].filter(Boolean);
+      if (
+        needles.some((needle) =>
+          strings.some((value) => value === needle || value.includes(needle)),
+        )
+      ) {
+        return true;
+      }
       current = current.parentId ? byId.get(current.parentId) : null;
     }
     return false;
@@ -189,10 +216,37 @@ try {
       continue;
     }
     const feed = feedOf(declaration.feed);
-    const targetLabel = String(declaration.targetLabel ?? '').trim();
-    const footprint = String(declaration.targetFootprint ?? '').trim();
-    if (!feed || !targetLabel) {
-      report('UNRESOLVED', breaker, { reason: 'DECLARATION_INCOMPLETE', feed, targetLabel });
+    const targetLabel = stringValue(declaration.targetLabel);
+    const footprint = stringValue(declaration.targetFootprint);
+    const targetEntityName = stringValue(declaration.targetEntityName);
+    const targetCanonicalEntityName = stringValue(declaration.targetCanonicalEntityName);
+    const targetAid = stringValue(declaration.targetAid);
+    const targetLocalAid = stringValue(declaration.targetLocalAid);
+    const targetBaseAid = stringValue(declaration.targetBaseAid);
+    const targetRackAid = stringValue(declaration.targetRackAid);
+    const targetKind =
+      declaration.targetKind === 'EQUIPMENT' || declaration.targetKind === 'PDU'
+        ? declaration.targetKind
+        : null;
+    const targetMaterialization = stringValue(declaration.targetMaterialization);
+    const entityIdentityHints = uniqueNormalized(
+      targetCanonicalEntityName || targetEntityName
+        ? [targetCanonicalEntityName, targetEntityName]
+        : [targetLabel],
+    );
+    const endpointIdentityHints = uniqueNormalized([targetAid, targetLocalAid]);
+    const contextIdentityHints = [targetRackAid, footprint].filter(Boolean);
+
+    if (!feed || !targetLabel || !entityIdentityHints.length) {
+      report('UNRESOLVED', breaker, {
+        reason: 'DECLARATION_INCOMPLETE',
+        feed,
+        targetLabel,
+        targetEntityName,
+        targetCanonicalEntityName,
+        targetAid,
+        targetRackAid,
+      });
       continue;
     }
 
@@ -209,23 +263,35 @@ try {
     }
     const sourcePort = sourcePorts[0];
 
-    const labelKey = normalize(targetLabel);
     let targetCandidates = candidates.filter(
       (candidate) =>
-        candidate.deviceId !== breaker.deviceId && identityTokens(candidate).includes(labelKey),
+        candidate.deviceId !== breaker.deviceId &&
+        entityIdentityHints.some((hint) => identityTokens(candidate).includes(hint)),
     );
 
-    if (targetCandidates.length > 1 && footprint) {
+    if (targetCandidates.length > 1 && contextIdentityHints.length) {
       const narrowed = targetCandidates.filter((candidate) =>
-        contextMatchesFootprint(candidate, footprint),
+        contextMatchesIdentity(candidate, contextIdentityHints),
       );
       if (narrowed.length) targetCandidates = narrowed;
     }
 
     if (targetCandidates.length !== 1) {
+      const missingReason =
+        targetMaterialization === 'NOT_CREATED'
+          ? 'TARGET_ENTITY_NOT_MATERIALIZED'
+          : 'TARGET_ENTITY_NOT_FOUND';
       report(targetCandidates.length ? 'CONFLICT' : 'UNRESOLVED', breaker, {
-        reason: targetCandidates.length ? 'TARGET_AMBIGUOUS' : 'TARGET_NOT_FOUND',
+        reason: targetCandidates.length ? 'TARGET_ENTITY_AMBIGUOUS' : missingReason,
         targetLabel,
+        targetEntityName,
+        targetCanonicalEntityName,
+        targetKind,
+        targetAid,
+        targetLocalAid,
+        targetBaseAid,
+        targetRackAid,
+        targetMaterialization,
         footprint,
         feed,
         candidateIds: targetCandidates.map((candidate) => candidate.id),
@@ -235,24 +301,64 @@ try {
 
     const target = targetCandidates[0];
     const allInputs = activePowerPorts(target, 'INPUT');
-    const explicitFeedInputs = allInputs.filter((port) => portFeed(port) === feed);
-    let targetPorts = explicitFeedInputs;
-    let targetPortResolution = 'EXPLICIT_FEED';
+    let targetPorts = [];
+    let targetPortResolution = '';
 
-    if (!targetPorts.length && allInputs.length === 1) {
-      targetPorts = allInputs;
-      targetPortResolution = 'SOLE_INPUT_ON_EXACT_TARGET';
+    if (endpointIdentityHints.length) {
+      targetPorts = allInputs.filter((port) =>
+        endpointIdentityHints.some((hint) => portIdentityTokens(port).includes(hint)),
+      );
+      targetPortResolution = 'DECLARED_AID';
+
+      if (!targetPorts.length) {
+        report('UNRESOLVED', breaker, {
+          reason: 'TARGET_ENDPOINT_NOT_MATERIALIZED',
+          targetId: target.id,
+          targetName: target.name,
+          targetLabel,
+          targetEntityName,
+          targetCanonicalEntityName,
+          targetKind,
+          targetAid,
+          targetLocalAid,
+          targetBaseAid,
+          targetRackAid,
+          targetMaterialization,
+          footprint,
+          feed,
+          inputPortIds: allInputs.map((port) => port.id),
+        });
+        continue;
+      }
+    } else {
+      const explicitFeedInputs = allInputs.filter((port) => portFeed(port) === feed);
+      targetPorts = explicitFeedInputs;
+      targetPortResolution = 'EXPLICIT_FEED';
+
+      if (!targetPorts.length && allInputs.length === 1) {
+        targetPorts = allInputs;
+        targetPortResolution = 'SOLE_INPUT_ON_EXACT_TARGET';
+      }
     }
 
     if (targetPorts.length !== 1) {
       report(targetPorts.length ? 'CONFLICT' : 'UNRESOLVED', breaker, {
-        reason: targetPorts.length ? 'TARGET_PORT_AMBIGUOUS' : 'TARGET_PORT_MISSING',
+        reason: targetPorts.length ? 'TARGET_ENDPOINT_AMBIGUOUS' : 'TARGET_PORT_MISSING',
         targetId: target.id,
         targetName: target.name,
         targetLabel,
+        targetEntityName,
+        targetCanonicalEntityName,
+        targetKind,
+        targetAid,
+        targetLocalAid,
+        targetBaseAid,
+        targetRackAid,
+        targetMaterialization,
         footprint,
         feed,
         inputPortIds: allInputs.map((port) => port.id),
+        candidatePortIds: targetPorts.map((port) => port.id),
       });
       continue;
     }
@@ -293,6 +399,11 @@ try {
           targetId: target.id,
           targetName: target.name,
           targetLabel,
+          targetEntityName,
+          targetCanonicalEntityName,
+          targetAid,
+          targetLocalAid,
+          targetRackAid,
           footprint,
           sourcePortId: sourcePort.id,
           targetPortId: targetPort.id,
@@ -332,6 +443,11 @@ try {
       qdf: declaration.qdf,
       pairId: declaration.pairId,
       targetLabel,
+      targetEntityName,
+      targetCanonicalEntityName,
+      targetAid,
+      targetLocalAid,
+      targetRackAid,
       footprint,
       targetId: target.id,
       targetName: target.name,
@@ -343,6 +459,11 @@ try {
       targetId: target.id,
       targetName: target.name,
       targetLabel,
+      targetEntityName,
+      targetCanonicalEntityName,
+      targetAid,
+      targetLocalAid,
+      targetRackAid,
       footprint,
       sourcePortId: sourcePort.id,
       targetPortId: targetPort.id,
@@ -370,6 +491,13 @@ try {
     creates: findings.filter((item) => item.status === 'CREATE').length,
     conflicts: findings.filter((item) => item.status === 'CONFLICT').length,
     unresolved: findings.filter((item) => item.status === 'UNRESOLVED').length,
+    unresolvedByReason: findings
+      .filter((item) => item.status === 'UNRESOLVED')
+      .reduce((counts, item) => {
+        const reason = item.reason ?? 'UNKNOWN';
+        counts[reason] = (counts[reason] ?? 0) + 1;
+        return counts;
+      }, {}),
     invariant: 'NO_TOPOLOGY_OR_ACCESSPORT_MUTATION',
     findings,
   };

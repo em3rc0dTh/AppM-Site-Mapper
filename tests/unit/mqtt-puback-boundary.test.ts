@@ -11,7 +11,7 @@ describe('MQTT PUBACK durable-capture boundary', () => {
     const capture = runtime.indexOf('await industrialOutbox!.enqueue(envelope);');
     const detached = runtime.indexOf('void (async () => {', capture);
     const ingest = runtime.indexOf('service.ingest(topic, payload, receivedAt)', detached);
-    const liveFailure = runtime.indexOf("telemetry.live.processing_failed", ingest);
+    const liveFailure = runtime.indexOf('telemetry.live.processing_failed', ingest);
 
     expect(capture).toBeGreaterThanOrEqual(0);
     expect(detached).toBeGreaterThan(capture);

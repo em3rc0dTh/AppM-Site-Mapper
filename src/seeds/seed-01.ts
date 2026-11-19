@@ -16,7 +16,10 @@ import type {
 import { MongoTopologyRepository } from '@/modules/topology/infrastructure/mongo-topology-repository';
 import { CasService } from '@/modules/rack/application/cas-service';
 import { withIntegrityTransaction } from '@/shared/infrastructure/mongodb/integrity-transaction';
-import { findPowerTargetRackAssociation, POWER_TARGET_IDENTITY_SOURCE } from '@/seeds/seed-01-power-target-identity';
+import {
+  findPowerTargetRackAssociation,
+  POWER_TARGET_IDENTITY_SOURCE,
+} from '@/seeds/seed-01-power-target-identity';
 import { createDomainId, nowIso } from '@/shared/domain/entity';
 
 export const SEED_01_PROFILE = 'seed-01' as const;
@@ -1679,16 +1682,14 @@ async function ensureDeclaredFeedPairs(
     if (
       targetIdentity.targetKind === 'PDU' &&
       (rackAssociation.baseAid !== targetIdentity.baseAid ||
-        (feed === 'A' ? rackAssociation.feedAidA : rackAssociation.feedAidB) !==
-          targetIdentity.aid)
+        (feed === 'A' ? rackAssociation.feedAidA : rackAssociation.feedAidB) !== targetIdentity.aid)
     ) {
       throw new Error(
         `SEED_01_TARGET_IDENTITY_CONFLICT: PDU AID mismatch for ${breaker.destination}`,
       );
     }
 
-    const associationRemarks =
-      feed === 'A' ? rackAssociation.remarksA : rackAssociation.remarksB;
+    const associationRemarks = feed === 'A' ? rackAssociation.remarksA : rackAssociation.remarksB;
     if (
       breaker.remarks?.length &&
       associationRemarks?.length &&
@@ -1771,8 +1772,7 @@ async function ensureDeclaredFeedPairs(
           ...(declaredPower.targetBaseAid && existingDeclared.targetBaseAid === undefined
             ? { targetBaseAid: declaredPower.targetBaseAid }
             : {}),
-          remarksSemantics:
-            existingDeclared.remarksSemantics ?? declaredPower.remarksSemantics,
+          remarksSemantics: existingDeclared.remarksSemantics ?? declaredPower.remarksSemantics,
           targetPlacement:
             existingDeclared.targetPlacement === undefined ||
             existingDeclared.targetPlacement === 'UNKNOWN'

@@ -45,12 +45,7 @@ function panel(): EquipmentNode {
   };
 }
 
-function breaker(
-  id: string,
-  name: string,
-  target: string,
-  feed: 'A' | 'B',
-): EquipmentNode {
+function breaker(id: string, name: string, target: string, feed: 'A' | 'B'): EquipmentNode {
   return {
     id,
     kind: 'EQUIPMENT',

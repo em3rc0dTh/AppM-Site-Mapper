@@ -1,4 +1,4 @@
-import type { BreakerTelemetryReading } from '@/modules/telemetry/domain/entities';
+import type { BreakerTelemetryReading, TelemetrySample } from '@/modules/telemetry/domain/entities';
 import { normalizedTelemetryPointPrefix } from '@/modules/topology/domain/telemetry-point-prefix';
 
 export interface TelemetryMetric {
@@ -41,6 +41,65 @@ export function telemetryMetrics(reported: Readonly<Record<string, unknown>>): T
   }
 
   return result;
+}
+
+export interface BreakerLiveMetricValues {
+  readonly receivedAt?: string;
+  readonly voltageV?: number;
+  readonly currentA?: number;
+  readonly powerW?: number;
+  readonly energyKwh?: number;
+}
+
+function canonicalReportedMetric(
+  reported: Readonly<Record<string, unknown>>,
+  key: 'voltageV' | 'currentA' | 'powerW' | 'energyKwh',
+): number | undefined {
+  const raw = reported[key];
+  if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
+  const value = (raw as Record<string, unknown>).value;
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+/**
+ * Resolve one breaker's canonical LIVE electrical metrics.
+ *
+ * Exact Equipment telemetry is authoritative and stores V/I/P/E in sample.reported.
+ * breakerReadings is retained as the compatible aggregate fallback for parent/BDFB samples.
+ */
+export function resolveBreakerLiveMetrics(
+  sample: TelemetrySample | null | undefined,
+  breakerId: string,
+): BreakerLiveMetricValues {
+  const reading = sample?.breakerReadings?.find((item) => item.breakerId === breakerId);
+  const direct =
+    sample?.targetType === 'EQUIPMENT' && sample.targetId === breakerId ? sample : undefined;
+
+  const voltageV =
+    (direct ? canonicalReportedMetric(direct.reported, 'voltageV') : undefined) ??
+    reading?.metrics.voltageV?.value;
+  const currentA =
+    (direct ? canonicalReportedMetric(direct.reported, 'currentA') : undefined) ??
+    reading?.metrics.currentA?.value;
+  const powerW =
+    (direct ? canonicalReportedMetric(direct.reported, 'powerW') : undefined) ??
+    reading?.metrics.powerW?.value;
+  const energyKwh =
+    (direct ? canonicalReportedMetric(direct.reported, 'energyKwh') : undefined) ??
+    reading?.metrics.energyKwh?.value;
+
+  return {
+    ...(direct?.receivedAt
+      ? { receivedAt: direct.receivedAt }
+      : reading?.receivedAt
+        ? { receivedAt: reading.receivedAt }
+        : {}),
+    ...(voltageV !== undefined ? { voltageV } : {}),
+    ...(currentA !== undefined ? { currentA } : {}),
+    ...(powerW !== undefined ? { powerW } : {}),
+    ...(energyKwh !== undefined ? { energyKwh } : {}),
+  };
 }
 
 export function breakerTelemetryMetrics(reading: BreakerTelemetryReading): TelemetryMetric[] {

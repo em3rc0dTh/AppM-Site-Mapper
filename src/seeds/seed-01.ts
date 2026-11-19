@@ -1771,6 +1771,11 @@ async function ensureDeclaredFeedPairs(
             : {}),
           remarksSemantics:
             existingDeclared.remarksSemantics ?? declaredPower.remarksSemantics,
+          targetPlacement:
+            existingDeclared.targetPlacement === undefined ||
+            existingDeclared.targetPlacement === 'UNKNOWN'
+              ? declaredPower.targetPlacement
+              : existingDeclared.targetPlacement,
           documentedRatingA: existingDeclared.documentedRatingA ?? field.ratedCurrentA,
           targetFootprint: existingDeclared.targetFootprint ?? field.targetFootprint,
           documentedStatus: existingDeclared.documentedStatus ?? field.documentedStatus,

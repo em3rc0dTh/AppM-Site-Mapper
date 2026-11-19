@@ -73,11 +73,14 @@ AID:               GRTLuren3::NoShelf::PSU0::A0
 ```
 
 The AID identifies the declared electrical endpoint. It is **not** promoted to the
-canonical identity of a physical Site Mapper Device or Equipment.
+canonical identity of a physical Site Mapper Device or Equipment. Rack AID is a
+documentary physical association and does not imply rack-U materialization.
 
 The powered-equipment projection key is deterministic and local to this projection.
-It can later be replaced by a persisted canonical ID without changing existing
-`POWER_TARGET` or PowerPath identities.
+For ordinary equipment it remains equipment-name based for backward compatibility.
+For PDU it is rack-scoped because the local PDU name may repeat. The projection key can
+later be replaced by a persisted canonical ID without changing existing `POWER_TARGET`
+or PowerPath identities.
 
 ## Supported parsing patterns
 
@@ -94,17 +97,49 @@ dataset, including:
 Shelf labels normalize leading zeroes for AID comparison, for example `SH01 → SH1`,
 while the original declared target label remains unchanged.
 
-### PDU hold
+## Rack AID and PDU identity
 
-Any target containing a PDU token is excluded from this grouping phase. Examples:
+The final workbook `Lista de Equipos QDF mop v2 AID + RackAID.xlsx` closes the
+previous PDU ambiguity.
+
+Workbook rules:
+
+- `HUELLA` identifies the physical destination rack.
+- Rack identity is `RACK::<HUELLA>`.
+- `PDU 01` is a **local rack name** and may repeat in different racks.
+- Feed A and Feed B are two feeds of the **same PDU**, not two independent PDUs.
+- `POS-N` entries are editable documentary remarks; they do not create individual
+  telemetry endpoints.
+
+Therefore PDU identity is rack-scoped:
 
 ```text
-Rack CDN PDU-1A
-010208.14 PDU1-A
+RACK::010208.14::PDU01
+├── RACK::010208.14::PDU01::A
+└── RACK::010208.14::PDU01::B
 ```
 
-This is intentional. PDU semantics remain unresolved and the implementation must not
-guess whether those tokens identify equipment, modules or distribution stages.
+The workbook's local endpoint AID is retained as supporting identity:
+
+```text
+PDU01::NoShelf::NoSlot::A
+PDU01::NoShelf::NoSlot::B
+```
+
+For ordinary powered equipment the endpoint AID remains equipment-scoped, while the
+rack association is carried separately:
+
+```text
+GRTLuren3::NoShelf::PSU0::A0
+rack: RACK::010202.09
+```
+
+This avoids changing the endpoint identity that was already accepted while making the
+physical rack association explicit.
+
+The workbook also contains `Orion` at `RACK::010205.16` without a corresponding
+breaker row. Site Mapper records that association as documentary source truth but does
+**not** invent a power connection or telemetry endpoint for Orion.
 
 ## Global search
 
@@ -154,7 +189,9 @@ QDF / BDFB
 ```
 
 Multiple QDF/BDFB source groups are supported by the projection even though the current
-field assumption is commonly one QDF per powered equipment.
+field assumption is commonly one QDF per powered equipment. The header also exposes the
+documentary Rack AID(s). PDU rows expose canonical rack-scoped feed AIDs and their local
+AID for field cross-checking.
 
 ## Telemetry
 
@@ -213,3 +250,26 @@ PoweredEquipment projection
 ```
 
 It must not require rewriting historical breaker declarations, AIDs or PowerPaths.
+
+
+## Seed-01 v13 documentary enrichment
+
+The workbook identity facts are seeded additively into each existing breaker declaration:
+
+```text
+declaredPower.contractVersion = 2
+declaredPower.identitySourceDocument
+declaredPower.targetEntityName
+declaredPower.targetKind
+declaredPower.targetAid
+declaredPower.targetLocalAid
+declaredPower.targetRackAid
+declaredPower.targetBaseAid?       # PDU only
+declaredPower.remarksSemantics
+declaredPower.targetPlacement = RACK_ASSOCIATED_U_UNKNOWN
+```
+
+Existing operator-corrected declarations remain authoritative. Seed v13 fills missing
+identity fields and only upgrades `targetPlacement: UNKNOWN` to the newly confirmed
+rack-associated state. It still does not create remote Equipment, PDU, AccessPorts or
+PowerPaths.

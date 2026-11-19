@@ -1,4 +1,4 @@
-# QDF breaker field schedule — seed-01 v10
+# QDF breaker field schedule — seed-01 v13
 
 ## Scope
 
@@ -18,8 +18,9 @@ anyone. Installed breaker count remains **74**.
   exists.
 - `attributes.declaredPower.documentedRatingA`: documentary rating retained
   separately for reconciliation.
-- `attributes.declaredPower.targetFootprint`: string identifying the destination
-  (for example `010202.11`), **not** the rack dimension in millimeters.
+- `attributes.declaredPower.targetFootprint`: workbook `HUELLA` identifying the
+  destination physical rack reference (for example `010202.11`). It is **not** a rack
+  dimension and does not establish rack-U placement.
 - `attributes.declaredPower.documentedStatus`: `IN_SERVICE` or `OFF` as
   documented at the source, not independently verified energized state.
 - `attributes.declaredPower.replacementTargetA`: proposed replacement size;
@@ -27,9 +28,11 @@ anyone. Installed breaker count remains **74**.
 - Existing operator-reviewed declarations and approved protection records take
   precedence on subsequent seed upgrades.
 
-The workbook is the source of these **documentary** attributes. A remote load
-is not considered materialized or connected without separately verified
-Equipment, AccessPorts, and PowerPath records.
+The rating/status workbook remains the source of the documentary protection facts.
+`Lista de Equipos QDF mop v2 AID + RackAID.xlsx` is the source of remote target AID,
+RackAID, PDU grouping, and POS-N remark semantics. A remote load is not considered
+materialized or connected without separately verified Equipment, AccessPorts, and
+PowerPath records.
 
 ## Protection and alarms
 

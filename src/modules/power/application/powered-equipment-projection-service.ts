@@ -43,7 +43,7 @@ type DeclaredPowerMetadata = {
 };
 
 function declaredPowerMetadata(value: unknown): DeclaredPowerMetadata {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return { remarks: [] };
   const record = value as Record<string, unknown>;
   const qdf = typeof record.qdf === 'string' && record.qdf.trim() ? record.qdf.trim() : undefined;
   const feed = record.feed === 'A' || record.feed === 'B' ? record.feed : undefined;

@@ -2,7 +2,10 @@ import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const source = fs.readFileSync(
-  new URL('../../scripts/operations/plan-field-power-rack-parent-authorization.mjs', import.meta.url),
+  new URL(
+    '../../scripts/operations/plan-field-power-rack-parent-authorization.mjs',
+    import.meta.url,
+  ),
   'utf8',
 );
 

@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 export default async function PoweredEquipmentWorkbenchPage({
   searchParams,
 }: Readonly<{
-  searchParams: Promise<{ key?: string; target?: string }>;
+  searchParams: Promise<{ key?: string; target?: string; breakerId?: string }>;
 }>) {
   const auth = await requirePermission('power:read');
   if (!auth.ok) redirect('/login');
@@ -19,11 +19,15 @@ export default async function PoweredEquipmentWorkbenchPage({
   const query = await searchParams;
   const explicitKey = query.key?.trim().toLocaleLowerCase();
   const targetKey = query.target ? parseDeclaredPowerTarget(query.target)?.equipmentKey : undefined;
-  const key = explicitKey || targetKey;
-  if (!key) notFound();
+  const breakerId = query.breakerId?.trim();
 
   const repository = await createTopologyRepository();
-  const equipment = await new PoweredEquipmentProjectionService(repository).getByKey(key);
+  const service = new PoweredEquipmentProjectionService(repository);
+  const equipment = breakerId
+    ? await service.getByBreakerId(breakerId)
+    : explicitKey || targetKey
+      ? await service.getByKey(explicitKey || targetKey || '')
+      : null;
   if (!equipment) notFound();
 
   return <PoweredEquipmentConnectionDiagram equipment={equipment} />;

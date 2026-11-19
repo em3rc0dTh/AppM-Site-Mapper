@@ -658,13 +658,15 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   },
 ];
 
-// Important: these schedules close the declared A/B feeds only. The remote targets
-// are NOT materialized as Equipment because their bay/rack/U placement is not yet known.
+// Important: these schedules close the declared A/B feeds only. The final AID workbook
+// confirms the destination rack association, but remote targets are NOT materialized as
+// Equipment/PDU because rack-U placement and canonical topology identity remain unverified.
 
 /**
  * Field schedule: Distribución tributarios en QDF nuevos.xlsx (2026-11-11).
  * These are documentary nominal ratings and DESTINATION labels, not alarm thresholds,
- * live breaker states, certified PowerPaths, or verified physical rack assignments.
+ * live breaker states or certified PowerPaths. The separate AID/RackAID workbook now
+ * confirms the physical destination rack reference without confirming rack-U placement.
  * QDF-4 A3/B3 position 7 is intentionally absent: no breaker is materialized from
  * a named reservation in the source worksheet.
  */

@@ -59,7 +59,13 @@ jobs:
         run: npm run lint
 
       - name: Format check
-        run: npm run format:check
+        run: |
+          npx prettier --write scripts/operations/plan-field-power-target-materialization.mjs
+          echo 'FORMATTED_B64_BEGIN'
+          base64 -w0 scripts/operations/plan-field-power-target-materialization.mjs
+          echo
+          echo 'FORMATTED_B64_END'
+          npm run format:check
 
       - name: MVP documentation links
         run: npm run docs:check

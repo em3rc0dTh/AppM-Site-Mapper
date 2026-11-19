@@ -143,9 +143,9 @@ try {
     const qdf = stringValue(declaration.qdf);
     const rackAid = stringValue(declaration.targetRackAid);
     const footprint = stringValue(declaration.targetFootprint);
-    const entityName =
-      stringValue(declaration.targetCanonicalEntityName) ||
-      stringValue(declaration.targetEntityName);
+    const targetEntityName = stringValue(declaration.targetEntityName);
+    const targetCanonicalEntityName = stringValue(declaration.targetCanonicalEntityName);
+    const entityName = targetCanonicalEntityName || targetEntityName;
     const targetKind =
       declaration.targetKind === 'EQUIPMENT' || declaration.targetKind === 'PDU'
         ? declaration.targetKind
@@ -161,6 +161,8 @@ try {
         rackAid,
         footprint,
         entityName,
+        targetEntityName,
+        targetCanonicalEntityName,
         targetKind,
       });
       continue;
@@ -185,9 +187,13 @@ try {
       key: targetKey,
       canonicalName: entityName,
       kind: targetKind,
+      identityNames: new Set(),
       breakerIds: new Set(),
       qdfs: new Set(),
     };
+    if (targetEntityName) target.identityNames.add(targetEntityName);
+    if (targetCanonicalEntityName) target.identityNames.add(targetCanonicalEntityName);
+    target.identityNames.add(entityName);
     target.breakerIds.add(breaker.id);
     target.qdfs.add(qdf);
     group.targets.set(targetKey, target);
@@ -268,9 +274,9 @@ try {
           let targetDeviceCandidates = [];
 
           if (resolvedRack) {
-            const canonicalKey = normalize(target.canonicalName);
+            const identityKeys = [...target.identityNames].map(normalize).filter(Boolean);
             targetDeviceCandidates = directDevices.filter((device) =>
-              deviceIdentityTokens(device).includes(canonicalKey),
+              identityKeys.some((identity) => deviceIdentityTokens(device).includes(identity)),
             );
 
             if (targetDeviceCandidates.length === 1) {
@@ -285,6 +291,7 @@ try {
           return {
             key: target.key,
             canonicalName: target.canonicalName,
+            identityNames: [...target.identityNames].sort(),
             kind: target.kind,
             qdfs: [...target.qdfs].sort(),
             breakerCount: target.breakerIds.size,

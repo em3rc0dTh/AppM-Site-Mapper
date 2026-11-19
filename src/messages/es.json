@@ -559,7 +559,12 @@
       "selectedEndpoint": "Endpoint seleccionado",
       "selectConnectionHelp": "Selecciona un breaker o endpoint para resaltar su conexión y ver el AID completo.",
       "openConnectionDiagram": "VER TODAS LAS CONEXIONES ↗",
-      "energyCounterShort": "Σ contador"
+      "energyCounterShort": "Σ contador",
+      "pdu": "PDU",
+      "rackAid": "AID de rack",
+      "localAid": "AID local",
+      "documentaryRemarks": "REMARKS DOCUMENTALES",
+      "documentaryRemarksHelp": "Los POS-N provienen del Excel y son observaciones editables. No representan endpoints con telemetría individual."
     },
     "rack": {
       "elevation": "ELEVACIÓN",

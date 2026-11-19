@@ -38,21 +38,17 @@ function metricValue(
 
 function liveMetrics(view: TelemetryView | null, breakerId: string): LiveMetrics {
   const reading = view?.sample?.breakerReadings?.find((item) => item.breakerId === breakerId);
+  const voltageV = metricValue(reading, 'voltageV');
+  const currentA = metricValue(reading, 'currentA');
+  const powerW = metricValue(reading, 'powerW');
+  const energyKwh = metricValue(reading, 'energyKwh');
   return {
     status: view?.status ?? 'NO_DATA',
     ...(reading?.receivedAt ? { receivedAt: reading.receivedAt } : {}),
-    ...(metricValue(reading, 'voltageV') !== undefined
-      ? { voltageV: metricValue(reading, 'voltageV') }
-      : {}),
-    ...(metricValue(reading, 'currentA') !== undefined
-      ? { currentA: metricValue(reading, 'currentA') }
-      : {}),
-    ...(metricValue(reading, 'powerW') !== undefined
-      ? { powerW: metricValue(reading, 'powerW') }
-      : {}),
-    ...(metricValue(reading, 'energyKwh') !== undefined
-      ? { energyKwh: metricValue(reading, 'energyKwh') }
-      : {}),
+    ...(voltageV !== undefined ? { voltageV } : {}),
+    ...(currentA !== undefined ? { currentA } : {}),
+    ...(powerW !== undefined ? { powerW } : {}),
+    ...(energyKwh !== undefined ? { energyKwh } : {}),
   };
 }
 
@@ -194,7 +190,7 @@ export function PoweredEquipmentConnectionDiagram({
                 Σ {power.value === undefined ? '—' : `${(power.value / 1000).toFixed(3)} kW`}
               </b>
               <span>
-                Σ E {energy.value === undefined ? '—' : `${energy.value.toFixed(3)} kWh`}
+                {t('energyCounterShort')} {energy.value === undefined ? '—' : `${energy.value.toFixed(3)} kWh`}
               </span>
               {power.reporting < connections.length || energy.reporting < connections.length ? (
                 <em>{t('partialData')}</em>

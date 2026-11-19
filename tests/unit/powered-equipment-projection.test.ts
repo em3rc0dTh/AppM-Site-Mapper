@@ -127,15 +127,19 @@ describe('powered equipment projection', () => {
     const projection = await new PoweredEquipmentProjectionService(repository).list();
 
     expect(projection).toHaveLength(1);
-    expect(projection[0]).toMatchObject({
+    const powered = projection[0];
+    expect(powered).toBeDefined();
+    if (!powered) throw new Error('EXPECTED_POWERED_EQUIPMENT');
+
+    expect(powered).toMatchObject({
       id: 'powered-equipment:bb-lur-04',
       key: 'bb-lur-04',
       name: 'BB-LUR-04',
       qdfs: ['QDF2'],
       feeds: ['A', 'B'],
     });
-    expect(projection[0].connections).toHaveLength(2);
-    expect(projection[0].connections.map((item) => item.breakerId)).toEqual([
+    expect(powered.connections).toHaveLength(2);
+    expect(powered.connections.map((item) => item.breakerId)).toEqual([
       'breaker-a',
       'breaker-b',
     ]);

@@ -100,6 +100,11 @@ export function PoweredEquipmentConnectionDiagram({
   const [telemetry, setTelemetry] = useState<Record<string, LiveMetrics>>({});
   const [selectedAid, setSelectedAid] = useState<string | null>(null);
   const groups = useMemo(() => qdfGroups(equipment), [equipment]);
+  const remarkConnections = useMemo(
+    () => equipment.connections.filter((connection) => connection.remarks.length),
+    [equipment.connections],
+  );
+  const targetTypeLabel = equipment.kind === 'PDU' ? t('pdu') : t('poweredEquipment');
 
   useEffect(() => {
     const controller = new AbortController();
@@ -177,11 +182,14 @@ export function PoweredEquipmentConnectionDiagram({
       : isB
         ? t('feedSide', { side: 'B' })
         : t('feedUnspecified');
-    const partLabel = isA
-      ? t('poweredPart', { side: 'A' })
-      : isB
-        ? t('poweredPart', { side: 'B' })
-        : t('poweredPartUnspecified');
+    const partLabel =
+      equipment.kind === 'PDU'
+        ? label
+        : isA
+          ? t('poweredPart', { side: 'A' })
+          : isB
+            ? t('poweredPart', { side: 'B' })
+            : t('poweredPartUnspecified');
     const power = sumDefined(
       connections.map((connection) => telemetry[connection.breakerId]?.powerW),
     );
@@ -297,6 +305,11 @@ export function PoweredEquipmentConnectionDiagram({
                   <span>
                     <strong>{connection.endpoint.displayLabel}</strong>
                     <small>{connection.endpoint.aid}</small>
+                    {connection.endpoint.localAid !== connection.endpoint.aid ? (
+                      <small>
+                        {t('localAid')}: {connection.endpoint.localAid}
+                      </small>
+                    ) : null}
                   </span>
                 </button>
               );
@@ -336,7 +349,7 @@ export function PoweredEquipmentConnectionDiagram({
         </div>
         <div>
           <h2>{equipment.name}</h2>
-          <p>{t('poweredEquipment')}</p>
+          <p>{targetTypeLabel}</p>
         </div>
         <dl>
           <div>
@@ -346,6 +359,10 @@ export function PoweredEquipmentConnectionDiagram({
           <div>
             <dt>{t('sourceQdf')}</dt>
             <dd>{equipment.qdfs.join(', ') || '—'}</dd>
+          </div>
+          <div>
+            <dt>{t('rackAid')}</dt>
+            <dd>{equipment.rackAids.join(', ') || '—'}</dd>
           </div>
           <div>
             <dt>{t('totalLivePower')}</dt>
@@ -390,7 +407,7 @@ export function PoweredEquipmentConnectionDiagram({
                 </div>
                 <div>
                   <strong>{equipment.name}</strong>
-                  <span>{t('poweredEquipment')}</span>
+                  <span>{targetTypeLabel}</span>
                 </div>
               </div>
             </div>
@@ -472,6 +489,24 @@ export function PoweredEquipmentConnectionDiagram({
           ) : (
             <p>{t('selectConnectionHelp')}</p>
           )}
+          {remarkConnections.length ? (
+            <div className="sm-powered-documentary-remarks">
+              <h3>{t('documentaryRemarks')}</h3>
+              <p>{t('documentaryRemarksHelp')}</p>
+              <ul>
+                {remarkConnections.map((connection) => (
+                  <li key={`remarks-${connection.breakerId}-${connection.endpoint.aid}`}>
+                    <strong>
+                      {connection.breakerName} · {connection.endpoint.displayLabel}
+                    </strong>
+                    {connection.remarks.map((remark) => (
+                      <span key={remark}>{remark}</span>
+                    ))}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </article>
       </section>
     </main>

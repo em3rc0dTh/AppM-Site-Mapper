@@ -24,27 +24,27 @@ The workbook states:
 
 ## Rack association map
 
-| QDF | HUELLA | Rack AID | Type | Equipment / PDU | PDU base AID |
-| --- | --- | --- | --- | --- | --- |
-| QDF-2 | 010202.10 | `RACK::010202.10` | PDU | PDU 01 | `RACK::010202.10::PDU01` |
-| QDF-2 | 010202.09 | `RACK::010202.09` | EQUIPO | GRTLuren3 | — |
-| QDF-2 | 010202.11 | `RACK::010202.11` | EQUIPO | DTX-LUR-FP2-01 | — |
-| QDF-4 | 010206.20 | `RACK::010206.20` | EQUIPO | BB-LUR-04 | — |
-| QDF-4 | 010206.19 | `RACK::010206.19` | EQUIPO | PL-LUR-FPN3-1 | — |
-| QDF-4 | 010206.15 | `RACK::010206.15` | EQUIPO | DTN-LUR-FP4-01 | — |
-| QDF-4 | 010205.20 | `RACK::010205.20` | EQUIPO | BB-LUR-FPN3-3 | — |
-| QDF-4 | 010205.16 | `RACK::010205.16` | EQUIPO | Orion | — |
-| QDF-5 | 010208.12 | `RACK::010208.12` | EQUIPO | WS-LUR-04 | — |
-| QDF-5 | 010208.12 | `RACK::010208.12` | EQUIPO | WS-LUR-01 | — |
-| QDF-5 | 010208.12 | `RACK::010208.12` | EQUIPO | WS-LUR-02 | — |
-| QDF-5 | 010208.12 | `RACK::010208.12` | EQUIPO | CAR-LUR-01 | — |
-| QDF-5 | 010208.12 | `RACK::010208.12` | EQUIPO | WS-LUR-03 | — |
-| QDF-5 | 010208.13 | `RACK::010208.13` | EQUIPO | GXLUR02 | — |
-| QDF-5 | 010208.13 | `RACK::010208.13` | EQUIPO | GXLUR01 | — |
-| QDF-5 | 010208.13 | `RACK::010208.13` | PDU | PDU 01 | `RACK::010208.13::PDU01` |
-| QDF-5 | 010208.14 | `RACK::010208.14` | PDU | PDU 01 | `RACK::010208.14::PDU01` |
-| QDF-5 | 010208.16 | `RACK::010208.16` | EQUIPO | DTX-LUR-FP2-1 | — |
-| QDF-5 | 010207.20 | `RACK::010207.20` | EQUIPO | PL-LUR-FPO1-1 | — |
+| QDF   | HUELLA    | Rack AID          | Type   | Equipment / PDU | PDU base AID             |
+| ----- | --------- | ----------------- | ------ | --------------- | ------------------------ |
+| QDF-2 | 010202.10 | `RACK::010202.10` | PDU    | PDU 01          | `RACK::010202.10::PDU01` |
+| QDF-2 | 010202.09 | `RACK::010202.09` | EQUIPO | GRTLuren3       | —                        |
+| QDF-2 | 010202.11 | `RACK::010202.11` | EQUIPO | DTX-LUR-FP2-01  | —                        |
+| QDF-4 | 010206.20 | `RACK::010206.20` | EQUIPO | BB-LUR-04       | —                        |
+| QDF-4 | 010206.19 | `RACK::010206.19` | EQUIPO | PL-LUR-FPN3-1   | —                        |
+| QDF-4 | 010206.15 | `RACK::010206.15` | EQUIPO | DTN-LUR-FP4-01  | —                        |
+| QDF-4 | 010205.20 | `RACK::010205.20` | EQUIPO | BB-LUR-FPN3-3   | —                        |
+| QDF-4 | 010205.16 | `RACK::010205.16` | EQUIPO | Orion           | —                        |
+| QDF-5 | 010208.12 | `RACK::010208.12` | EQUIPO | WS-LUR-04       | —                        |
+| QDF-5 | 010208.12 | `RACK::010208.12` | EQUIPO | WS-LUR-01       | —                        |
+| QDF-5 | 010208.12 | `RACK::010208.12` | EQUIPO | WS-LUR-02       | —                        |
+| QDF-5 | 010208.12 | `RACK::010208.12` | EQUIPO | CAR-LUR-01      | —                        |
+| QDF-5 | 010208.12 | `RACK::010208.12` | EQUIPO | WS-LUR-03       | —                        |
+| QDF-5 | 010208.13 | `RACK::010208.13` | EQUIPO | GXLUR02         | —                        |
+| QDF-5 | 010208.13 | `RACK::010208.13` | EQUIPO | GXLUR01         | —                        |
+| QDF-5 | 010208.13 | `RACK::010208.13` | PDU    | PDU 01          | `RACK::010208.13::PDU01` |
+| QDF-5 | 010208.14 | `RACK::010208.14` | PDU    | PDU 01          | `RACK::010208.14::PDU01` |
+| QDF-5 | 010208.16 | `RACK::010208.16` | EQUIPO | DTX-LUR-FP2-1   | —                        |
+| QDF-5 | 010207.20 | `RACK::010207.20` | EQUIPO | PL-LUR-FPO1-1   | —                        |
 
 ## PDU contract
 

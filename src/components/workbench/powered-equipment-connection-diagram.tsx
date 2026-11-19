@@ -1,0 +1,467 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
+
+import type {
+  PoweredEquipmentConnection,
+  PoweredEquipmentProjection,
+} from '@/modules/power/application/powered-equipment-projection-service';
+import type {
+  BreakerTelemetryReading,
+  TelemetrySample,
+} from '@/modules/telemetry/domain/entities';
+
+type TelemetryView = {
+  readonly targetId: string;
+  readonly status: string;
+  readonly sample: TelemetrySample | null;
+};
+
+type LiveMetrics = {
+  readonly status: string;
+  readonly receivedAt?: string;
+  readonly voltageV?: number;
+  readonly currentA?: number;
+  readonly powerW?: number;
+  readonly energyKwh?: number;
+};
+
+type FeedKey = 'A' | 'B' | 'UNSPECIFIED';
+
+function metricValue(
+  reading: BreakerTelemetryReading | undefined,
+  key: keyof BreakerTelemetryReading['metrics'],
+): number | undefined {
+  return reading?.metrics[key]?.value;
+}
+
+function liveMetrics(view: TelemetryView | null, breakerId: string): LiveMetrics {
+  const reading = view?.sample?.breakerReadings?.find((item) => item.breakerId === breakerId);
+  return {
+    status: view?.status ?? 'NO_DATA',
+    ...(reading?.receivedAt ? { receivedAt: reading.receivedAt } : {}),
+    ...(metricValue(reading, 'voltageV') !== undefined
+      ? { voltageV: metricValue(reading, 'voltageV') }
+      : {}),
+    ...(metricValue(reading, 'currentA') !== undefined
+      ? { currentA: metricValue(reading, 'currentA') }
+      : {}),
+    ...(metricValue(reading, 'powerW') !== undefined
+      ? { powerW: metricValue(reading, 'powerW') }
+      : {}),
+    ...(metricValue(reading, 'energyKwh') !== undefined
+      ? { energyKwh: metricValue(reading, 'energyKwh') }
+      : {}),
+  };
+}
+
+function feedKey(connection: PoweredEquipmentConnection): FeedKey {
+  return connection.feed ?? connection.endpoint.side ?? 'UNSPECIFIED';
+}
+
+function formatNumber(value: number | undefined, digits: number): string {
+  return value === undefined || !Number.isFinite(value) ? '—' : value.toFixed(digits);
+}
+
+function sumDefined(values: readonly (number | undefined)[]): {
+  readonly value?: number;
+  readonly reporting: number;
+} {
+  const defined = values.filter((value): value is number => value !== undefined && Number.isFinite(value));
+  return {
+    ...(defined.length ? { value: defined.reduce((sum, value) => sum + value, 0) } : {}),
+    reporting: defined.length,
+  };
+}
+
+function qdfGroups(equipment: PoweredEquipmentProjection) {
+  return equipment.qdfs.map((qdf) => ({
+    qdf,
+    connections: equipment.connections.filter((connection) => connection.qdfName === qdf),
+  }));
+}
+
+function feedConnections(
+  connections: readonly PoweredEquipmentConnection[],
+  feed: FeedKey,
+): readonly PoweredEquipmentConnection[] {
+  return connections.filter((connection) => feedKey(connection) === feed);
+}
+
+function statusClass(status: string): string {
+  const normalized = status.toUpperCase();
+  if (normalized === 'LIVE' || normalized === 'ONLINE' || normalized === 'REPORTING') return 'is-live';
+  return 'is-no-data';
+}
+
+export function PoweredEquipmentConnectionDiagram({
+  equipment,
+}: Readonly<{
+  equipment: PoweredEquipmentProjection;
+}>) {
+  const t = useTranslations('pages.power');
+  const [telemetry, setTelemetry] = useState<Record<string, LiveMetrics>>({});
+  const [selectedAid, setSelectedAid] = useState<string | null>(null);
+  const groups = useMemo(() => qdfGroups(equipment), [equipment]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let timer: ReturnType<typeof setTimeout>;
+    const breakerIds = [...new Set(equipment.connections.map((connection) => connection.breakerId))];
+
+    async function load() {
+      const entries = await Promise.all(
+        breakerIds.map(async (breakerId) => {
+          try {
+            const response = await fetch(
+              `/api/telemetry/entity?${new URLSearchParams({ targetId: breakerId, window: 'LIVE' })}`,
+              { cache: 'no-store', signal: controller.signal },
+            );
+            if (!response.ok) throw new Error('LIVE_UNAVAILABLE');
+            const body = (await response.json()) as TelemetryView;
+            return [breakerId, liveMetrics(body, breakerId)] as const;
+          } catch {
+            return [breakerId, { status: 'NO_DATA' } satisfies LiveMetrics] as const;
+          }
+        }),
+      );
+      if (!controller.signal.aborted) {
+        setTelemetry(Object.fromEntries(entries));
+        timer = setTimeout(load, 5000);
+      }
+    }
+
+    void load();
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+    };
+  }, [equipment.connections]);
+
+  const aggregate = useMemo(() => {
+    const byFeed = (feed: FeedKey) => {
+      const connections = equipment.connections.filter((connection) => feedKey(connection) === feed);
+      const powers = sumDefined(connections.map((connection) => telemetry[connection.breakerId]?.powerW));
+      const energy = sumDefined(
+        connections.map((connection) => telemetry[connection.breakerId]?.energyKwh),
+      );
+      return { feed, connections, powers, energy };
+    };
+    return [byFeed('A'), byFeed('B'), byFeed('UNSPECIFIED')];
+  }, [equipment.connections, telemetry]);
+
+  const totalPower = sumDefined(
+    equipment.connections.map((connection) => telemetry[connection.breakerId]?.powerW),
+  );
+  const totalEnergy = sumDefined(
+    equipment.connections.map((connection) => telemetry[connection.breakerId]?.energyKwh),
+  );
+
+  async function toggleFullscreen() {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen().catch(() => undefined);
+      return;
+    }
+    await document.documentElement.requestFullscreen?.().catch(() => undefined);
+  }
+
+  function renderFeed(
+    connections: readonly PoweredEquipmentConnection[],
+    feed: FeedKey,
+  ) {
+    if (!connections.length) return null;
+    const isA = feed === 'A';
+    const isB = feed === 'B';
+    const label = isA ? t('feedSide', { side: 'A' }) : isB ? t('feedSide', { side: 'B' }) : t('feedUnspecified');
+    const partLabel = isA ? t('poweredPart', { side: 'A' }) : isB ? t('poweredPart', { side: 'B' }) : t('poweredPartUnspecified');
+    const power = sumDefined(connections.map((connection) => telemetry[connection.breakerId]?.powerW));
+    const energy = sumDefined(
+      connections.map((connection) => telemetry[connection.breakerId]?.energyKwh),
+    );
+    const feedClass = isA ? 'is-a' : isB ? 'is-b' : 'is-unspecified';
+
+    return (
+      <section className={`sm-powered-feed-layout ${feedClass}`} key={feed}>
+        <div className="sm-powered-feed-panel">
+          <header>
+            <div>
+              <strong>{label}</strong>
+              <span>{t('breakerCount', { count: connections.length })}</span>
+            </div>
+            <div className="sm-powered-feed-totals">
+              <b>
+                Σ {power.value === undefined ? '—' : `${(power.value / 1000).toFixed(3)} kW`}
+              </b>
+              <span>
+                Σ E {energy.value === undefined ? '—' : `${energy.value.toFixed(3)} kWh`}
+              </span>
+              {power.reporting < connections.length || energy.reporting < connections.length ? (
+                <em>{t('partialData')}</em>
+              ) : null}
+            </div>
+          </header>
+          <div className="sm-powered-columns" aria-hidden="true">
+            <span>{t('breaker')}</span>
+            <span>{t('endpoint')}</span>
+            <span>V</span>
+            <span>I</span>
+            <span>P</span>
+            <span>E</span>
+          </div>
+          <div className="sm-powered-breaker-rows">
+            {connections.map((connection) => {
+              const metrics = telemetry[connection.breakerId];
+              const selected = selectedAid === connection.endpoint.aid;
+              return (
+                <button
+                  type="button"
+                  className={selected ? 'sm-powered-breaker-row is-selected' : 'sm-powered-breaker-row'}
+                  key={`${connection.breakerId}-${connection.endpoint.aid}`}
+                  onClick={() =>
+                    setSelectedAid((current) =>
+                      current === connection.endpoint.aid ? null : connection.endpoint.aid,
+                    )
+                  }
+                  title={connection.endpoint.aid}
+                >
+                  <span className="sm-powered-breaker-name">
+                    <i className={statusClass(metrics?.status ?? 'NO_DATA')} aria-hidden="true" />
+                    <b>{connection.breakerName}</b>
+                  </span>
+                  <span>{connection.endpoint.displayLabel}</span>
+                  <span>{formatNumber(metrics?.voltageV, 1)}</span>
+                  <span>{formatNumber(metrics?.currentA, 2)}</span>
+                  <span>
+                    {metrics?.powerW === undefined ? '—' : (metrics.powerW / 1000).toFixed(3)}
+                  </span>
+                  <span>{formatNumber(metrics?.energyKwh, 3)}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="sm-powered-wire-panel" aria-hidden="true">
+          <div className="sm-powered-wire-spacer" />
+          {connections.map((connection) => (
+            <div
+              className={
+                selectedAid === connection.endpoint.aid
+                  ? 'sm-powered-wire is-selected'
+                  : 'sm-powered-wire'
+              }
+              key={`wire-${connection.breakerId}-${connection.endpoint.aid}`}
+            >
+              <span />
+            </div>
+          ))}
+        </div>
+
+        <div className="sm-powered-endpoint-panel">
+          <header>
+            <strong>{partLabel}</strong>
+            <span>{t('declaredEndpoints', { count: connections.length })}</span>
+          </header>
+          <div className="sm-powered-endpoint-label" aria-hidden="true">
+            {t('endpointAid')}
+          </div>
+          <div className="sm-powered-endpoint-rows">
+            {connections.map((connection) => {
+              const selected = selectedAid === connection.endpoint.aid;
+              return (
+                <button
+                  type="button"
+                  className={selected ? 'sm-powered-endpoint-row is-selected' : 'sm-powered-endpoint-row'}
+                  key={`endpoint-${connection.breakerId}-${connection.endpoint.aid}`}
+                  onClick={() =>
+                    setSelectedAid((current) =>
+                      current === connection.endpoint.aid ? null : connection.endpoint.aid,
+                    )
+                  }
+                  title={connection.endpoint.aid}
+                >
+                  <i aria-hidden="true" />
+                  <span>
+                    <strong>{connection.endpoint.displayLabel}</strong>
+                    <small>{connection.endpoint.aid}</small>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <main className="sm-workbench sm-powered-equipment-workbench">
+      <header className="sm-workbench-header">
+        <div>
+          <small>{t('detachedTitle')}</small>
+          <h1>{t('connectionDiagram')}</h1>
+          <p>{t('connectionDiagramSubtitle')}</p>
+        </div>
+        <div className="sm-workbench-header-actions">
+          <button type="button" onClick={() => window.print()}>
+            {t('exportDiagram')}
+          </button>
+          <button type="button" onClick={() => void toggleFullscreen()}>
+            {t('fullscreen')}
+          </button>
+          <button type="button" onClick={() => window.close()}>
+            {t('closeConnectionDiagram')}
+          </button>
+        </div>
+      </header>
+
+      <section className="sm-powered-summary-card">
+        <div className="sm-powered-equipment-icon" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </div>
+        <div>
+          <h2>{equipment.name}</h2>
+          <p>{t('poweredEquipment')}</p>
+        </div>
+        <dl>
+          <div>
+            <dt>{t('declaredEndpointsLabel')}</dt>
+            <dd>{equipment.connections.length}</dd>
+          </div>
+          <div>
+            <dt>{t('sourceQdf')}</dt>
+            <dd>{equipment.qdfs.join(', ') || '—'}</dd>
+          </div>
+          <div>
+            <dt>{t('totalLivePower')}</dt>
+            <dd>
+              {totalPower.value === undefined ? '—' : `${(totalPower.value / 1000).toFixed(3)} kW`}
+              {totalPower.reporting < equipment.connections.length ? (
+                <small>{t('partialData')}</small>
+              ) : null}
+            </dd>
+          </div>
+          <div>
+            <dt>{t('energyCounterSum')}</dt>
+            <dd>
+              {totalEnergy.value === undefined ? '—' : `${totalEnergy.value.toFixed(3)} kWh`}
+              {totalEnergy.reporting < equipment.connections.length ? (
+                <small>{t('partialData')}</small>
+              ) : null}
+            </dd>
+          </div>
+        </dl>
+      </section>
+
+      <section className="sm-powered-diagram">
+        {groups.map((group) => (
+          <article className="sm-powered-source-group" key={group.qdf}>
+            <div className="sm-powered-diagram-head">
+              <div className="sm-powered-source-title">
+                <div className="sm-powered-qdf-icon" aria-hidden="true">
+                  ▥
+                </div>
+                <div>
+                  <strong>{group.qdf}</strong>
+                  <span>{t('powerSource')}</span>
+                </div>
+              </div>
+              <span aria-hidden="true" />
+              <div className="sm-powered-target-title">
+                <div className="sm-powered-equipment-icon is-small" aria-hidden="true">
+                  <span />
+                  <span />
+                  <span />
+                </div>
+                <div>
+                  <strong>{equipment.name}</strong>
+                  <span>{t('poweredEquipment')}</span>
+                </div>
+              </div>
+            </div>
+
+            {renderFeed(feedConnections(group.connections, 'A'), 'A')}
+            {renderFeed(feedConnections(group.connections, 'B'), 'B')}
+            {renderFeed(feedConnections(group.connections, 'UNSPECIFIED'), 'UNSPECIFIED')}
+          </article>
+        ))}
+      </section>
+
+      <section className="sm-powered-footer-grid">
+        <article className="sm-powered-footer-card">
+          <h2>{t('connectionSummary')}</h2>
+          <div className="sm-powered-summary-table">
+            <div className="is-header">
+              <span>{t('feedLabel')}</span>
+              <span>{t('breakers')}</span>
+              <span>{t('totalPower')}</span>
+              <span>{t('energyCounterSum')}</span>
+            </div>
+            {aggregate
+              .filter((item) => item.connections.length)
+              .map((item) => (
+                <div key={item.feed}>
+                  <b>{item.feed === 'UNSPECIFIED' ? '—' : item.feed}</b>
+                  <span>{item.connections.length}</span>
+                  <span>
+                    {item.powers.value === undefined
+                      ? '—'
+                      : `${(item.powers.value / 1000).toFixed(3)} kW`}
+                  </span>
+                  <span>
+                    {item.energy.value === undefined
+                      ? '—'
+                      : `${item.energy.value.toFixed(3)} kWh`}
+                  </span>
+                </div>
+              ))}
+            <div className="is-total">
+              <b>{t('total')}</b>
+              <strong>{equipment.connections.length}</strong>
+              <strong>
+                {totalPower.value === undefined ? '—' : `${(totalPower.value / 1000).toFixed(3)} kW`}
+              </strong>
+              <strong>
+                {totalEnergy.value === undefined ? '—' : `${totalEnergy.value.toFixed(3)} kWh`}
+              </strong>
+            </div>
+          </div>
+          <p>{t('connectionSummaryNote')}</p>
+        </article>
+
+        <article className="sm-powered-footer-card">
+          <h2>{t('legend')}</h2>
+          <ul className="sm-powered-legend">
+            <li>
+              <i className="is-a" />
+              <span>{t('connectionFeed', { side: 'A' })}</span>
+            </li>
+            <li>
+              <i className="is-b" />
+              <span>{t('connectionFeed', { side: 'B' })}</span>
+            </li>
+            <li>
+              <i className="is-live-dot" />
+              <span>{t('breakerLive')}</span>
+            </li>
+            <li>
+              <i className="is-no-data-dot" />
+              <span>{t('breakerNoData')}</span>
+            </li>
+          </ul>
+          {selectedAid ? (
+            <div className="sm-powered-selection">
+              <small>{t('selectedEndpoint')}</small>
+              <code>{selectedAid}</code>
+            </div>
+          ) : (
+            <p>{t('selectConnectionHelp')}</p>
+          )}
+        </article>
+      </section>
+    </main>
+  );
+}

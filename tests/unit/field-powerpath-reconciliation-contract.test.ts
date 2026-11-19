@@ -26,12 +26,25 @@ describe('FIELD PowerPath reconciliation safety contract', () => {
   });
 
   it('keeps unresolved and conflicting inventory out of CREATE', () => {
-    expect(source).toContain("'TARGET_NOT_FOUND'");
-    expect(source).toContain("'TARGET_AMBIGUOUS'");
+    expect(source).toContain("'TARGET_ENTITY_NOT_MATERIALIZED'");
+    expect(source).toContain("'TARGET_ENTITY_NOT_FOUND'");
+    expect(source).toContain("'TARGET_ENTITY_AMBIGUOUS'");
+    expect(source).toContain("'TARGET_ENDPOINT_NOT_MATERIALIZED'");
+    expect(source).toContain("'TARGET_ENDPOINT_AMBIGUOUS'");
     expect(source).toContain("'SOURCE_PORT_MISSING'");
     expect(source).toContain("'TARGET_PORT_MISSING'");
     expect(source).toContain("'SOURCE_ALREADY_CONNECTED'");
     expect(source).toContain("'TARGET_ALREADY_CONNECTED'");
+  });
+
+  it('resolves v14 target identity before legacy display labels', () => {
+    expect(source).toContain('declaration.targetCanonicalEntityName');
+    expect(source).toContain('declaration.targetEntityName');
+    expect(source).toContain('declaration.targetAid');
+    expect(source).toContain('declaration.targetLocalAid');
+    expect(source).toContain('declaration.targetRackAid');
+    expect(source).toContain("targetPortResolution = 'DECLARED_AID'");
+    expect(source).toContain('unresolvedByReason');
   });
 
   it('uses the canonical runtime Mongo database before legacy/default fallbacks', () => {
@@ -39,7 +52,7 @@ describe('FIELD PowerPath reconciliation safety contract', () => {
   });
 
   it('requires the complete declared QDF breaker baseline by default', () => {
-    expect(source).toContain("option('--expected-breakers', '74')");
+    expect(source).toContain("option('--expected-breakers', '76')");
     expect(source).toContain('refuse to infer against incomplete/changed inventory');
   });
 });

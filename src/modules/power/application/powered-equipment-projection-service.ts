@@ -144,7 +144,11 @@ export class PoweredEquipmentProjectionService {
       .map(([key, group]) => {
         const connections = [...group.connections].sort(compareConnections);
         const qdfs = [...new Set(connections.map((connection) => connection.qdfName))].sort();
-        const feeds = [...new Set(connections.flatMap((connection) => (connection.feed ? [connection.feed] : [])))].sort() as PowerFeed[];
+        const feeds = [
+          ...new Set(
+            connections.flatMap((connection) => (connection.feed ? [connection.feed] : [])),
+          ),
+        ].sort() as PowerFeed[];
         return {
           id: `powered-equipment:${key}`,
           key,
@@ -154,7 +158,9 @@ export class PoweredEquipmentProjectionService {
           feeds,
         };
       })
-      .sort((left, right) => left.name.localeCompare(right.name) || left.key.localeCompare(right.key));
+      .sort(
+        (left, right) => left.name.localeCompare(right.name) || left.key.localeCompare(right.key),
+      );
   }
 
   async getByKey(key: string): Promise<PoweredEquipmentProjection | null> {

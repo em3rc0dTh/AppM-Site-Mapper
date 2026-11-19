@@ -76,7 +76,9 @@ const activePowerPorts = (equipment, direction) =>
 
 const stablePathId = (sourcePortId, targetPortId) =>
   'reconcile:powerpath:' +
-  createHash('sha256').update(sourcePortId + '|' + targetPortId).digest('hex');
+  createHash('sha256')
+    .update(sourcePortId + '|' + targetPortId)
+    .digest('hex');
 
 const shallowStrings = (value) => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return [];
@@ -300,9 +302,7 @@ try {
     const existingToTarget = targetOwners.get(targetPort.id) ?? [];
     if (existingFromSource.length || existingToTarget.length) {
       report('CONFLICT', breaker, {
-        reason: existingFromSource.length
-          ? 'SOURCE_ALREADY_CONNECTED'
-          : 'TARGET_ALREADY_CONNECTED',
+        reason: existingFromSource.length ? 'SOURCE_ALREADY_CONNECTED' : 'TARGET_ALREADY_CONNECTED',
         feed,
         targetId: target.id,
         targetName: target.name,
@@ -463,8 +463,7 @@ try {
         created: creates.length,
         database: databaseName,
         backupPath,
-        note:
-          'Only PowerPath records were eligible for insertion; topology and AccessPorts were untouched.',
+        note: 'Only PowerPath records were eligible for insertion; topology and AccessPorts were untouched.',
       }),
     );
   }

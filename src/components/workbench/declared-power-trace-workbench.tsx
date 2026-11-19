@@ -296,7 +296,7 @@ export function DeclaredPowerTraceWorkbench({
             })}
           </div>
         </section>
-      ) : null>
+      ) : null}
 
       <section className="sm-trace-section">
         <header>

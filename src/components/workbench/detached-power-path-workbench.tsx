@@ -203,6 +203,13 @@ export function DetachedPowerPathWorkbench({
           <span className="sm-power-declared-badge" title={t('declaredAssetTooltip')}>
             {t('declaredAsset')}
           </span>
+          <DetachedWorkbenchButton
+            href={`/workbench/powered-equipment?breakerId=${encodeURIComponent(breakerId)}`}
+            windowName={`site-mapper-powered-equipment-${breakerId}`}
+            label={t('openConnectionDiagram')}
+          >
+            {t('openConnectionDiagram')}
+          </DetachedWorkbenchButton>
         </article>
       </section>
 

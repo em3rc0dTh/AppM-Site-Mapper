@@ -1,6 +1,7 @@
 import type { ClientSession, Db, Document } from 'mongodb';
 
 import type { CommunicationProfile } from '@/modules/industrial/domain/commissioning';
+import { parseDeclaredPowerTarget } from '@/modules/power/domain/powered-equipment';
 import type { TelemetryBinding } from '@/modules/telemetry/domain/entities';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
@@ -15,10 +16,14 @@ import type {
 import { MongoTopologyRepository } from '@/modules/topology/infrastructure/mongo-topology-repository';
 import { CasService } from '@/modules/rack/application/cas-service';
 import { withIntegrityTransaction } from '@/shared/infrastructure/mongodb/integrity-transaction';
+import {
+  findPowerTargetRackAssociation,
+  POWER_TARGET_IDENTITY_SOURCE,
+} from '@/seeds/seed-01-power-target-identity';
 import { createDomainId, nowIso } from '@/shared/domain/entity';
 
 export const SEED_01_PROFILE = 'seed-01' as const;
-export const SEED_01_VERSION = 12 as const;
+export const SEED_01_VERSION = 14 as const;
 
 const PANELS = ['A3', 'A2', 'A1', 'B3', 'B2', 'B1'] as const;
 type PanelName = (typeof PANELS)[number];
@@ -36,8 +41,10 @@ interface BreakerSpec {
   readonly destination: string;
   /** Source workbook row used as the authoritative Feed A/B pairing key. */
   readonly sourceRow: number;
-  readonly legacyPanel: 'A1' | 'A2' | 'B1' | 'B2';
-  readonly legacyPosition: number;
+  readonly legacyPanel?: 'A1' | 'A2' | 'B1' | 'B2';
+  readonly legacyPosition?: number;
+  /** Previous workbook remark value used only to distinguish source-managed text from operator edits. */
+  readonly previousRemarks?: readonly string[];
   /** Workbook SUB-EQUIPO content is evidence/remark only; never materialized as Equipment. */
   readonly remarks?: readonly string[];
 }
@@ -55,7 +62,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 2,
-    destination: 'GRTLuren3 PSU0 A0',
+    destination: 'GRTLUREM3 PSU0 A0',
     sourceRow: 1,
     legacyPanel: 'A1',
     legacyPosition: 1,
@@ -63,7 +70,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 2,
-    destination: 'GRTLuren3 PSU0 B0',
+    destination: 'GRTLUREM3 PSU0 B0',
     sourceRow: 1,
     legacyPanel: 'B1',
     legacyPosition: 1,
@@ -71,7 +78,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 3,
-    destination: 'GRTLuren3 PSU0 A1',
+    destination: 'GRTLUREM3 PSU0 A1',
     sourceRow: 2,
     legacyPanel: 'A1',
     legacyPosition: 2,
@@ -79,7 +86,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 3,
-    destination: 'GRTLuren3 PSU0 B1',
+    destination: 'GRTLUREM3 PSU0 B1',
     sourceRow: 2,
     legacyPanel: 'B1',
     legacyPosition: 2,
@@ -87,7 +94,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 4,
-    destination: 'GRTLuren3 PSU1 A0',
+    destination: 'GRTLUREM3 PSU1 A0',
     sourceRow: 3,
     legacyPanel: 'A1',
     legacyPosition: 3,
@@ -95,7 +102,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 4,
-    destination: 'GRTLuren3 PSU1 B0',
+    destination: 'GRTLUREM3 PSU1 B0',
     sourceRow: 3,
     legacyPanel: 'B1',
     legacyPosition: 3,
@@ -119,7 +126,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 5,
-    destination: 'GRTLuren3 PSU1 A1',
+    destination: 'GRTLUREM3 PSU1 A1',
     sourceRow: 5,
     legacyPanel: 'A2',
     legacyPosition: 1,
@@ -127,7 +134,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 5,
-    destination: 'GRTLuren3 PSU1 B1',
+    destination: 'GRTLUREM3 PSU1 B1',
     sourceRow: 5,
     legacyPanel: 'B2',
     legacyPosition: 1,
@@ -135,7 +142,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 6,
-    destination: 'GRTLuren3 PSU2 A0',
+    destination: 'GRTLUREM3 PSU2 A0',
     sourceRow: 6,
     legacyPanel: 'A2',
     legacyPosition: 2,
@@ -143,7 +150,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 6,
-    destination: 'GRTLuren3 PSU2 B0',
+    destination: 'GRTLUREM3 PSU2 B0',
     sourceRow: 6,
     legacyPanel: 'B2',
     legacyPosition: 2,
@@ -151,7 +158,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 7,
-    destination: 'GRTLuren3 PSU2 A1',
+    destination: 'GRTLUREM3 PSU2 A1',
     sourceRow: 7,
     legacyPanel: 'A2',
     legacyPosition: 3,
@@ -159,7 +166,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 7,
-    destination: 'GRTLuren3 PSU2 B1',
+    destination: 'GRTLUREM3 PSU2 B1',
     sourceRow: 7,
     legacyPanel: 'B2',
     legacyPosition: 3,
@@ -167,7 +174,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 8,
-    destination: 'DTX-LUR-FP2-01 SH15 PEM A1.1',
+    destination: 'DTX-LUR-FP2-01 SH15 PA1-1',
     sourceRow: 8,
     legacyPanel: 'A2',
     legacyPosition: 6,
@@ -175,7 +182,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 8,
-    destination: 'DTX-LUR-FP2-01 SH15 PEM B1.1',
+    destination: 'DTX-LUR-FP2-01 SH15 PB1-1',
     sourceRow: 8,
     legacyPanel: 'B2',
     legacyPosition: 6,
@@ -183,7 +190,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 9,
-    destination: 'DTX-LUR-FP2-01 SH15 PEM A1.2',
+    destination: 'DTX-LUR-FP2-01 SH15 PA1-2',
     sourceRow: 9,
     legacyPanel: 'A2',
     legacyPosition: 7,
@@ -191,7 +198,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 9,
-    destination: 'DTX-LUR-FP2-01 SH15 PEM B1.2',
+    destination: 'DTX-LUR-FP2-01 SH15 PB1-2',
     sourceRow: 9,
     legacyPanel: 'B2',
     legacyPosition: 7,
@@ -199,7 +206,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 10,
-    destination: 'DTX-LUR-FP2-01 SH15 PEM A2.1',
+    destination: 'DTX-LUR-FP2-01 SH15 PA2-1',
     sourceRow: 10,
     legacyPanel: 'A2',
     legacyPosition: 8,
@@ -207,7 +214,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 10,
-    destination: 'DTX-LUR-FP2-01 SH15 PEM B2.1',
+    destination: 'DTX-LUR-FP2-01 SH15 PB2-1',
     sourceRow: 10,
     legacyPanel: 'B2',
     legacyPosition: 8,
@@ -215,7 +222,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 11,
-    destination: 'DTX-LUR-FP2-01 SH15 PEM A2.2',
+    destination: 'DTX-LUR-FP2-01 SH15 PA2-2',
     sourceRow: 11,
     legacyPanel: 'A2',
     legacyPosition: 14,
@@ -223,7 +230,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 11,
-    destination: 'DTX-LUR-FP2-01 SH15 PEM B2.2',
+    destination: 'DTX-LUR-FP2-01 SH15 PB2-2',
     sourceRow: 11,
     legacyPanel: 'B2',
     legacyPosition: 14,
@@ -231,7 +238,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 12,
-    destination: 'DTX-LUR-FP2-01 SH15 PEM A3.1',
+    destination: 'DTX-LUR-FP2-01 SH15 PA3-1',
     sourceRow: 12,
     legacyPanel: 'A2',
     legacyPosition: 15,
@@ -239,7 +246,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 12,
-    destination: 'DTX-LUR-FP2-01 SH15 PEM B3.1',
+    destination: 'DTX-LUR-FP2-01 SH15 PB3-1',
     sourceRow: 12,
     legacyPanel: 'B2',
     legacyPosition: 15,
@@ -247,7 +254,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 13,
-    destination: 'DTX-LUR-FP2-01 SH15 PEM A3.2',
+    destination: 'DTX-LUR-FP2-01 SH15 PA3-2',
     sourceRow: 13,
     legacyPanel: 'A2',
     legacyPosition: 16,
@@ -255,7 +262,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 13,
-    destination: 'DTX-LUR-FP2-01 SH15 PEM B3.2',
+    destination: 'DTX-LUR-FP2-01 SH15 PB3-2',
     sourceRow: 13,
     legacyPanel: 'B2',
     legacyPosition: 16,
@@ -314,7 +321,7 @@ const QDF_4_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 4,
-    destination: 'DTN-LUR-FP4-01 SH1 A',
+    destination: 'DTN-LUR-FP4-01 SH1 PWR:A',
     sourceRow: 4,
     legacyPanel: 'A2',
     legacyPosition: 5,
@@ -322,7 +329,7 @@ const QDF_4_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 4,
-    destination: 'DTN-LUR-FP4-01 SH1 B',
+    destination: 'DTN-LUR-FP4-01 SH1 PWR:B',
     sourceRow: 4,
     legacyPanel: 'B2',
     legacyPosition: 5,
@@ -330,7 +337,7 @@ const QDF_4_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 5,
-    destination: 'DTN-LUR-FP4-01 SH2 A',
+    destination: 'DTN-LUR-FP4-01 SH2 PWR:A',
     sourceRow: 5,
     legacyPanel: 'A2',
     legacyPosition: 10,
@@ -338,7 +345,7 @@ const QDF_4_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 5,
-    destination: 'DTN-LUR-FP4-01 SH2 B',
+    destination: 'DTN-LUR-FP4-01 SH2 PWR:B',
     sourceRow: 5,
     legacyPanel: 'B2',
     legacyPosition: 10,
@@ -359,13 +366,25 @@ const QDF_4_BREAKERS: readonly BreakerSpec[] = [
     legacyPanel: 'B2',
     legacyPosition: 16,
   },
+  {
+    panel: 'A3',
+    position: 7,
+    destination: 'Orion',
+    sourceRow: 7,
+  },
+  {
+    panel: 'B3',
+    position: 7,
+    destination: 'Orion',
+    sourceRow: 7,
+  },
 ];
 
 const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 1,
-    destination: 'WS-LUR-04 PS1',
+    destination: 'WS-LUR-04 PSU1',
     sourceRow: 9,
     legacyPanel: 'A2',
     legacyPosition: 5,
@@ -373,7 +392,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 1,
-    destination: 'WS-LUR-04 PS2',
+    destination: 'WS-LUR-04 PSU2',
     sourceRow: 9,
     legacyPanel: 'B2',
     legacyPosition: 5,
@@ -397,7 +416,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 3,
-    destination: 'GXLUR02 SH01 PEM1',
+    destination: 'GX-LUR-02 SH01 PEM 1',
     sourceRow: 1,
     legacyPanel: 'A1',
     legacyPosition: 6,
@@ -405,7 +424,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 3,
-    destination: 'GXLUR02 SH1 PEM3',
+    destination: 'GX-LUR-02 SH01 PEM 3',
     sourceRow: 1,
     legacyPanel: 'B1',
     legacyPosition: 6,
@@ -413,7 +432,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 4,
-    destination: 'GXLUR02 SH01 PEM2',
+    destination: 'GX-LUR-02 SH01 PEM 2',
     sourceRow: 2,
     legacyPanel: 'A1',
     legacyPosition: 7,
@@ -421,7 +440,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 4,
-    destination: 'GXLUR02 SH1 PEM4',
+    destination: 'GX-LUR-02 SH01 PEM 4',
     sourceRow: 2,
     legacyPanel: 'B1',
     legacyPosition: 7,
@@ -429,7 +448,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 5,
-    destination: 'GXLUR01 SH2 PEM1',
+    destination: 'GX-LUR-01 SH02 PEM 1',
     sourceRow: 4,
     legacyPanel: 'A1',
     legacyPosition: 14,
@@ -437,7 +456,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 5,
-    destination: 'GXLUR01 SH2 PEM3',
+    destination: 'GX-LUR-01 SH02 PEM 3',
     sourceRow: 4,
     legacyPanel: 'B1',
     legacyPosition: 14,
@@ -445,7 +464,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 6,
-    destination: 'GXLUR01 SH2 PEM2',
+    destination: 'GX-LUR-01 SH02 PEM 2',
     sourceRow: 5,
     legacyPanel: 'A1',
     legacyPosition: 15,
@@ -453,7 +472,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 6,
-    destination: 'GXLUR01 SH2 PEM4',
+    destination: 'GX-LUR-01 SH02 PEM 4',
     sourceRow: 5,
     legacyPanel: 'B1',
     legacyPosition: 15,
@@ -461,7 +480,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 7,
-    destination: 'WS-LUR-02 L1',
+    destination: 'WS-LUR-02 PSU1',
     sourceRow: 6,
     legacyPanel: 'A1',
     legacyPosition: 16,
@@ -469,7 +488,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 7,
-    destination: 'WS-LUR-02 L2',
+    destination: 'WS-LUR-02 PSU2',
     sourceRow: 6,
     legacyPanel: 'B1',
     legacyPosition: 16,
@@ -477,7 +496,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 8,
-    destination: 'CAR-LUR-01 L1',
+    destination: 'CAR-LUR-01 PSA',
     sourceRow: 7,
     legacyPanel: 'A1',
     legacyPosition: 22,
@@ -485,7 +504,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 8,
-    destination: 'CAR-LUR-01 L2',
+    destination: 'CAR-LUR-01 PSB',
     sourceRow: 7,
     legacyPanel: 'B1',
     legacyPosition: 22,
@@ -493,7 +512,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 9,
-    destination: 'WS-LUR-03 L1',
+    destination: 'WS-LUR-03 PSU1',
     sourceRow: 8,
     legacyPanel: 'A1',
     legacyPosition: 23,
@@ -501,7 +520,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 9,
-    destination: 'WS-LUR-03 L2',
+    destination: 'WS-LUR-03 PSU2',
     sourceRow: 8,
     legacyPanel: 'B1',
     legacyPosition: 23,
@@ -621,7 +640,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 17,
-    destination: '010208.14 PDU1-A',
+    destination: 'PDU1-A',
     sourceRow: 13,
     legacyPanel: 'A2',
     legacyPosition: 10,
@@ -630,7 +649,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 17,
-    destination: '010208.14 PDU1-B',
+    destination: 'PDU1-B',
     sourceRow: 13,
     legacyPanel: 'B2',
     legacyPosition: 10,
@@ -639,30 +658,34 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 18,
-    destination: '010208.13 PDU1-A',
+    destination: 'PDU1-A',
     sourceRow: 14,
     legacyPanel: 'A2',
     legacyPosition: 11,
-    remarks: ['Pos-1: MTC-9 SH1 PEM A', 'Pos-2: MTC-9 SH4 PEM A'],
+    previousRemarks: ['Pos-1: MTC-9 SH1 PEM A', 'Pos-2: MTC-9 SH4 PEM A'],
+    remarks: ['Pos-1: MTC-9 SH01 PEM A', 'Pos-2: MTC-9 SH04 PEM A'],
   },
   {
     panel: 'B3',
     position: 18,
-    destination: '010208.13 PDU1-B',
+    destination: 'PDU1-B',
     sourceRow: 14,
     legacyPanel: 'B2',
     legacyPosition: 11,
-    remarks: ['Pos-1: MTC-9 SH1 PEM B', 'Pos-2: MTC-9 SH4 PEM B'],
+    previousRemarks: ['Pos-1: MTC-9 SH1 PEM B', 'Pos-2: MTC-9 SH4 PEM B'],
+    remarks: ['Pos-1: MTC-9 SH01 PEM B', 'Pos-2: MTC-9 SH04 PEM B'],
   },
 ];
 
-// Important: these schedules close the declared A/B feeds only. The remote targets
-// are NOT materialized as Equipment because their bay/rack/U placement is not yet known.
+// Important: these schedules close the declared A/B feeds only. The final AID workbook
+// confirms the destination rack association, but remote targets are NOT materialized as
+// Equipment/PDU because rack-U placement and canonical topology identity remain unverified.
 
 /**
  * Field schedule: Distribución tributarios en QDF nuevos.xlsx (2026-11-11).
  * These are documentary nominal ratings and DESTINATION labels, not alarm thresholds,
- * live breaker states, certified PowerPaths, or verified physical rack assignments.
+ * live breaker states or certified PowerPaths. The separate AID/RackAID workbook now
+ * confirms the physical destination rack reference without confirming rack-U placement.
  * QDF-4 A3/B3 position 7 is intentionally absent: no breaker is materialized from
  * a named reservation in the source worksheet.
  */
@@ -697,6 +720,12 @@ export const BREAKER_FIELD_SCHEDULE: Readonly<
   'QDF-4:4': { ratedCurrentA: 100, targetFootprint: '010206.15', documentedStatus: 'IN_SERVICE' },
   'QDF-4:5': { ratedCurrentA: 100, targetFootprint: '010206.15', documentedStatus: 'IN_SERVICE' },
   'QDF-4:6': { ratedCurrentA: 60, targetFootprint: '010205.20', documentedStatus: 'IN_SERVICE' },
+  'QDF-4:7': {
+    ratedCurrentA: 80,
+    targetFootprint: '010205.16',
+    documentedStatus: 'OFF',
+    replacementTargetA: 60,
+  },
   ...Object.fromEntries(
     Array.from({ length: 18 }, (_, index) => {
       const position = index + 1;
@@ -722,7 +751,7 @@ export const BREAKER_FIELD_SCHEDULE: Readonly<
     }),
   ),
 };
-const BREAKER_FIELD_SCHEDULE_SOURCE = 'Distribución tributarios en QDF nuevos.xlsx';
+const BREAKER_FIELD_SCHEDULE_SOURCE = POWER_TARGET_IDENTITY_SOURCE;
 
 const BDFBS: readonly BdfbSpec[] = [
   {
@@ -1649,15 +1678,69 @@ async function ensureDeclaredFeedPairs(
       throw new Error(
         `SEED_01_FIELD_SCHEDULE_MISSING: ${spec.key}/${breaker.panel}/${breaker.position}`,
       );
+
+    const targetIdentity = parseDeclaredPowerTarget(breaker.destination, {
+      targetFootprint: field.targetFootprint,
+      feed,
+    });
+    if (!targetIdentity || !targetIdentity.rackAid) {
+      throw new Error(
+        `SEED_01_TARGET_IDENTITY_CONFLICT: cannot resolve ${spec.key}/${breaker.panel}/${breaker.position}`,
+      );
+    }
+    const rackAssociation = findPowerTargetRackAssociation(
+      spec.key,
+      field.targetFootprint,
+      targetIdentity.canonicalEquipmentName,
+    );
+    if (
+      !rackAssociation ||
+      rackAssociation.rackAid !== targetIdentity.rackAid ||
+      rackAssociation.kind !== targetIdentity.targetKind
+    ) {
+      throw new Error(
+        `SEED_01_TARGET_IDENTITY_CONFLICT: rack association mismatch for ${breaker.destination}`,
+      );
+    }
+    if (
+      targetIdentity.targetKind === 'PDU' &&
+      (rackAssociation.baseAid !== targetIdentity.baseAid ||
+        (feed === 'A' ? rackAssociation.feedAidA : rackAssociation.feedAidB) !== targetIdentity.aid)
+    ) {
+      throw new Error(
+        `SEED_01_TARGET_IDENTITY_CONFLICT: PDU AID mismatch for ${breaker.destination}`,
+      );
+    }
+
+    const associationRemarks = feed === 'A' ? rackAssociation.remarksA : rackAssociation.remarksB;
+    if (
+      breaker.remarks?.length &&
+      associationRemarks?.length &&
+      JSON.stringify(breaker.remarks) !== JSON.stringify(associationRemarks)
+    ) {
+      throw new Error(
+        `SEED_01_TARGET_IDENTITY_CONFLICT: remarks mismatch for ${breaker.destination}`,
+      );
+    }
+    const documentaryRemarks = breaker.remarks ?? associationRemarks ?? [];
+
     const declaredPower = {
-      contractVersion: 1,
+      contractVersion: 3,
       state: 'DECLARED' as const,
-      sourceDocument: 'Lista de Equipos QDF mop 1 - actualizado',
+      sourceDocument: POWER_TARGET_IDENTITY_SOURCE,
+      identitySourceDocument: POWER_TARGET_IDENTITY_SOURCE,
       qdf: spec.key,
       sourceRow: breaker.sourceRow,
       pairId: `seed01:${spec.key}:row:${breaker.sourceRow}`,
       feed,
       targetLabel: breaker.destination,
+      targetEntityName: targetIdentity.equipmentName,
+      targetCanonicalEntityName: targetIdentity.canonicalEquipmentName,
+      targetKind: targetIdentity.targetKind,
+      targetAid: targetIdentity.aid,
+      targetLocalAid: targetIdentity.localAid,
+      targetRackAid: targetIdentity.rackAid,
+      ...(targetIdentity.baseAid ? { targetBaseAid: targetIdentity.baseAid } : {}),
       documentedRatingA: field.ratedCurrentA,
       targetFootprint: field.targetFootprint,
       documentedStatus: field.documentedStatus,
@@ -1667,10 +1750,14 @@ async function ensureDeclaredFeedPairs(
         panel: breaker.panel,
         position: breaker.position,
       },
-      legacyBreaker: {
-        panel: breaker.legacyPanel,
-        position: breaker.legacyPosition,
-      },
+      ...(breaker.legacyPanel && breaker.legacyPosition !== undefined
+        ? {
+            legacyBreaker: {
+              panel: breaker.legacyPanel,
+              position: breaker.legacyPosition,
+            },
+          }
+        : {}),
       companionFeed: {
         feed: breakerFeed(companion.panel),
         breakerId: companionId,
@@ -1678,13 +1765,15 @@ async function ensureDeclaredFeedPairs(
         position: companion.position,
         targetLabel: companion.destination,
       },
-      remarks: [...(breaker.remarks ?? [])],
-      targetPlacement: 'UNKNOWN' as const,
+      remarks: [...documentaryRemarks],
+      remarksSemantics: 'DOCUMENTARY_EDITABLE_NO_INDIVIDUAL_TELEMETRY' as const,
+      targetPlacement: 'RACK_ASSOCIATED_U_UNKNOWN' as const,
       targetMaterialization: 'NOT_CREATED' as const,
     };
 
-    // Preserve operator-corrected destination/pair/placement assertions during a
-    // version upgrade. The new worksheet facts fill missing documentary fields only.
+    // v14 is source-authoritative for the 19.11 workbook, but must not overwrite
+    // an operator correction. A target is source-managed only while its current
+    // declaration still matches one of the breaker's pre-upgrade aliases.
     const previousDeclaration = current.attributes?.declaredPower;
     const existingDeclared =
       previousDeclaration &&
@@ -1692,20 +1781,98 @@ async function ensureDeclaredFeedPairs(
       !Array.isArray(previousDeclaration)
         ? (previousDeclaration as Record<string, unknown>)
         : null;
+    const existingTargetLabel =
+      typeof existingDeclared?.targetLabel === 'string' ? existingDeclared.targetLabel : undefined;
+    const sourceManagedTarget =
+      !existingDeclared ||
+      !existingTargetLabel ||
+      (current.aliases ?? []).some(
+        (alias) => normalizedName(alias) === normalizedName(existingTargetLabel),
+      );
+    const existingRemarks = Array.isArray(existingDeclared?.remarks)
+      ? existingDeclared.remarks.filter((value): value is string => typeof value === 'string')
+      : undefined;
+    const sourceManagedRemarks =
+      !existingDeclared ||
+      !existingRemarks ||
+      (breaker.previousRemarks
+        ? JSON.stringify(existingRemarks) === JSON.stringify(breaker.previousRemarks)
+        : JSON.stringify(existingRemarks) === JSON.stringify(documentaryRemarks));
+
+    const targetAliases = [
+      ...new Set([...(current.aliases ?? []), breaker.destination].map((value) => value.trim())),
+    ].filter(Boolean);
+    const priorAid =
+      typeof existingDeclared?.targetAid === 'string' ? existingDeclared.targetAid.trim() : '';
+    const priorAidAliases = Array.isArray(existingDeclared?.targetAidAliases)
+      ? existingDeclared.targetAidAliases.filter(
+          (value): value is string => typeof value === 'string' && Boolean(value.trim()),
+        )
+      : [];
+    const targetAidAliases = [
+      ...new Set(
+        [
+          ...priorAidAliases,
+          ...(sourceManagedTarget && priorAid && priorAid !== declaredPower.targetAid
+            ? [priorAid]
+            : []),
+        ]
+          .map((value) => value.trim())
+          .filter(Boolean),
+      ),
+    ];
+
     const mergedDeclaredPower = existingDeclared
       ? {
           ...declaredPower,
           ...existingDeclared,
+          contractVersion: Math.max(
+            typeof existingDeclared.contractVersion === 'number'
+              ? existingDeclared.contractVersion
+              : 0,
+            3,
+          ),
+          targetAliases,
+          ...(targetAidAliases.length ? { targetAidAliases } : {}),
+          ...(sourceManagedTarget
+            ? {
+                sourceDocument: declaredPower.sourceDocument,
+                identitySourceDocument: declaredPower.identitySourceDocument,
+                targetLabel: declaredPower.targetLabel,
+                targetEntityName: declaredPower.targetEntityName,
+                targetCanonicalEntityName: declaredPower.targetCanonicalEntityName,
+                targetKind: declaredPower.targetKind,
+                targetAid: declaredPower.targetAid,
+                targetLocalAid: declaredPower.targetLocalAid,
+                targetRackAid: declaredPower.targetRackAid,
+                ...(declaredPower.targetBaseAid
+                  ? { targetBaseAid: declaredPower.targetBaseAid }
+                  : {}),
+                currentBreaker: declaredPower.currentBreaker,
+                companionFeed: declaredPower.companionFeed,
+              }
+            : {}),
+          remarks: sourceManagedRemarks ? declaredPower.remarks : existingRemarks,
+          remarksSemantics: existingDeclared.remarksSemantics ?? declaredPower.remarksSemantics,
+          targetPlacement:
+            existingDeclared.targetPlacement === undefined ||
+            existingDeclared.targetPlacement === 'UNKNOWN'
+              ? declaredPower.targetPlacement
+              : existingDeclared.targetPlacement,
           documentedRatingA: existingDeclared.documentedRatingA ?? field.ratedCurrentA,
           targetFootprint: existingDeclared.targetFootprint ?? field.targetFootprint,
           documentedStatus: existingDeclared.documentedStatus ?? field.documentedStatus,
-          fieldScheduleSource:
-            existingDeclared.fieldScheduleSource ?? BREAKER_FIELD_SCHEDULE_SOURCE,
-          ...(field.replacementTargetA && existingDeclared.replacementTargetA === undefined
-            ? { replacementTargetA: field.replacementTargetA }
+          fieldScheduleSource: BREAKER_FIELD_SCHEDULE_SOURCE,
+          ...(field.replacementTargetA
+            ? {
+                replacementTargetA: existingDeclared.replacementTargetA ?? field.replacementTargetA,
+              }
             : {}),
         }
-      : declaredPower;
+      : {
+          ...declaredPower,
+          targetAliases,
+        };
 
     // Never overwrite an existing commissioned/verified rating or alarm policy.
     // A documentary rating is a field fact, not an enabled overcurrent threshold.
@@ -1722,8 +1889,10 @@ async function ensureDeclaredFeedPairs(
           },
         }
       : {};
+    const mergedAliases = [...new Set([...(current.aliases ?? []), breaker.destination])];
     if (
       JSON.stringify(current.attributes?.declaredPower) === JSON.stringify(mergedDeclaredPower) &&
+      JSON.stringify(current.aliases ?? []) === JSON.stringify(mergedAliases) &&
       !canSeedRating
     )
       continue;
@@ -1731,6 +1900,7 @@ async function ensureDeclaredFeedPairs(
     before.push(current);
     after.push({
       ...current,
+      aliases: mergedAliases,
       attributes: {
         ...(current.attributes ?? {}),
         ...ratingPatch,

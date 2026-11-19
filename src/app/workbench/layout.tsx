@@ -5,6 +5,7 @@ import { SiteMapperProductHeader } from '@/shared/ui/site-mapper-product-header'
 
 import './workbench.css';
 import './power-trace.css';
+import './powered-equipment.css';
 
 export default async function WorkbenchLayout({ children }: Readonly<{ children: ReactNode }>) {
   const t = await getTranslations('shell');

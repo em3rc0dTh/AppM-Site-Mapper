@@ -1,23 +1,15 @@
 name: TEMP workbook-v2 prettier preview
 
 on:
-  pull_request:
-    paths:
-      - 'docs/architecture/powered-equipment-connection-diagram.md'
-      - 'docs/operations/qdf-power-target-aid-rack-map.md'
-      - 'src/app/workbench/powered-equipment.css'
-      - 'src/modules/power/application/powered-equipment-projection-service.ts'
-      - 'src/seeds/seed-01.ts'
-      - 'tests/unit/powered-equipment-projection.test.ts'
-      - 'tests/unit/seed01-power-target-identity.test.ts'
-      - '.github/workflows/tmp-workbook-v2-format.yml'
+  push:
+    branches:
+      - 'feat/powered-equipment-connections-20261119'
 
 permissions:
   contents: read
 
 jobs:
   preview:
-    if: github.head_ref == 'feat/powered-equipment-connections-20261119'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

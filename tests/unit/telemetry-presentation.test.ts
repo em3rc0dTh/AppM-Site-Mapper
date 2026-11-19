@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   breakerTelemetryMetrics,
   panelReportedPoints,
+  resolveBreakerLiveMetrics,
   telemetryMetrics,
 } from '@/components/telemetry/telemetry-presentation';
+import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 
 describe('telemetry presentation truth boundary', () => {
   it('preserves explicit units and nested source labels without inventing units', () => {
@@ -25,6 +27,62 @@ describe('telemetry presentation truth boundary', () => {
       breakerTelemetryMetrics(reading as Parameters<typeof breakerTelemetryMetrics>[0]),
     ).toEqual([{ label: 'Power', value: '9.720', unit: 'kW' }]);
     expect(reading.metrics.powerW.value).toBe(9720);
+  });
+
+  it('renders canonical direct Equipment breaker telemetry from sample.reported', () => {
+    const observedAt = '2026-11-19T22:20:00.000Z';
+    const direct: TelemetrySample = {
+      bindingId: 'binding-a3-03',
+      targetId: 'breaker-a3-03',
+      targetType: 'EQUIPMENT',
+      entityId: 'breaker-a3-03',
+      entityKind: 'EQUIPMENT',
+      sourceIdentity: '26092403950002',
+      sourcePointId: '0_3_3',
+      metricBindingIds: ['v', 'i', 'p', 'e'],
+      receivedAt: '2026-11-19T22:20:00.250Z',
+      reported: {
+        voltageV: { value: 52.41, unit: 'V', observedAt },
+        currentA: { value: 7.8, unit: 'A', observedAt },
+        powerW: { value: 408.798, unit: 'W', observedAt },
+        energyKwh: { value: 12.3456, unit: 'kWh', observedAt },
+      },
+    };
+
+    expect(resolveBreakerLiveMetrics(direct, 'breaker-a3-03')).toEqual({
+      receivedAt: direct.receivedAt,
+      voltageV: 52.41,
+      currentA: 7.8,
+      powerW: 408.798,
+      energyKwh: 12.3456,
+    });
+  });
+
+  it('retains aggregate breakerReadings as fallback when the sample is a parent projection', () => {
+    const aggregate = {
+      targetId: 'qdf-5',
+      targetType: 'DEVICE',
+      breakerReadings: [
+        {
+          breakerId: 'breaker-a3-03',
+          receivedAt: '2026-11-19T22:21:00.000Z',
+          metrics: {
+            voltageV: { value: 53.1 },
+            currentA: { value: 8.2 },
+            powerW: { value: 435.42 },
+            energyKwh: { value: 12.4 },
+          },
+        },
+      ],
+    } as unknown as TelemetrySample;
+
+    expect(resolveBreakerLiveMetrics(aggregate, 'breaker-a3-03')).toEqual({
+      receivedAt: '2026-11-19T22:21:00.000Z',
+      voltageV: 53.1,
+      currentA: 8.2,
+      powerW: 435.42,
+      energyKwh: 12.4,
+    });
   });
 
   it('keeps zero values and omits null/arrays from the scalar overview', () => {

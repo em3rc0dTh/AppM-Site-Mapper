@@ -39,14 +39,8 @@ describe('seed-01 power target rack/AID workbook identity', () => {
 
   it('preserves POS-N as documentary remarks without making them endpoints', () => {
     const pdu = findPowerTargetRackAssociation('QDF-5', '010208.14', 'PDU 01');
-    expect(pdu?.remarksA).toEqual([
-      'Pos-1: MTC-9 SH10 PEM A',
-      'Pos-2: XTM-LUR01 PEM A',
-    ]);
-    expect(pdu?.remarksB).toEqual([
-      'Pos-1: MTC-9 SH10 PEM B',
-      'Pos-2: XTM-LUR01 PEM B',
-    ]);
+    expect(pdu?.remarksA).toEqual(['Pos-1: MTC-9 SH10 PEM A', 'Pos-2: XTM-LUR01 PEM A']);
+    expect(pdu?.remarksB).toEqual(['Pos-1: MTC-9 SH10 PEM B', 'Pos-2: XTM-LUR01 PEM B']);
   });
 
   it('retains association-only equipment that has no breaker row without inventing power', () => {

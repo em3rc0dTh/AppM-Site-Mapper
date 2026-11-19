@@ -39,9 +39,12 @@ const fail = (reason) => {
 
 if (!mongoUri) fail('MONGODB_URI must be set privately in the runtime environment');
 if (!qdfs.length) fail('--qdfs must contain at least one QDF');
-if (!Number.isInteger(expectedBreakers) || expectedBreakers < 1) fail('invalid --expected-breakers');
+if (!Number.isInteger(expectedBreakers) || expectedBreakers < 1)
+  fail('invalid --expected-breakers');
 if (apply && (ack !== 'RECONCILE_FIELD_POWER_PATHS' || !backupPath)) {
-  fail('--apply requires --ack RECONCILE_FIELD_POWER_PATHS and --backup .runtime/<private-file>.json');
+  fail(
+    '--apply requires --ack RECONCILE_FIELD_POWER_PATHS and --backup .runtime/<private-file>.json',
+  );
 }
 if (apply && !path.resolve(backupPath).includes(path.sep + '.runtime' + path.sep)) {
   fail('backup must be stored under a private .runtime/ directory');
@@ -460,7 +463,8 @@ try {
         created: creates.length,
         database: databaseName,
         backupPath,
-        note: 'Only PowerPath records were eligible for insertion; topology and AccessPorts were untouched.',
+        note:
+          'Only PowerPath records were eligible for insertion; topology and AccessPorts were untouched.',
       }),
     );
   }

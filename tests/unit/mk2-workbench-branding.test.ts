@@ -10,13 +10,20 @@ describe('Mk2 shared product header', () => {
   it('uses one reusable product header in AppShell and detached workbenches', () => {
     const appShell = source('src/shared/ui/app-shell.tsx');
     const workbench = source('src/app/workbench/layout.tsx');
+    const workbenchHeader = source('src/components/workbench/workbench-product-header.tsx');
     const productHeader = source('src/shared/ui/site-mapper-product-header.tsx');
 
     expect(appShell).toContain('<SiteMapperProductHeader');
-    expect(workbench).toContain('<SiteMapperProductHeader');
+    expect(workbench).toContain('<WorkbenchProductHeader');
 
     expect(appShell).not.toContain('<SiteMapperBrand variant="compact"');
     expect(workbench).not.toContain('<SiteMapperBrand variant="compact"');
+
+    expect(workbenchHeader).toContain("pathname.startsWith('/workbench/powered-equipment')");
+    expect(workbenchHeader).toContain('<SiteMapperBrand variant="compact" tagline={tagline} />');
+    expect(workbenchHeader).toContain(
+      '<SiteMapperProductHeader tagline={tagline} ariaLabel={ariaLabel} />',
+    );
 
     expect(productHeader).toContain('<SiteMapperBrand variant="compact" tagline={tagline} />');
     expect(productHeader).toContain('className="sm-product-header-home"');
@@ -33,6 +40,15 @@ describe('Mk2 shared product header', () => {
     expect(css).toContain('color: #fff;');
     expect(css).toContain('width: 44px;');
     expect(css).toContain('height: 44px;');
+  });
+
+  it('removes Home navigation from the powered-equipment independent workbench only', () => {
+    const workbenchHeader = source('src/components/workbench/workbench-product-header.tsx');
+
+    expect(workbenchHeader).toContain("pathname.startsWith('/workbench/powered-equipment')");
+    expect(workbenchHeader).toContain('sm-product-header--static');
+    expect(workbenchHeader).toContain('<SiteMapperBrand variant="compact" tagline={tagline} />');
+    expect(workbenchHeader).not.toContain('href="/workspace"');
   });
 
   it('keeps Power Trace free of the legacy MK1 identity', () => {

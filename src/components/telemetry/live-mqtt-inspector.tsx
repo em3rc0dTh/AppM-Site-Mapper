@@ -53,9 +53,13 @@ function displaySource(sample: TelemetrySample): string {
 }
 
 function readingMatchesContext(reading: BreakerTelemetryReading, context: string): boolean {
-  return [reading.deviceId, reading.shelfId, reading.frameId, reading.panelId, reading.breakerId].some(
-    (id) => id && context.includes(id),
-  );
+  return [
+    reading.deviceId,
+    reading.shelfId,
+    reading.frameId,
+    reading.panelId,
+    reading.breakerId,
+  ].some((id) => id && context.includes(id));
 }
 
 function sourceMatchesContext(sample: TelemetrySample, context: string): boolean {
@@ -271,7 +275,9 @@ export function LiveMqttInspector() {
         <div className={styles.identity}>
           <CubeMark />
           <span className={styles.divider} aria-hidden="true" />
-          <h1><span>Live</span> Inspector</h1>
+          <h1>
+            <span>Live</span> Inspector
+          </h1>
         </div>
 
         <div className={styles.liveArea}>
@@ -316,10 +322,15 @@ export function LiveMqttInspector() {
 
         <label>
           <span>Alcance</span>
-          <select value={effectiveSelectedPanel} onChange={(event) => setSelectedPanel(event.target.value)}>
+          <select
+            value={effectiveSelectedPanel}
+            onChange={(event) => setSelectedPanel(event.target.value)}
+          >
             <option value="ALL">ALL</option>
             {panels.map((panel) => (
-              <option key={panel} value={panel}>{panel}</option>
+              <option key={panel} value={panel}>
+                {panel}
+              </option>
             ))}
           </select>
         </label>
@@ -327,7 +338,9 @@ export function LiveMqttInspector() {
         <div className={styles.packetMeta}>
           <div>
             <span>Último paquete</span>
-            <strong>{packet?.receivedAt ? new Date(packet.receivedAt).toLocaleString() : '—'}</strong>
+            <strong>
+              {packet?.receivedAt ? new Date(packet.receivedAt).toLocaleString() : '—'}
+            </strong>
           </div>
           <div>
             <span>Hace</span>
@@ -367,15 +380,14 @@ export function LiveMqttInspector() {
 
       {!packet ? (
         <section className={styles.empty}>
-          <strong>{streamState === 'reconnecting' ? 'Reconectando telemetría…' : 'Esperando MQTT…'}</strong>
+          <strong>
+            {streamState === 'reconnecting' ? 'Reconectando telemetría…' : 'Esperando MQTT…'}
+          </strong>
           <span>El inspector mostrará el último paquete BFDB aceptado por Site Mapper.</span>
         </section>
       ) : (
         <section
-          className={[
-            styles.content,
-            mode === 'split' ? styles.split : styles.single,
-          ].join(' ')}
+          className={[styles.content, mode === 'split' ? styles.split : styles.single].join(' ')}
         >
           {mode !== 'normalized' ? (
             <article className={styles.panel}>
@@ -413,10 +425,18 @@ export function LiveMqttInspector() {
 
       <footer className={styles.footer}>
         <div className={styles.rules}>
-          <span><b>V</b> fuente primaria</span>
-          <span><b>A</b> fuente primaria</span>
-          <span><b>kW</b> derivado V × A</span>
-          <span><b>kWh</b> energía derivada Site Mapper</span>
+          <span>
+            <b>V</b> fuente primaria
+          </span>
+          <span>
+            <b>A</b> fuente primaria
+          </span>
+          <span>
+            <b>kW</b> derivado V × A
+          </span>
+          <span>
+            <b>kWh</b> energía derivada Site Mapper
+          </span>
         </div>
         <button className={styles.pause} onClick={() => setPaused((value) => !value)}>
           {paused ? '▶ Reanudar' : 'Ⅱ Pausar'}

@@ -1,49 +1,23 @@
-# Powered Equipment & Connection Diagram — Additive Power Projection
+# Powered Equipment & Connection Diagram — additive projection v14
 
-**Status:** Implemented as additive read-only projection  
-**Date:** 2026-11-19  
-**Scope:** Power / declared field targets / connection diagram
+**Status:** implemented as additive read-only projection  
+**Current field source:** `Lista de Equipos NUEVO QDF-2-4-5  mop ver.19.11.2026.xlsx`  
+**Date:** 2026-11-19
 
 ## Purpose
 
-Site Mapper already stores declared electrical destinations on circuit breakers. Those
-destinations currently appear independently in global search as `POWER_TARGET` results, for
-example:
+Site Mapper already stores declared electrical destinations on circuit breakers. The connection
+diagram groups those endpoint declarations into the logical equipment they feed without creating a
+second physical inventory model.
 
 ```text
-GRTLuren3 PSU0 A0
-GRTLuren3 PSU0 A1
-GRTLuren3 PSU0 B0
-GRTLuren3 PSU0 B1
-```
-
-Field clarification established that these strings can describe multiple electrical
-endpoints of one powered telecom equipment instead of independent equipment identities.
-
-The implementation therefore adds a read-only `PoweredEquipment` projection without
-changing the existing breaker, topology, PowerPath or telemetry persistence contracts.
-
-## Non-breaking rule
-
-The existing data remains authoritative and untouched:
-
-```text
-CIRCUIT_BREAKER
-  aliases[]                 ← unchanged
-  attributes.declaredPower  ← unchanged
-  AccessPorts               ← unchanged
-  PowerPaths                ← unchanged
-```
-
-The new layer is derived:
-
-```text
-Breaker declaration
+Circuit Breaker
       │
       ▼
-Declared target / POWER_TARGET
+declaredPower.targetLabel / POWER_TARGET
       │
-      ├── AID projection (endpoint)
+      ▼
+Power endpoint / AID
       │
       ▼
 PoweredEquipment projection
@@ -52,66 +26,75 @@ PoweredEquipment projection
 Connection Diagram
 ```
 
-No new MongoDB collection is introduced in this phase. No topology node is created,
-renamed, moved or deleted.
+The projection remains read-only. No new MongoDB collection is introduced and no remote Equipment,
+PDU, AccessPort or PowerPath is created merely because a spreadsheet names a destination.
 
-## Identity
+## Identity versus display name
 
-A declared target such as:
+The 19.11 workbook demonstrates why display names must not be used as immutable identity.
 
-```text
-GRTLuren3 PSU0 A0
-```
-
-is interpreted as:
+Examples:
 
 ```text
-powered equipment: GRTLuren3
-module:            PSU0
-endpoint:          A0
-AID:               GRTLuren3::NoShelf::PSU0::A0
+Display source: GRTLUREM3
+Canonical logical equipment: GRTLuren3
+Projection key: grtluren3
 ```
 
-The AID identifies the declared electrical endpoint. It is **not** promoted to the
-canonical identity of a physical Site Mapper Device or Equipment. Rack AID is a
-documentary physical association and does not imply rack-U materialization.
+```text
+Current display: GX-LUR-02
+Legacy display: GXLUR02
+Projection key: gx-lur-02
+```
 
-The powered-equipment projection key is deterministic and local to this projection.
-For ordinary equipment it remains equipment-name based for backward compatibility.
-For PDU it is rack-scoped because the local PDU name may repeat. The projection key can
-later be replaced by a persisted canonical ID without changing existing `POWER_TARGET`
-or PowerPath identities.
+A current display change therefore does not produce a second powered equipment.
 
-## Supported parsing patterns
+The endpoint AID can legitimately change when the field endpoint notation changes. In that case the
+new AID becomes current and the old AID remains in compatibility history.
 
-The projection recognizes the field patterns already observed in the QDF reconciliation
-dataset, including:
+```text
+old: DTX-LUR-FP2-01::SH15::PEM::A1.1
+new: DTX-LUR-FP2-01::SH15::NoSlot::PA1-1
+```
 
-- `GRTLuren3 PSU0 A0`
-- `DTX-LUR-FP2-01 SH15 PEM A1.1`
-- `BB-LUR-04 SH2 A1`
+## Supported current endpoint notation
+
+The projection supports the current workbook patterns, including:
+
+- `GRTLUREM3 PSU0 A0`
+- `DTX-LUR-FP2-01 SH15 PA1-1` / `PB1-1`
+- `DTN-LUR-FP4-01 SH1 PWR:A` / `PWR:B`
+- `GX-LUR-02 SH01 PEM 1`
+- `WS-LUR-04 PSU1`
+- `CAR-LUR-01 PSA` / `PSB`
 - `PL-LUR-FPN3-1 SH20 FEED A`
-- `GXLUR02 SH01 PEM1`
-- `WS-LUR-01 PSU1`
+- `PDU1-A` / `PDU1-B`
+- `Orion` with Feed A/B supplied by breaker context.
 
-Shelf labels normalize leading zeroes for AID comparison, for example `SH01 → SH1`,
-while the original declared target label remains unchanged.
+Shelf zero-padding is normalized for endpoint identity:
+
+```text
+SH01 → SH1
+SH02 → SH2
+SH04 → SH4
+```
+
+Spaced module notation is normalized:
+
+```text
+PEM 1 → PEM1
+PEM 3 → PEM3
+```
 
 ## Rack AID and PDU identity
 
-The final workbook `Lista de Equipos QDF mop v2 AID + RackAID.xlsx` closes the
-previous PDU ambiguity.
+`HUELLA` is carried as documentary rack association:
 
-Workbook rules:
+```text
+010208.14 → RACK::010208.14
+```
 
-- `HUELLA` identifies the physical destination rack.
-- Rack identity is `RACK::<HUELLA>`.
-- `PDU 01` is a **local rack name** and may repeat in different racks.
-- Feed A and Feed B are two feeds of the **same PDU**, not two independent PDUs.
-- `POS-N` entries are editable documentary remarks; they do not create individual
-  telemetry endpoints.
-
-Therefore PDU identity is rack-scoped:
+PDU identity is rack-scoped because `PDU 01` can repeat:
 
 ```text
 RACK::010208.14::PDU01
@@ -119,156 +102,123 @@ RACK::010208.14::PDU01
 └── RACK::010208.14::PDU01::B
 ```
 
-The workbook's local endpoint AID is retained as supporting identity:
+The local field AID remains available:
 
 ```text
 PDU01::NoShelf::NoSlot::A
 PDU01::NoShelf::NoSlot::B
 ```
 
-For ordinary powered equipment the endpoint AID remains equipment-scoped, while the
-rack association is carried separately:
+PDU POS-N lines remain documentary remarks only; they do not create telemetry endpoints.
+
+## Orion
+
+The current workbook adds a real A/B breaker pair:
 
 ```text
-GRTLuren3::NoShelf::PSU0::A0
-rack: RACK::010202.09
+QDF-4 A3-07 → Orion
+QDF-4 B3-07 → Orion
+RackAID: RACK::010205.16
 ```
 
-This avoids changing the endpoint identity that was already accepted while making the
-physical rack association explicit.
+Because no lower-level endpoint is named, the projection derives a feed-specific documentary
+endpoint from breaker context:
 
-The workbook also contains `Orion` at `RACK::010205.16` without a corresponding
-breaker row. Site Mapper records that association as documentary source truth but does
-**not** invent a power connection or telemetry endpoint for Orion.
+```text
+Orion::NoShelf::NoSlot::FEED-A
+Orion::NoShelf::NoSlot::FEED-B
+```
 
-## Global search
+This is an endpoint projection, not creation of remote Orion Equipment topology.
 
-Ctrl/Cmd+K remains backward compatible.
+## Search and navigation
 
-Searching `GRTLuren3` now returns:
+Ctrl/Cmd+K remains backward compatible:
 
-1. a new `POWERED_EQUIPMENT` result that opens the complete connection diagram;
-2. the existing individual `POWER_TARGET` results.
+1. `POWERED_EQUIPMENT` groups all current endpoints of the logical equipment.
+2. Individual `POWER_TARGET` results remain searchable, including retained historical aliases.
 
-No existing search result type is removed.
-
-Searching a specific endpoint such as `GRTLuren3 PSU0 A0` also matches the grouped
-powered equipment because endpoint labels and AIDs are part of the projection search
-surface.
-
-## Connection diagram
-
-The detached route is:
+The detached route remains:
 
 ```text
 /workbench/powered-equipment?key={projection-key}
 ```
 
-and also accepts an existing declared target:
+Power Path uses breaker identity:
 
 ```text
-/workbench/powered-equipment?target={declared-target}
+/workbench/powered-equipment?breakerId={breaker-id}
 ```
 
-The second form allows the existing Power Path workbench to open the complete powered
-equipment diagram without changing its current route contract.
+Using breaker identity avoids ambiguity for rack-scoped PDU targets.
 
-The window groups connections as:
+## Diagram contract
+
+The window is standalone and groups:
 
 ```text
 QDF / BDFB
 ├── Feed A
-│   ├── Breaker → endpoint/AID
+│   ├── breaker → endpoint/AID
 │   └── ...
 └── Feed B
-    ├── Breaker → endpoint/AID
+    ├── breaker → endpoint/AID
     └── ...
-                         Powered Equipment
-                         ├── Part A endpoints
-                         └── Part B endpoints
+                         Powered Equipment / PDU
 ```
 
-Multiple QDF/BDFB source groups are supported by the projection even though the current
-field assumption is commonly one QDF per powered equipment. The header also exposes the
-documentary Rack AID(s). PDU rows expose canonical rack-scoped feed AIDs and their local
-AID for field cross-checking.
+The header may expose documentary RackAID. Multiple QDF/BDFB sources remain supported by the model.
 
 ## Telemetry
 
-The connection diagram reads existing breaker telemetry. It does not create another
-telemetry binding model.
-
-Per breaker it may show:
+The diagram reads existing breaker telemetry only:
 
 - voltage,
 - current,
 - power,
 - energy counter.
 
-Missing readings are shown as unavailable; missing values are never coerced to zero.
+Rules:
 
-Power totals are sums of available breaker power readings and are marked partial when
-coverage is incomplete.
+- missing readings display unavailable, never invented zero;
+- voltage and current are not aggregated;
+- available breaker power can be summed and marked partial when coverage is incomplete;
+- energy is displayed as counter sum, never mislabeled as 24-hour consumption.
 
-Energy is shown explicitly as a sum of reported counters. The UI does **not** call that
-value “24 h energy” because the existing live metric can be a cumulative counter rather
-than a validated period delta.
+Spreadsheet Fluke/AEMC/Thradex measurements are documentary field evidence and are not written into
+live telemetry by seed-01.
 
-Voltage and current remain per-breaker values; the diagram does not invent aggregate
-voltage or current semantics.
+## Seed-01 v14 additive upgrade
 
-## Entry points
-
-Primary:
+Seed v14 advances the documentary declaration contract to version 3:
 
 ```text
-Ctrl/Cmd+K
-  → POWERED EQUIPMENT
-  → Connection Diagram
-```
-
-Contextual:
-
-```text
-Power Path
-  → declared destination
-  → VIEW ALL CONNECTIONS
-  → Connection Diagram
-```
-
-Both entry points open the same detached workbench.
-
-## Future evolution
-
-If the customer later inventories a powered telecom asset physically, the projection may
-be linked to a canonical Device/Equipment ID. That future association must be additive:
-
-```text
-PoweredEquipment projection
-        │
-        └── physicalInventoryId? → Device / Equipment
-```
-
-It must not require rewriting historical breaker declarations, AIDs or PowerPaths.
-
-## Seed-01 v13 documentary enrichment
-
-The workbook identity facts are seeded additively into each existing breaker declaration:
-
-```text
-declaredPower.contractVersion = 2
+declaredPower.contractVersion = 3
+declaredPower.sourceDocument
 declaredPower.identitySourceDocument
+declaredPower.targetLabel
 declaredPower.targetEntityName
+declaredPower.targetCanonicalEntityName
 declaredPower.targetKind
 declaredPower.targetAid
 declaredPower.targetLocalAid
 declaredPower.targetRackAid
-declaredPower.targetBaseAid?       # PDU only
+declaredPower.targetBaseAid?          # PDU
+declaredPower.targetAliases
+declaredPower.targetAidAliases?
+declaredPower.remarks
 declaredPower.remarksSemantics
 declaredPower.targetPlacement = RACK_ASSOCIATED_U_UNKNOWN
 ```
 
-Existing operator-corrected declarations remain authoritative. Seed v13 fills missing
-identity fields and only upgrades `targetPlacement: UNKNOWN` to the newly confirmed
-rack-associated state. It still does not create remote Equipment, PDU, AccessPorts or
-PowerPaths.
+Upgrade behavior is intentionally asymmetric:
+
+- if the current declaration still matches a known source alias, the 19.11 source updates it;
+- if an operator has changed the target to something outside the source aliases, that correction wins;
+- prior source labels remain breaker aliases;
+- replaced AIDs remain `targetAidAliases`;
+- source-managed PDU remarks can be normalized to SH01/SH04;
+- operator-edited remarks are preserved;
+- existing IDs, PowerPaths and commissioned protection are not replaced.
+
+This is the non-breaking boundary for the Connection Diagram feature.

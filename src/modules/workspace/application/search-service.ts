@@ -72,6 +72,7 @@ export async function searchTopology(
       ...equipment.rackAids,
       ...equipment.connections.flatMap((connection) => [
         connection.endpoint.targetLabel,
+        connection.endpoint.canonicalEquipmentName,
         connection.endpoint.aid,
         connection.endpoint.localAid,
         connection.endpoint.baseAid ?? '',

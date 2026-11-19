@@ -59,20 +59,7 @@ jobs:
         run: npm run lint
 
       - name: Format check
-        run: |
-          npx prettier --write \
-            docs/operations/field-powerpath-reconciliation.md \
-            scripts/operations/reconcile-field-power-paths.mjs \
-            src/components/telemetry/live-mqtt-inspector.module.css \
-            src/components/telemetry/live-mqtt-inspector.tsx \
-            src/modules/telemetry/domain/composition-breaker-telemetry.ts
-          git diff -- \
-            docs/operations/field-powerpath-reconciliation.md \
-            scripts/operations/reconcile-field-power-paths.mjs \
-            src/components/telemetry/live-mqtt-inspector.module.css \
-            src/components/telemetry/live-mqtt-inspector.tsx \
-            src/modules/telemetry/domain/composition-breaker-telemetry.ts
-          npm run format:check
+        run: npm run format:check
 
       - name: MVP documentation links
         run: npm run docs:check

@@ -2,22 +2,26 @@ import { describe, expect, it } from 'vitest';
 import { BREAKER_FIELD_SCHEDULE, SEED_01_VERSION } from '@/seeds/seed-01';
 
 describe('seed-01 QDF documentary breaker schedule', () => {
-  it('advances the additive workbook identity migration to seed v13', () => {
-    expect(SEED_01_VERSION).toBe(13);
+  it('advances the additive workbook identity migration to seed v14', () => {
+    expect(SEED_01_VERSION).toBe(14);
   });
   it('covers exactly the installed breaker positions in QDF-2/4/5', () => {
-    expect(Object.keys(BREAKER_FIELD_SCHEDULE)).toHaveLength(37);
+    expect(Object.keys(BREAKER_FIELD_SCHEDULE)).toHaveLength(38);
     expect(
       Object.keys(BREAKER_FIELD_SCHEDULE).filter((key) => key.startsWith('QDF-2:')),
     ).toHaveLength(13);
     expect(
       Object.keys(BREAKER_FIELD_SCHEDULE).filter((key) => key.startsWith('QDF-4:')),
-    ).toHaveLength(6);
+    ).toHaveLength(7);
     expect(
       Object.keys(BREAKER_FIELD_SCHEDULE).filter((key) => key.startsWith('QDF-5:')),
     ).toHaveLength(18);
-    // Source workbook describes a named reservation, not a commissioned breaker.
-    expect(BREAKER_FIELD_SCHEDULE['QDF-4:7']).toBeUndefined();
+    expect(BREAKER_FIELD_SCHEDULE['QDF-4:7']).toMatchObject({
+      ratedCurrentA: 80,
+      targetFootprint: '010205.16',
+      documentedStatus: 'OFF',
+      replacementTargetA: 60,
+    });
   });
 
   it('preserves actual nominal ratings, field footprints and proposed replacements', () => {

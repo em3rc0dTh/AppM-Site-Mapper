@@ -23,7 +23,7 @@ import {
 import { createDomainId, nowIso } from '@/shared/domain/entity';
 
 export const SEED_01_PROFILE = 'seed-01' as const;
-export const SEED_01_VERSION = 13 as const;
+export const SEED_01_VERSION = 14 as const;
 
 const PANELS = ['A3', 'A2', 'A1', 'B3', 'B2', 'B1'] as const;
 type PanelName = (typeof PANELS)[number];
@@ -41,8 +41,10 @@ interface BreakerSpec {
   readonly destination: string;
   /** Source workbook row used as the authoritative Feed A/B pairing key. */
   readonly sourceRow: number;
-  readonly legacyPanel: 'A1' | 'A2' | 'B1' | 'B2';
-  readonly legacyPosition: number;
+  readonly legacyPanel?: 'A1' | 'A2' | 'B1' | 'B2';
+  readonly legacyPosition?: number;
+  /** Previous workbook remark value used only to distinguish source-managed text from operator edits. */
+  readonly previousRemarks?: readonly string[];
   /** Workbook SUB-EQUIPO content is evidence/remark only; never materialized as Equipment. */
   readonly remarks?: readonly string[];
 }
@@ -60,7 +62,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 2,
-    destination: 'GRTLuren3 PSU0 A0',
+    destination: 'GRTLUREM3 PSU0 A0',
     sourceRow: 1,
     legacyPanel: 'A1',
     legacyPosition: 1,
@@ -68,7 +70,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 2,
-    destination: 'GRTLuren3 PSU0 B0',
+    destination: 'GRTLUREM3 PSU0 B0',
     sourceRow: 1,
     legacyPanel: 'B1',
     legacyPosition: 1,
@@ -76,7 +78,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 3,
-    destination: 'GRTLuren3 PSU0 A1',
+    destination: 'GRTLUREM3 PSU0 A1',
     sourceRow: 2,
     legacyPanel: 'A1',
     legacyPosition: 2,
@@ -84,7 +86,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 3,
-    destination: 'GRTLuren3 PSU0 B1',
+    destination: 'GRTLUREM3 PSU0 B1',
     sourceRow: 2,
     legacyPanel: 'B1',
     legacyPosition: 2,
@@ -92,7 +94,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 4,
-    destination: 'GRTLuren3 PSU1 A0',
+    destination: 'GRTLUREM3 PSU1 A0',
     sourceRow: 3,
     legacyPanel: 'A1',
     legacyPosition: 3,
@@ -100,7 +102,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 4,
-    destination: 'GRTLuren3 PSU1 B0',
+    destination: 'GRTLUREM3 PSU1 B0',
     sourceRow: 3,
     legacyPanel: 'B1',
     legacyPosition: 3,
@@ -124,7 +126,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 5,
-    destination: 'GRTLuren3 PSU1 A1',
+    destination: 'GRTLUREM3 PSU1 A1',
     sourceRow: 5,
     legacyPanel: 'A2',
     legacyPosition: 1,
@@ -132,7 +134,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 5,
-    destination: 'GRTLuren3 PSU1 B1',
+    destination: 'GRTLUREM3 PSU1 B1',
     sourceRow: 5,
     legacyPanel: 'B2',
     legacyPosition: 1,
@@ -140,7 +142,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 6,
-    destination: 'GRTLuren3 PSU2 A0',
+    destination: 'GRTLUREM3 PSU2 A0',
     sourceRow: 6,
     legacyPanel: 'A2',
     legacyPosition: 2,
@@ -148,7 +150,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 6,
-    destination: 'GRTLuren3 PSU2 B0',
+    destination: 'GRTLUREM3 PSU2 B0',
     sourceRow: 6,
     legacyPanel: 'B2',
     legacyPosition: 2,
@@ -156,7 +158,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 7,
-    destination: 'GRTLuren3 PSU2 A1',
+    destination: 'GRTLUREM3 PSU2 A1',
     sourceRow: 7,
     legacyPanel: 'A2',
     legacyPosition: 3,
@@ -164,7 +166,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 7,
-    destination: 'GRTLuren3 PSU2 B1',
+    destination: 'GRTLUREM3 PSU2 B1',
     sourceRow: 7,
     legacyPanel: 'B2',
     legacyPosition: 3,
@@ -172,7 +174,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 8,
-    destination: 'DTX-LUR-FP2-01 SH15 PEM A1.1',
+    destination: 'DTX-LUR-FP2-01 SH15 PA1-1',
     sourceRow: 8,
     legacyPanel: 'A2',
     legacyPosition: 6,
@@ -180,7 +182,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 8,
-    destination: 'DTX-LUR-FP2-01 SH15 PEM B1.1',
+    destination: 'DTX-LUR-FP2-01 SH15 PB1-1',
     sourceRow: 8,
     legacyPanel: 'B2',
     legacyPosition: 6,
@@ -188,7 +190,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 9,
-    destination: 'DTX-LUR-FP2-01 SH15 PEM A1.2',
+    destination: 'DTX-LUR-FP2-01 SH15 PA1-2',
     sourceRow: 9,
     legacyPanel: 'A2',
     legacyPosition: 7,
@@ -196,7 +198,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 9,
-    destination: 'DTX-LUR-FP2-01 SH15 PEM B1.2',
+    destination: 'DTX-LUR-FP2-01 SH15 PB1-2',
     sourceRow: 9,
     legacyPanel: 'B2',
     legacyPosition: 7,
@@ -204,7 +206,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 10,
-    destination: 'DTX-LUR-FP2-01 SH15 PEM A2.1',
+    destination: 'DTX-LUR-FP2-01 SH15 PA2-1',
     sourceRow: 10,
     legacyPanel: 'A2',
     legacyPosition: 8,
@@ -212,7 +214,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 10,
-    destination: 'DTX-LUR-FP2-01 SH15 PEM B2.1',
+    destination: 'DTX-LUR-FP2-01 SH15 PB2-1',
     sourceRow: 10,
     legacyPanel: 'B2',
     legacyPosition: 8,
@@ -220,7 +222,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 11,
-    destination: 'DTX-LUR-FP2-01 SH15 PEM A2.2',
+    destination: 'DTX-LUR-FP2-01 SH15 PA2-2',
     sourceRow: 11,
     legacyPanel: 'A2',
     legacyPosition: 14,
@@ -228,7 +230,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 11,
-    destination: 'DTX-LUR-FP2-01 SH15 PEM B2.2',
+    destination: 'DTX-LUR-FP2-01 SH15 PB2-2',
     sourceRow: 11,
     legacyPanel: 'B2',
     legacyPosition: 14,
@@ -236,7 +238,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 12,
-    destination: 'DTX-LUR-FP2-01 SH15 PEM A3.1',
+    destination: 'DTX-LUR-FP2-01 SH15 PA3-1',
     sourceRow: 12,
     legacyPanel: 'A2',
     legacyPosition: 15,
@@ -244,7 +246,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 12,
-    destination: 'DTX-LUR-FP2-01 SH15 PEM B3.1',
+    destination: 'DTX-LUR-FP2-01 SH15 PB3-1',
     sourceRow: 12,
     legacyPanel: 'B2',
     legacyPosition: 15,
@@ -252,7 +254,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 13,
-    destination: 'DTX-LUR-FP2-01 SH15 PEM A3.2',
+    destination: 'DTX-LUR-FP2-01 SH15 PA3-2',
     sourceRow: 13,
     legacyPanel: 'A2',
     legacyPosition: 16,
@@ -260,7 +262,7 @@ const QDF_2_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 13,
-    destination: 'DTX-LUR-FP2-01 SH15 PEM B3.2',
+    destination: 'DTX-LUR-FP2-01 SH15 PB3-2',
     sourceRow: 13,
     legacyPanel: 'B2',
     legacyPosition: 16,
@@ -319,7 +321,7 @@ const QDF_4_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 4,
-    destination: 'DTN-LUR-FP4-01 SH1 A',
+    destination: 'DTN-LUR-FP4-01 SH1 PWR:A',
     sourceRow: 4,
     legacyPanel: 'A2',
     legacyPosition: 5,
@@ -327,7 +329,7 @@ const QDF_4_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 4,
-    destination: 'DTN-LUR-FP4-01 SH1 B',
+    destination: 'DTN-LUR-FP4-01 SH1 PWR:B',
     sourceRow: 4,
     legacyPanel: 'B2',
     legacyPosition: 5,
@@ -335,7 +337,7 @@ const QDF_4_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 5,
-    destination: 'DTN-LUR-FP4-01 SH2 A',
+    destination: 'DTN-LUR-FP4-01 SH2 PWR:A',
     sourceRow: 5,
     legacyPanel: 'A2',
     legacyPosition: 10,
@@ -343,7 +345,7 @@ const QDF_4_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 5,
-    destination: 'DTN-LUR-FP4-01 SH2 B',
+    destination: 'DTN-LUR-FP4-01 SH2 PWR:B',
     sourceRow: 5,
     legacyPanel: 'B2',
     legacyPosition: 10,
@@ -364,13 +366,25 @@ const QDF_4_BREAKERS: readonly BreakerSpec[] = [
     legacyPanel: 'B2',
     legacyPosition: 16,
   },
+  {
+    panel: 'A3',
+    position: 7,
+    destination: 'Orion',
+    sourceRow: 7,
+  },
+  {
+    panel: 'B3',
+    position: 7,
+    destination: 'Orion',
+    sourceRow: 7,
+  },
 ];
 
 const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 1,
-    destination: 'WS-LUR-04 PS1',
+    destination: 'WS-LUR-04 PSU1',
     sourceRow: 9,
     legacyPanel: 'A2',
     legacyPosition: 5,
@@ -378,7 +392,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 1,
-    destination: 'WS-LUR-04 PS2',
+    destination: 'WS-LUR-04 PSU2',
     sourceRow: 9,
     legacyPanel: 'B2',
     legacyPosition: 5,
@@ -402,7 +416,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 3,
-    destination: 'GXLUR02 SH01 PEM1',
+    destination: 'GX-LUR-02 SH01 PEM 1',
     sourceRow: 1,
     legacyPanel: 'A1',
     legacyPosition: 6,
@@ -410,7 +424,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 3,
-    destination: 'GXLUR02 SH1 PEM3',
+    destination: 'GX-LUR-02 SH01 PEM 3',
     sourceRow: 1,
     legacyPanel: 'B1',
     legacyPosition: 6,
@@ -418,7 +432,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 4,
-    destination: 'GXLUR02 SH01 PEM2',
+    destination: 'GX-LUR-02 SH01 PEM 2',
     sourceRow: 2,
     legacyPanel: 'A1',
     legacyPosition: 7,
@@ -426,7 +440,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 4,
-    destination: 'GXLUR02 SH1 PEM4',
+    destination: 'GX-LUR-02 SH01 PEM 4',
     sourceRow: 2,
     legacyPanel: 'B1',
     legacyPosition: 7,
@@ -434,7 +448,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 5,
-    destination: 'GXLUR01 SH2 PEM1',
+    destination: 'GX-LUR-01 SH02 PEM 1',
     sourceRow: 4,
     legacyPanel: 'A1',
     legacyPosition: 14,
@@ -442,7 +456,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 5,
-    destination: 'GXLUR01 SH2 PEM3',
+    destination: 'GX-LUR-01 SH02 PEM 3',
     sourceRow: 4,
     legacyPanel: 'B1',
     legacyPosition: 14,
@@ -450,7 +464,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 6,
-    destination: 'GXLUR01 SH2 PEM2',
+    destination: 'GX-LUR-01 SH02 PEM 2',
     sourceRow: 5,
     legacyPanel: 'A1',
     legacyPosition: 15,
@@ -458,7 +472,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 6,
-    destination: 'GXLUR01 SH2 PEM4',
+    destination: 'GX-LUR-01 SH02 PEM 4',
     sourceRow: 5,
     legacyPanel: 'B1',
     legacyPosition: 15,
@@ -466,7 +480,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 7,
-    destination: 'WS-LUR-02 L1',
+    destination: 'WS-LUR-02 PSU1',
     sourceRow: 6,
     legacyPanel: 'A1',
     legacyPosition: 16,
@@ -474,7 +488,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 7,
-    destination: 'WS-LUR-02 L2',
+    destination: 'WS-LUR-02 PSU2',
     sourceRow: 6,
     legacyPanel: 'B1',
     legacyPosition: 16,
@@ -482,7 +496,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 8,
-    destination: 'CAR-LUR-01 L1',
+    destination: 'CAR-LUR-01 PSA',
     sourceRow: 7,
     legacyPanel: 'A1',
     legacyPosition: 22,
@@ -490,7 +504,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 8,
-    destination: 'CAR-LUR-01 L2',
+    destination: 'CAR-LUR-01 PSB',
     sourceRow: 7,
     legacyPanel: 'B1',
     legacyPosition: 22,
@@ -498,7 +512,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 9,
-    destination: 'WS-LUR-03 L1',
+    destination: 'WS-LUR-03 PSU1',
     sourceRow: 8,
     legacyPanel: 'A1',
     legacyPosition: 23,
@@ -506,7 +520,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 9,
-    destination: 'WS-LUR-03 L2',
+    destination: 'WS-LUR-03 PSU2',
     sourceRow: 8,
     legacyPanel: 'B1',
     legacyPosition: 23,
@@ -626,7 +640,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 17,
-    destination: '010208.14 PDU1-A',
+    destination: 'PDU1-A',
     sourceRow: 13,
     legacyPanel: 'A2',
     legacyPosition: 10,
@@ -635,7 +649,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'B3',
     position: 17,
-    destination: '010208.14 PDU1-B',
+    destination: 'PDU1-B',
     sourceRow: 13,
     legacyPanel: 'B2',
     legacyPosition: 10,
@@ -644,20 +658,22 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
   {
     panel: 'A3',
     position: 18,
-    destination: '010208.13 PDU1-A',
+    destination: 'PDU1-A',
     sourceRow: 14,
     legacyPanel: 'A2',
     legacyPosition: 11,
-    remarks: ['Pos-1: MTC-9 SH1 PEM A', 'Pos-2: MTC-9 SH4 PEM A'],
+    previousRemarks: ['Pos-1: MTC-9 SH1 PEM A', 'Pos-2: MTC-9 SH4 PEM A'],
+    remarks: ['Pos-1: MTC-9 SH01 PEM A', 'Pos-2: MTC-9 SH04 PEM A'],
   },
   {
     panel: 'B3',
     position: 18,
-    destination: '010208.13 PDU1-B',
+    destination: 'PDU1-B',
     sourceRow: 14,
     legacyPanel: 'B2',
     legacyPosition: 11,
-    remarks: ['Pos-1: MTC-9 SH1 PEM B', 'Pos-2: MTC-9 SH4 PEM B'],
+    previousRemarks: ['Pos-1: MTC-9 SH1 PEM B', 'Pos-2: MTC-9 SH4 PEM B'],
+    remarks: ['Pos-1: MTC-9 SH01 PEM B', 'Pos-2: MTC-9 SH04 PEM B'],
   },
 ];
 
@@ -704,6 +720,12 @@ export const BREAKER_FIELD_SCHEDULE: Readonly<
   'QDF-4:4': { ratedCurrentA: 100, targetFootprint: '010206.15', documentedStatus: 'IN_SERVICE' },
   'QDF-4:5': { ratedCurrentA: 100, targetFootprint: '010206.15', documentedStatus: 'IN_SERVICE' },
   'QDF-4:6': { ratedCurrentA: 60, targetFootprint: '010205.20', documentedStatus: 'IN_SERVICE' },
+  'QDF-4:7': {
+    ratedCurrentA: 80,
+    targetFootprint: '010205.16',
+    documentedStatus: 'OFF',
+    replacementTargetA: 60,
+  },
   ...Object.fromEntries(
     Array.from({ length: 18 }, (_, index) => {
       const position = index + 1;
@@ -729,7 +751,7 @@ export const BREAKER_FIELD_SCHEDULE: Readonly<
     }),
   ),
 };
-const BREAKER_FIELD_SCHEDULE_SOURCE = 'Distribución tributarios en QDF nuevos.xlsx';
+const BREAKER_FIELD_SCHEDULE_SOURCE = POWER_TARGET_IDENTITY_SOURCE;
 
 const BDFBS: readonly BdfbSpec[] = [
   {

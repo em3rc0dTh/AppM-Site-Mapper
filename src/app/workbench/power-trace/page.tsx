@@ -35,7 +35,12 @@ export default async function PowerTraceWorkbenchPage({
   if (entity.kind === 'EQUIPMENT' && entity.equipmentType === 'CIRCUIT_BREAKER') {
     const declaredTrace = await new DeclaredPowerTraceService(topology).resolveBreaker(entity.id);
     if (declaredTrace) {
-      return <DeclaredPowerTraceWorkbench trace={declaredTrace} />;
+      return (
+        <DeclaredPowerTraceWorkbench
+          trace={declaredTrace}
+          canReadTelemetry={hasPermission(auth.value.role, 'telemetry:read')}
+        />
+      );
     }
   }
 

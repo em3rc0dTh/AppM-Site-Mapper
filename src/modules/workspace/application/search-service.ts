@@ -69,21 +69,26 @@ export async function searchTopology(
     const searchable = [
       equipment.name,
       equipment.id,
+      ...equipment.rackAids,
       ...equipment.connections.flatMap((connection) => [
         connection.endpoint.targetLabel,
         connection.endpoint.aid,
+        connection.endpoint.localAid,
+        connection.endpoint.baseAid ?? '',
         connection.endpoint.displayLabel,
+        ...connection.remarks,
       ]),
     ].join(' ');
     if (!searchMatches(searchable, normalized)) continue;
 
     const qdfLabel = equipment.qdfs.length ? equipment.qdfs.join(', ') : 'QDF/BDFB';
+    const rackLabel = equipment.rackAids.length ? ` · ${equipment.rackAids.join(', ')}` : '';
     results.push({
       id: equipment.id,
       name: equipment.name,
       kind: 'POWERED_EQUIPMENT',
       href: `/workbench/powered-equipment?key=${encodeURIComponent(equipment.key)}`,
-      breadcrumb: `${equipment.connections.length} endpoints · ${qdfLabel}`,
+      breadcrumb: `${equipment.connections.length} endpoints · ${qdfLabel}${rackLabel}`,
     });
   }
   for (const node of nodes) {

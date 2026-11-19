@@ -53,11 +53,19 @@ function stringValue(value: unknown): string | undefined {
 function metadata(value: unknown): DeclaredPowerMetadata | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const record = value as Record<string, unknown>;
+  const qdf = stringValue(record.qdf);
+  const pairId = stringValue(record.pairId);
   const feed = record.feed === 'A' || record.feed === 'B' ? record.feed : undefined;
+  const targetLabel = stringValue(record.targetLabel);
+  const targetEntityName = stringValue(record.targetEntityName);
+  const targetCanonicalEntityName = stringValue(record.targetCanonicalEntityName);
   const targetKind =
     record.targetKind === 'EQUIPMENT' || record.targetKind === 'PDU'
       ? record.targetKind
       : undefined;
+  const targetAid = stringValue(record.targetAid);
+  const targetLocalAid = stringValue(record.targetLocalAid);
+  const targetRackAid = stringValue(record.targetRackAid);
 
   let companionFeed: DeclaredPowerMetadata['companionFeed'];
   const rawCompanion = record.companionFeed;
@@ -67,41 +75,33 @@ function metadata(value: unknown): DeclaredPowerMetadata | null {
       companion.feed === 'A' || companion.feed === 'B' ? companion.feed : undefined;
     const breakerId = stringValue(companion.breakerId);
     const panel = stringValue(companion.panel);
-    const targetLabel = stringValue(companion.targetLabel);
+    const targetLabelValue = stringValue(companion.targetLabel);
     const position =
       typeof companion.position === 'number' && Number.isFinite(companion.position)
         ? companion.position
         : undefined;
-    if (companionFeedValue && breakerId && panel && position !== undefined && targetLabel) {
+    if (companionFeedValue && breakerId && panel && position !== undefined && targetLabelValue) {
       companionFeed = {
         breakerId,
         feed: companionFeedValue,
         panel,
         position,
-        targetLabel,
+        targetLabel: targetLabelValue,
       };
     }
   }
 
   return {
-    ...(stringValue(record.qdf) ? { qdf: stringValue(record.qdf) } : {}),
-    ...(stringValue(record.pairId) ? { pairId: stringValue(record.pairId) } : {}),
+    ...(qdf ? { qdf } : {}),
+    ...(pairId ? { pairId } : {}),
     ...(feed ? { feed } : {}),
-    ...(stringValue(record.targetLabel) ? { targetLabel: stringValue(record.targetLabel) } : {}),
-    ...(stringValue(record.targetEntityName)
-      ? { targetEntityName: stringValue(record.targetEntityName) }
-      : {}),
-    ...(stringValue(record.targetCanonicalEntityName)
-      ? { targetCanonicalEntityName: stringValue(record.targetCanonicalEntityName) }
-      : {}),
+    ...(targetLabel ? { targetLabel } : {}),
+    ...(targetEntityName ? { targetEntityName } : {}),
+    ...(targetCanonicalEntityName ? { targetCanonicalEntityName } : {}),
     ...(targetKind ? { targetKind } : {}),
-    ...(stringValue(record.targetAid) ? { targetAid: stringValue(record.targetAid) } : {}),
-    ...(stringValue(record.targetLocalAid)
-      ? { targetLocalAid: stringValue(record.targetLocalAid) }
-      : {}),
-    ...(stringValue(record.targetRackAid)
-      ? { targetRackAid: stringValue(record.targetRackAid) }
-      : {}),
+    ...(targetAid ? { targetAid } : {}),
+    ...(targetLocalAid ? { targetLocalAid } : {}),
+    ...(targetRackAid ? { targetRackAid } : {}),
     ...(companionFeed ? { companionFeed } : {}),
   };
 }

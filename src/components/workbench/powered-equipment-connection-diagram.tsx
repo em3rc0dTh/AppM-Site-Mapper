@@ -199,9 +199,7 @@ export function PoweredEquipmentConnectionDiagram({
               <span>{t('breakerCount', { count: connections.length })}</span>
             </div>
             <div className="sm-powered-feed-totals">
-              <b>
-                Σ {power.value === undefined ? '—' : `${(power.value / 1000).toFixed(3)} kW`}
-              </b>
+              <b>Σ {power.value === undefined ? '—' : `${(power.value / 1000).toFixed(3)} kW`}</b>
               <span>
                 {t('energyCounterShort')}{' '}
                 {energy.value === undefined ? '—' : `${energy.value.toFixed(3)} kWh`}
@@ -352,9 +350,7 @@ export function PoweredEquipmentConnectionDiagram({
           <div>
             <dt>{t('totalLivePower')}</dt>
             <dd>
-              {totalPower.value === undefined
-                ? '—'
-                : `${(totalPower.value / 1000).toFixed(3)} kW`}
+              {totalPower.value === undefined ? '—' : `${(totalPower.value / 1000).toFixed(3)} kW`}
               {totalPower.reporting < equipment.connections.length ? (
                 <small>{t('partialData')}</small>
               ) : null}
@@ -428,9 +424,7 @@ export function PoweredEquipmentConnectionDiagram({
                       : `${(item.powers.value / 1000).toFixed(3)} kW`}
                   </span>
                   <span>
-                    {item.energy.value === undefined
-                      ? '—'
-                      : `${item.energy.value.toFixed(3)} kWh`}
+                    {item.energy.value === undefined ? '—' : `${item.energy.value.toFixed(3)} kWh`}
                   </span>
                 </div>
               ))}

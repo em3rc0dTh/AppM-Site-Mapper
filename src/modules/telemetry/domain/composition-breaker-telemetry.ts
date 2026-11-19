@@ -65,9 +65,9 @@ function numericMetric(value: unknown, expectedUnit: string): number | undefined
 function isSiteMapperDerived(value: unknown): boolean {
   return Boolean(
     value &&
-      typeof value === 'object' &&
-      !Array.isArray(value) &&
-      (value as Record<string, unknown>).origin === 'DERIVED',
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    (value as Record<string, unknown>).origin === 'DERIVED',
   );
 }
 
@@ -239,7 +239,9 @@ export function compositionBreakerTelemetry(
     return {
       status: 'NO DATA',
       diagnostic: receivedPoint
-        ? `Point observed but no valid breaker sample. Check ${expectations.join(', ')} target binding.`
+        ? `Point observed but no valid breaker sample. Check ${expectations.join(
+            ', ',
+          )} target binding.`
         : `Awaiting ${expectations.join(', ')}`,
     };
   }

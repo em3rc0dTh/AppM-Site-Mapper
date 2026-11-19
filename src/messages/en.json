@@ -558,7 +558,8 @@
       "breakerNoData": "Breaker without live reading",
       "selectedEndpoint": "Selected endpoint",
       "selectConnectionHelp": "Select a breaker or endpoint to highlight its connection and inspect the full AID.",
-      "openConnectionDiagram": "VIEW ALL CONNECTIONS ↗"
+      "openConnectionDiagram": "VIEW ALL CONNECTIONS ↗",
+      "energyCounterShort": "Σ counter"
     },
     "rack": {
       "elevation": "ELEVATION",

@@ -1,7 +1,9 @@
 import { notFound, redirect } from 'next/navigation';
 
+import { DeclaredPowerTraceWorkbench } from '@/components/workbench/declared-power-trace-workbench';
 import { FullPowerTraceWorkbench } from '@/components/workbench/full-power-trace-workbench';
 import { hasPermission } from '@/modules/identity/domain/roles';
+import { DeclaredPowerTraceService } from '@/modules/power/application/declared-power-trace-service';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 import { TopologyService } from '@/modules/topology/application/topology-service';
@@ -28,6 +30,18 @@ export default async function PowerTraceWorkbenchPage({
     entity.lifecycle !== 'ACTIVE'
   ) {
     notFound();
+  }
+
+  if (entity.kind === 'EQUIPMENT' && entity.equipmentType === 'CIRCUIT_BREAKER') {
+    const declaredTrace = await new DeclaredPowerTraceService(topology).resolveBreaker(entity.id);
+    if (declaredTrace) {
+      return (
+        <DeclaredPowerTraceWorkbench
+          trace={declaredTrace}
+          canReadTelemetry={hasPermission(auth.value.role, 'telemetry:read')}
+        />
+      );
+    }
   }
 
   const trail = await new TopologyService(topology).getTrail(entity.id);

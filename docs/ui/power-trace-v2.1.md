@@ -11,6 +11,29 @@ Desde los controles de Power Trace existentes en Device, Equipment y Power se ab
 
 La URL requiere sesión con permiso \`power:read\`; el módulo se abre como ventana independiente, sin modal ni menús laterales, pero reutiliza el **Workbench Shell MK2** con la identidad canónica \`AppManager SiteMapper Mk2\` y acceso a inicio. Los lectores sin \`telemetry:read\` no ven telemetría en la ventana.
 
+## Semántica al entrar desde un breaker declarado
+
+Cuando `entityId` identifica un `CIRCUIT_BREAKER` con `attributes.declaredPower`, Power Trace
+no usa el breaker como destino visual. El breaker es solamente el punto de entrada a la consulta.
+
+La vista se centra en el destino alimentado declarado:
+
+```text
+Feed A breaker  →  destino alimentado / AID  ←  Feed B breaker
+```
+
+Reglas:
+
+- Feed A permanece a la izquierda y Feed B a la derecha, sin depender de cuál breaker abrió la vista.
+- El destino central muestra el `targetLabel` seleccionado y la identidad canónica del equipo.
+- Los dos lados se resuelven desde `companionFeed` / `pairId` del contrato `declaredPower`.
+- El endpoint AID/RackAID es evidencia documental; no se inventa Equipment, Rack, AccessPort ni
+  PowerPath físico.
+- La ausencia de PowerPath físico no se presenta como «Feed vacío» ni como fallo cuando la consulta
+  proviene de un breaker declarado.
+- Para Device/Equipment físicos que sí tienen PowerPaths persistidos se conserva el flujo físico
+  existente de v2.1.
+
 ## Contenido y reglas
 
 - Workbench Shell MK2, fondo claro, título «Rastreo de Ruta», identidad del equipo y ubicación real. No se presenta branding \`Site Mapper MK1\` dentro del contenido.

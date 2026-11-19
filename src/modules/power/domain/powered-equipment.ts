@@ -57,7 +57,7 @@ export function parseDeclaredPowerTarget(value: string): PoweredEquipmentEndpoin
   if (!equipmentName) return null;
 
   let shelf: string | undefined;
-  let module: string | undefined;
+  let moduleName: string | undefined;
   let endpoint: string | undefined;
 
   if (tokens[0]) {
@@ -72,7 +72,7 @@ export function parseDeclaredPowerTarget(value: string): PoweredEquipmentEndpoin
     tokens.shift();
     if (tokens.length) endpoint = `FEED-${tokens.join('-')}`;
   } else if (tokens[0] && isModuleToken(tokens[0])) {
-    module = tokens.shift();
+    moduleName = tokens.shift();
     if (tokens.length) endpoint = tokens.join('-');
   } else if (tokens.length) {
     endpoint = tokens.join('-');
@@ -85,11 +85,11 @@ export function parseDeclaredPowerTarget(value: string): PoweredEquipmentEndpoin
   const aid = [
     equipmentName,
     shelf ?? 'NoShelf',
-    module ?? 'NoSlot',
+    moduleName ?? 'NoSlot',
     endpoint ?? 'NoPort',
   ].join('::');
   const displayLabel =
-    [shelf, module, endpoint].filter((part): part is string => Boolean(part)).join(' / ') ||
+    [shelf, moduleName, endpoint].filter((part): part is string => Boolean(part)).join(' / ') ||
     equipmentName;
 
   return {
@@ -99,7 +99,7 @@ export function parseDeclaredPowerTarget(value: string): PoweredEquipmentEndpoin
     targetLabel,
     displayLabel,
     ...(shelf ? { shelf } : {}),
-    ...(module ? { module } : {}),
+    ...(moduleName ? { module: moduleName } : {}),
     ...(endpoint ? { endpoint } : {}),
     ...(side ? { side } : {}),
   };

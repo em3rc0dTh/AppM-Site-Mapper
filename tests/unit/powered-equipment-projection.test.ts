@@ -32,7 +32,7 @@ function panel(): EquipmentNode {
     equipmentType: 'PANEL',
     parentEquipmentId: null,
     childMode: 'DYNAMIC',
-    children: ['breaker-a', 'breaker-b', 'breaker-pdu'],
+    children: ['breaker-a', 'breaker-b', 'breaker-pdu-a', 'breaker-pdu-b'],
     accessPorts: [],
     pinned: false,
     lifecycle: 'ACTIVE',
@@ -41,7 +41,14 @@ function panel(): EquipmentNode {
   };
 }
 
-function breaker(id: string, name: string, target: string, feed: 'A' | 'B'): EquipmentNode {
+function breaker(
+  id: string,
+  name: string,
+  target: string,
+  feed: 'A' | 'B',
+  targetFootprint?: string,
+  remarks: readonly string[] = [],
+): EquipmentNode {
   return {
     id,
     kind: 'EQUIPMENT',
@@ -59,6 +66,8 @@ function breaker(id: string, name: string, target: string, feed: 'A' | 'B'): Equ
         qdf: 'QDF2',
         feed,
         targetLabel: target,
+        ...(targetFootprint ? { targetFootprint } : {}),
+        remarks: [...remarks],
       },
     },
     pinned: false,
@@ -70,10 +79,15 @@ function breaker(id: string, name: string, target: string, feed: 'A' | 'B'): Equ
 
 describe('powered equipment projection', () => {
   it('parses endpoint composition without promoting the endpoint to equipment identity', () => {
-    expect(parseDeclaredPowerTarget('GRTLuren3 PSU0 A0')).toEqual({
+    expect(
+      parseDeclaredPowerTarget('GRTLuren3 PSU0 A0', { targetFootprint: '010202.09' }),
+    ).toEqual({
       equipmentKey: 'grtluren3',
       equipmentName: 'GRTLuren3',
+      targetKind: 'EQUIPMENT',
       aid: 'GRTLuren3::NoShelf::PSU0::A0',
+      localAid: 'GRTLuren3::NoShelf::PSU0::A0',
+      rackAid: 'RACK::010202.09',
       targetLabel: 'GRTLuren3 PSU0 A0',
       displayLabel: 'PSU0 / A0',
       module: 'PSU0',
@@ -84,11 +98,13 @@ describe('powered equipment projection', () => {
     expect(parseDeclaredPowerTarget('DTX-LUR-FP2-01 SH15 PEM B1.2')).toMatchObject({
       equipmentKey: 'dtx-lur-fp2-01',
       equipmentName: 'DTX-LUR-FP2-01',
+      targetKind: 'EQUIPMENT',
       shelf: 'SH15',
       module: 'PEM',
       endpoint: 'B1.2',
       side: 'B',
       aid: 'DTX-LUR-FP2-01::SH15::PEM::B1.2',
+      localAid: 'DTX-LUR-FP2-01::SH15::PEM::B1.2',
     });
   });
 
@@ -101,18 +117,45 @@ describe('powered equipment projection', () => {
     });
   });
 
-  it('keeps PDU semantics unresolved instead of guessing', () => {
+  it('resolves PDU identity only when the physical rack context is known', () => {
     expect(parseDeclaredPowerTarget('Rack CDN PDU-1A')).toBeNull();
-    expect(parseDeclaredPowerTarget('010208.14 PDU1-A')).toBeNull();
+
+    expect(
+      parseDeclaredPowerTarget('Rack CDN PDU-1A', { targetFootprint: '010202.10' }),
+    ).toEqual({
+      equipmentKey: 'rack-010202.10-pdu01',
+      equipmentName: 'PDU 01',
+      targetKind: 'PDU',
+      aid: 'RACK::010202.10::PDU01::A',
+      localAid: 'PDU01::NoShelf::NoSlot::A',
+      baseAid: 'RACK::010202.10::PDU01',
+      rackAid: 'RACK::010202.10',
+      targetLabel: 'Rack CDN PDU-1A',
+      displayLabel: 'Feed A',
+      endpoint: 'A',
+      side: 'A',
+    });
+
+    expect(
+      parseDeclaredPowerTarget('010208.14 PDU1-B', { targetFootprint: '010208.14' }),
+    ).toMatchObject({
+      equipmentKey: 'rack-010208.14-pdu01',
+      equipmentName: 'PDU 01',
+      targetKind: 'PDU',
+      aid: 'RACK::010208.14::PDU01::B',
+      localAid: 'PDU01::NoShelf::NoSlot::B',
+      baseAid: 'RACK::010208.14::PDU01',
+      rackAid: 'RACK::010208.14',
+      side: 'B',
+    });
   });
 
   it('groups existing breaker aliases additively under one powered equipment projection', async () => {
     const seed: TopologyNode[] = [
       device(),
       panel(),
-      breaker('breaker-a', 'A3-01', 'BB-LUR-04 SH2 A1', 'A'),
-      breaker('breaker-b', 'B3-01', 'BB-LUR-04 SH2 FEED B1', 'B'),
-      breaker('breaker-pdu', 'A3-17', '010208.14 PDU1-A', 'A'),
+      breaker('breaker-a', 'A3-01', 'BB-LUR-04 SH2 A1', 'A', '010206.20'),
+      breaker('breaker-b', 'B3-01', 'BB-LUR-04 SH2 FEED B1', 'B', '010206.20'),
     ];
     const repository = new MemoryTopologyRepository(seed);
     const projection = await new PoweredEquipmentProjectionService(repository).list();
@@ -126,13 +169,60 @@ describe('powered equipment projection', () => {
       id: 'powered-equipment:bb-lur-04',
       key: 'bb-lur-04',
       name: 'BB-LUR-04',
+      kind: 'EQUIPMENT',
       qdfs: ['QDF2'],
+      rackAids: ['RACK::010206.20'],
       feeds: ['A', 'B'],
     });
     expect(powered.connections).toHaveLength(2);
     expect(powered.connections.map((item) => item.breakerId)).toEqual(['breaker-a', 'breaker-b']);
+  });
 
-    const originalPdu = await repository.getById('breaker-pdu');
+  it('groups PDU feed A/B as one rack-scoped target and preserves remarks and aliases', async () => {
+    const seed: TopologyNode[] = [
+      device(),
+      panel(),
+      breaker(
+        'breaker-pdu-a',
+        'A3-17',
+        '010208.14 PDU1-A',
+        'A',
+        '010208.14',
+        ['Pos-1: MTC-9 SH10 PEM A', 'Pos-2: XTM-LUR01 PEM A'],
+      ),
+      breaker(
+        'breaker-pdu-b',
+        'B3-17',
+        '010208.14 PDU1-B',
+        'B',
+        '010208.14',
+        ['Pos-1: MTC-9 SH10 PEM B', 'Pos-2: XTM-LUR01 PEM B'],
+      ),
+    ];
+    const repository = new MemoryTopologyRepository(seed);
+    const projection = await new PoweredEquipmentProjectionService(repository).list();
+
+    expect(projection).toHaveLength(1);
+    const pdu = projection[0];
+    expect(pdu).toBeDefined();
+    if (!pdu) throw new Error('EXPECTED_PDU');
+
+    expect(pdu).toMatchObject({
+      id: 'powered-equipment:rack-010208.14-pdu01',
+      key: 'rack-010208.14-pdu01',
+      name: 'PDU 01',
+      kind: 'PDU',
+      rackAids: ['RACK::010208.14'],
+      feeds: ['A', 'B'],
+    });
+    expect(pdu.connections.map((item) => item.endpoint.aid)).toEqual([
+      'RACK::010208.14::PDU01::A',
+      'RACK::010208.14::PDU01::B',
+    ]);
+    expect(pdu.connections[0]?.remarks).toContain('Pos-1: MTC-9 SH10 PEM A');
+    expect(pdu.connections[1]?.remarks).toContain('Pos-1: MTC-9 SH10 PEM B');
+
+    const originalPdu = await repository.getById('breaker-pdu-a');
     expect(originalPdu?.kind === 'EQUIPMENT' ? originalPdu.aliases : undefined).toEqual([
       '010208.14 PDU1-A',
     ]);

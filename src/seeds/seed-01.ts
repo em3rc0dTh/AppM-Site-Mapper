@@ -1842,7 +1842,7 @@ async function ensureDeclaredFeedPairs(
                 targetRackAid: declaredPower.targetRackAid,
                 ...(declaredPower.targetBaseAid
                   ? { targetBaseAid: declaredPower.targetBaseAid }
-                  : { targetBaseAid: undefined }),
+                  : {}),
                 currentBreaker: declaredPower.currentBreaker,
                 companionFeed: declaredPower.companionFeed,
               }

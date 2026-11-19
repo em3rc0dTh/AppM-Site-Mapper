@@ -1681,6 +1681,7 @@ async function ensureDeclaredFeedPairs(
 
     const targetIdentity = parseDeclaredPowerTarget(breaker.destination, {
       targetFootprint: field.targetFootprint,
+      feed,
     });
     if (!targetIdentity || !targetIdentity.rackAid) {
       throw new Error(
@@ -1690,7 +1691,7 @@ async function ensureDeclaredFeedPairs(
     const rackAssociation = findPowerTargetRackAssociation(
       spec.key,
       field.targetFootprint,
-      targetIdentity.equipmentName,
+      targetIdentity.canonicalEquipmentName,
     );
     if (
       !rackAssociation ||
@@ -1724,7 +1725,7 @@ async function ensureDeclaredFeedPairs(
     const documentaryRemarks = breaker.remarks ?? associationRemarks ?? [];
 
     const declaredPower = {
-      contractVersion: 2,
+      contractVersion: 3,
       state: 'DECLARED' as const,
       sourceDocument: POWER_TARGET_IDENTITY_SOURCE,
       identitySourceDocument: POWER_TARGET_IDENTITY_SOURCE,
@@ -1734,6 +1735,7 @@ async function ensureDeclaredFeedPairs(
       feed,
       targetLabel: breaker.destination,
       targetEntityName: targetIdentity.equipmentName,
+      targetCanonicalEntityName: targetIdentity.canonicalEquipmentName,
       targetKind: targetIdentity.targetKind,
       targetAid: targetIdentity.aid,
       targetLocalAid: targetIdentity.localAid,
@@ -1748,10 +1750,14 @@ async function ensureDeclaredFeedPairs(
         panel: breaker.panel,
         position: breaker.position,
       },
-      legacyBreaker: {
-        panel: breaker.legacyPanel,
-        position: breaker.legacyPosition,
-      },
+      ...(breaker.legacyPanel && breaker.legacyPosition !== undefined
+        ? {
+            legacyBreaker: {
+              panel: breaker.legacyPanel,
+              position: breaker.legacyPosition,
+            },
+          }
+        : {}),
       companionFeed: {
         feed: breakerFeed(companion.panel),
         breakerId: companionId,
@@ -1765,8 +1771,9 @@ async function ensureDeclaredFeedPairs(
       targetMaterialization: 'NOT_CREATED' as const,
     };
 
-    // Preserve operator-corrected destination/pair/placement assertions during a
-    // version upgrade. The new worksheet facts fill missing documentary fields only.
+    // v14 is source-authoritative for the 19.11 workbook, but must not overwrite
+    // an operator correction. A target is source-managed only while its current
+    // declaration still matches one of the breaker's pre-upgrade aliases.
     const previousDeclaration = current.attributes?.declaredPower;
     const existingDeclared =
       previousDeclaration &&
@@ -1774,6 +1781,42 @@ async function ensureDeclaredFeedPairs(
       !Array.isArray(previousDeclaration)
         ? (previousDeclaration as Record<string, unknown>)
         : null;
+    const existingTargetLabel =
+      typeof existingDeclared?.targetLabel === 'string' ? existingDeclared.targetLabel : undefined;
+    const sourceManagedTarget =
+      !existingDeclared ||
+      !existingTargetLabel ||
+      (current.aliases ?? []).some(
+        (alias) => normalizedName(alias) === normalizedName(existingTargetLabel),
+      );
+    const existingRemarks = Array.isArray(existingDeclared?.remarks)
+      ? existingDeclared.remarks.filter((value): value is string => typeof value === 'string')
+      : undefined;
+    const sourceManagedRemarks =
+      !existingDeclared ||
+      !existingRemarks ||
+      (breaker.previousRemarks
+        ? JSON.stringify(existingRemarks) === JSON.stringify(breaker.previousRemarks)
+        : JSON.stringify(existingRemarks) === JSON.stringify(documentaryRemarks));
+
+    const targetAliases = [
+      ...new Set([...(current.aliases ?? []), breaker.destination].map((value) => value.trim())),
+    ].filter(Boolean);
+    const priorAid =
+      typeof existingDeclared?.targetAid === 'string' ? existingDeclared.targetAid.trim() : '';
+    const priorAidAliases = Array.isArray(existingDeclared?.targetAidAliases)
+      ? existingDeclared.targetAidAliases.filter(
+          (value): value is string => typeof value === 'string' && Boolean(value.trim()),
+        )
+      : [];
+    const targetAidAliases = [
+      ...new Set(
+        [...priorAidAliases, ...(priorAid && priorAid !== declaredPower.targetAid ? [priorAid] : [])]
+          .map((value) => value.trim())
+          .filter(Boolean),
+      ),
+    ];
+
     const mergedDeclaredPower = existingDeclared
       ? {
           ...declaredPower,
@@ -1782,18 +1825,29 @@ async function ensureDeclaredFeedPairs(
             typeof existingDeclared.contractVersion === 'number'
               ? existingDeclared.contractVersion
               : 0,
-            2,
+            3,
           ),
-          identitySourceDocument:
-            existingDeclared.identitySourceDocument ?? POWER_TARGET_IDENTITY_SOURCE,
-          targetEntityName: existingDeclared.targetEntityName ?? declaredPower.targetEntityName,
-          targetKind: existingDeclared.targetKind ?? declaredPower.targetKind,
-          targetAid: existingDeclared.targetAid ?? declaredPower.targetAid,
-          targetLocalAid: existingDeclared.targetLocalAid ?? declaredPower.targetLocalAid,
-          targetRackAid: existingDeclared.targetRackAid ?? declaredPower.targetRackAid,
-          ...(declaredPower.targetBaseAid && existingDeclared.targetBaseAid === undefined
-            ? { targetBaseAid: declaredPower.targetBaseAid }
+          targetAliases,
+          ...(targetAidAliases.length ? { targetAidAliases } : {}),
+          ...(sourceManagedTarget
+            ? {
+                sourceDocument: declaredPower.sourceDocument,
+                identitySourceDocument: declaredPower.identitySourceDocument,
+                targetLabel: declaredPower.targetLabel,
+                targetEntityName: declaredPower.targetEntityName,
+                targetCanonicalEntityName: declaredPower.targetCanonicalEntityName,
+                targetKind: declaredPower.targetKind,
+                targetAid: declaredPower.targetAid,
+                targetLocalAid: declaredPower.targetLocalAid,
+                targetRackAid: declaredPower.targetRackAid,
+                ...(declaredPower.targetBaseAid
+                  ? { targetBaseAid: declaredPower.targetBaseAid }
+                  : { targetBaseAid: undefined }),
+                currentBreaker: declaredPower.currentBreaker,
+                companionFeed: declaredPower.companionFeed,
+              }
             : {}),
+          remarks: sourceManagedRemarks ? declaredPower.remarks : existingRemarks,
           remarksSemantics: existingDeclared.remarksSemantics ?? declaredPower.remarksSemantics,
           targetPlacement:
             existingDeclared.targetPlacement === undefined ||
@@ -1803,13 +1857,15 @@ async function ensureDeclaredFeedPairs(
           documentedRatingA: existingDeclared.documentedRatingA ?? field.ratedCurrentA,
           targetFootprint: existingDeclared.targetFootprint ?? field.targetFootprint,
           documentedStatus: existingDeclared.documentedStatus ?? field.documentedStatus,
-          fieldScheduleSource:
-            existingDeclared.fieldScheduleSource ?? BREAKER_FIELD_SCHEDULE_SOURCE,
-          ...(field.replacementTargetA && existingDeclared.replacementTargetA === undefined
-            ? { replacementTargetA: field.replacementTargetA }
+          fieldScheduleSource: BREAKER_FIELD_SCHEDULE_SOURCE,
+          ...(field.replacementTargetA
+            ? { replacementTargetA: existingDeclared.replacementTargetA ?? field.replacementTargetA }
             : {}),
         }
-      : declaredPower;
+      : {
+          ...declaredPower,
+          targetAliases,
+        };
 
     // Never overwrite an existing commissioned/verified rating or alarm policy.
     // A documentary rating is a field fact, not an enabled overcurrent threshold.
@@ -1826,8 +1882,10 @@ async function ensureDeclaredFeedPairs(
           },
         }
       : {};
+    const mergedAliases = [...new Set([...(current.aliases ?? []), breaker.destination])];
     if (
       JSON.stringify(current.attributes?.declaredPower) === JSON.stringify(mergedDeclaredPower) &&
+      JSON.stringify(current.aliases ?? []) === JSON.stringify(mergedAliases) &&
       !canSeedRating
     )
       continue;
@@ -1835,6 +1893,7 @@ async function ensureDeclaredFeedPairs(
     before.push(current);
     after.push({
       ...current,
+      aliases: mergedAliases,
       attributes: {
         ...(current.attributes ?? {}),
         ...ratingPatch,

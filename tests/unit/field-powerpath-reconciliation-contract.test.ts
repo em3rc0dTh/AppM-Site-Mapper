@@ -14,7 +14,9 @@ describe('FIELD PowerPath reconciliation safety contract', () => {
   });
 
   it('does not issue topology mutations', () => {
-    expect(source).not.toMatch(/topology\.(insertOne|updateOne|updateMany|replaceOne|deleteOne|deleteMany)\s*\(/);
+    expect(source).not.toMatch(
+      /topology\.(insertOne|updateOne|updateMany|replaceOne|deleteOne|deleteMany)\s*\(/,
+    );
   });
 
   it('writes only PowerPath records during reconciliation', () => {

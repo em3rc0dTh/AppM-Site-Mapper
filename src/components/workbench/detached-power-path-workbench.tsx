@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 
 import { CompositionHistoryCharts } from '@/components/equipment/composition-history-charts';
 import { DetachedWorkbenchButton } from '@/components/workbench/detached-workbench-button';
+import { parseDeclaredPowerTarget } from '@/modules/power/domain/powered-equipment';
 import type { BreakerTelemetryReading, TelemetrySample } from '@/modules/telemetry/domain/entities';
 
 type View = {
@@ -98,6 +99,7 @@ export function DetachedPowerPathWorkbench({
   const locale = useLocale();
   const [view, setView] = useState<View | null>(null);
   const [section, setSection] = useState<'telemetry' | 'history' | 'trace'>('telemetry');
+  const poweredTarget = useMemo(() => parseDeclaredPowerTarget(target), [target]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -203,6 +205,15 @@ export function DetachedPowerPathWorkbench({
           <span className="sm-power-declared-badge" title={t('declaredAssetTooltip')}>
             {t('declaredAsset')}
           </span>
+          {poweredTarget ? (
+            <DetachedWorkbenchButton
+              href={`/workbench/powered-equipment?target=${encodeURIComponent(target)}`}
+              windowName={`site-mapper-powered-equipment-${poweredTarget.equipmentKey}`}
+              label={t('openConnectionDiagram')}
+            >
+              {t('openConnectionDiagram')}
+            </DetachedWorkbenchButton>
+          ) : null}
         </article>
       </section>
 

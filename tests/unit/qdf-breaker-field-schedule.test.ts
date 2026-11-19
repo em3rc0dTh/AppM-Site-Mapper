@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { BREAKER_FIELD_SCHEDULE } from '@/seeds/seed-01';
+import { BREAKER_FIELD_SCHEDULE, SEED_01_VERSION } from '@/seeds/seed-01';
 
 describe('seed-01 QDF documentary breaker schedule', () => {
+  it('advances the additive workbook identity migration to seed v13', () => {
+    expect(SEED_01_VERSION).toBe(13);
+  });
   it('covers exactly the installed breaker positions in QDF-2/4/5', () => {
     expect(Object.keys(BREAKER_FIELD_SCHEDULE)).toHaveLength(37);
     expect(

@@ -1864,7 +1864,9 @@ async function ensureDeclaredFeedPairs(
           documentedStatus: existingDeclared.documentedStatus ?? field.documentedStatus,
           fieldScheduleSource: BREAKER_FIELD_SCHEDULE_SOURCE,
           ...(field.replacementTargetA
-            ? { replacementTargetA: existingDeclared.replacementTargetA ?? field.replacementTargetA }
+            ? {
+                replacementTargetA: existingDeclared.replacementTargetA ?? field.replacementTargetA,
+              }
             : {}),
         }
       : {

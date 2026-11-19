@@ -91,14 +91,14 @@ export function CommandPalette() {
   function navigate(result: SearchResult) {
     close();
 
-    if (result.kind === 'POWER_TARGET') {
+    if (result.kind === 'POWER_TARGET' || result.kind === 'POWERED_EQUIPMENT') {
       const width = Math.min(1500, Math.max(980, window.screen.availWidth - 120));
       const height = Math.min(980, Math.max(720, window.screen.availHeight - 120));
       const left = Math.max(0, window.screenX + Math.round((window.outerWidth - width) / 2));
       const top = Math.max(0, window.screenY + 40);
       const opened = window.open(
         result.href,
-        `site-mapper-power-target-${result.id.replace(/[^a-zA-Z0-9_-]/g, '-')}`,
+        `site-mapper-${result.kind.toLowerCase().replaceAll('_', '-')}-${result.id.replace(/[^a-zA-Z0-9_-]/g, '-')}`,
         [
           'popup=yes',
           `width=${width}`,

@@ -73,27 +73,27 @@ new AID: DTN-LUR-FP4-01::SH1::NoSlot::PWR:A
 
 ## Rack association map
 
-| QDF | HUELLA | Rack AID | Type | Canonical equipment / PDU | Current display / aliases |
-| --- | --- | --- | --- | --- | --- |
-| QDF-2 | 010202.10 | `RACK::010202.10` | PDU | PDU 01 | Rack CDN PDU-1A/B |
-| QDF-2 | 010202.09 | `RACK::010202.09` | EQUIPMENT | GRTLuren3 | GRTLUREM3 |
-| QDF-2 | 010202.11 | `RACK::010202.11` | EQUIPMENT | DTX-LUR-FP2-01 | DTX-LUR-FP2-01 |
-| QDF-4 | 010206.20 | `RACK::010206.20` | EQUIPMENT | BB-LUR-04 | BB-LUR-04 |
-| QDF-4 | 010206.19 | `RACK::010206.19` | EQUIPMENT | PL-LUR-FPN3-1 | PL-LUR-FPN3-1 |
-| QDF-4 | 010206.15 | `RACK::010206.15` | EQUIPMENT | DTN-LUR-FP4-01 | DTN-LUR-FP4-01 |
-| QDF-4 | 010205.20 | `RACK::010205.20` | EQUIPMENT | BB-LUR-FPN3-3 | BB-LUR-FPN3-3 |
-| QDF-4 | 010205.16 | `RACK::010205.16` | EQUIPMENT | Orion | Orion |
-| QDF-5 | 010208.12 | `RACK::010208.12` | EQUIPMENT | WS-LUR-04 | WS-LUR-04 |
-| QDF-5 | 010208.12 | `RACK::010208.12` | EQUIPMENT | WS-LUR-01 | WS-LUR-01 |
-| QDF-5 | 010208.12 | `RACK::010208.12` | EQUIPMENT | WS-LUR-02 | WS-LUR-02 |
-| QDF-5 | 010208.12 | `RACK::010208.12` | EQUIPMENT | CAR-LUR-01 | CAR-LUR-01 |
-| QDF-5 | 010208.12 | `RACK::010208.12` | EQUIPMENT | WS-LUR-03 | WS-LUR-03 |
-| QDF-5 | 010208.13 | `RACK::010208.13` | EQUIPMENT | GX-LUR-02 | legacy: GXLUR02 |
-| QDF-5 | 010208.13 | `RACK::010208.13` | EQUIPMENT | GX-LUR-01 | legacy: GXLUR01 |
-| QDF-5 | 010208.13 | `RACK::010208.13` | PDU | PDU 01 | PDU1-A/B |
-| QDF-5 | 010208.14 | `RACK::010208.14` | PDU | PDU 01 | PDU1-A/B |
-| QDF-5 | 010208.16 | `RACK::010208.16` | EQUIPMENT | DTX-LUR-FP2-1 | DTX-LUR-FP2-1 |
-| QDF-5 | 010207.20 | `RACK::010207.20` | EQUIPMENT | PL-LUR-FPO1-1 | PL-LUR-FPO1-1 |
+| QDF   | HUELLA    | Rack AID          | Type      | Canonical equipment / PDU | Current display / aliases |
+| ----- | --------- | ----------------- | --------- | ------------------------- | ------------------------- |
+| QDF-2 | 010202.10 | `RACK::010202.10` | PDU       | PDU 01                    | Rack CDN PDU-1A/B         |
+| QDF-2 | 010202.09 | `RACK::010202.09` | EQUIPMENT | GRTLuren3                 | GRTLUREM3                 |
+| QDF-2 | 010202.11 | `RACK::010202.11` | EQUIPMENT | DTX-LUR-FP2-01            | DTX-LUR-FP2-01            |
+| QDF-4 | 010206.20 | `RACK::010206.20` | EQUIPMENT | BB-LUR-04                 | BB-LUR-04                 |
+| QDF-4 | 010206.19 | `RACK::010206.19` | EQUIPMENT | PL-LUR-FPN3-1             | PL-LUR-FPN3-1             |
+| QDF-4 | 010206.15 | `RACK::010206.15` | EQUIPMENT | DTN-LUR-FP4-01            | DTN-LUR-FP4-01            |
+| QDF-4 | 010205.20 | `RACK::010205.20` | EQUIPMENT | BB-LUR-FPN3-3             | BB-LUR-FPN3-3             |
+| QDF-4 | 010205.16 | `RACK::010205.16` | EQUIPMENT | Orion                     | Orion                     |
+| QDF-5 | 010208.12 | `RACK::010208.12` | EQUIPMENT | WS-LUR-04                 | WS-LUR-04                 |
+| QDF-5 | 010208.12 | `RACK::010208.12` | EQUIPMENT | WS-LUR-01                 | WS-LUR-01                 |
+| QDF-5 | 010208.12 | `RACK::010208.12` | EQUIPMENT | WS-LUR-02                 | WS-LUR-02                 |
+| QDF-5 | 010208.12 | `RACK::010208.12` | EQUIPMENT | CAR-LUR-01                | CAR-LUR-01                |
+| QDF-5 | 010208.12 | `RACK::010208.12` | EQUIPMENT | WS-LUR-03                 | WS-LUR-03                 |
+| QDF-5 | 010208.13 | `RACK::010208.13` | EQUIPMENT | GX-LUR-02                 | legacy: GXLUR02           |
+| QDF-5 | 010208.13 | `RACK::010208.13` | EQUIPMENT | GX-LUR-01                 | legacy: GXLUR01           |
+| QDF-5 | 010208.13 | `RACK::010208.13` | PDU       | PDU 01                    | PDU1-A/B                  |
+| QDF-5 | 010208.14 | `RACK::010208.14` | PDU       | PDU 01                    | PDU1-A/B                  |
+| QDF-5 | 010208.16 | `RACK::010208.16` | EQUIPMENT | DTX-LUR-FP2-1             | DTX-LUR-FP2-1             |
+| QDF-5 | 010207.20 | `RACK::010207.20` | EQUIPMENT | PL-LUR-FPO1-1             | PL-LUR-FPO1-1             |
 
 ## PDU contract
 

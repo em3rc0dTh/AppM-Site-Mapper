@@ -76,7 +76,9 @@ function declaredPowerMetadata(value: unknown): DeclaredPowerMetadata {
       ? record.targetEntityName.trim()
       : undefined;
   const remarks = Array.isArray(record.remarks)
-    ? record.remarks.filter((item): item is string => typeof item === 'string' && Boolean(item.trim()))
+    ? record.remarks.filter(
+        (item): item is string => typeof item === 'string' && Boolean(item.trim()),
+      )
     : [];
   return {
     ...(qdf ? { qdf } : {}),

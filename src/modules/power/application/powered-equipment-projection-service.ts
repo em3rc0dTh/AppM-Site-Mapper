@@ -117,13 +117,11 @@ export class PoweredEquipmentProjectionService {
         if (!endpoint) continue;
 
         const feed = metadata.feed ?? endpoint.side ?? panelFeed(panelName);
-        const group =
-          groups.get(endpoint.equipmentKey) ??
-          {
-            name: endpoint.equipmentName,
-            connections: [],
-            seen: new Set<string>(),
-          };
+        const group = groups.get(endpoint.equipmentKey) ?? {
+          name: endpoint.equipmentName,
+          connections: [],
+          seen: new Set<string>(),
+        };
         const dedupeKey = `${breaker.id}\u0000${endpoint.aid}`;
         if (group.seen.has(dedupeKey)) continue;
         group.seen.add(dedupeKey);

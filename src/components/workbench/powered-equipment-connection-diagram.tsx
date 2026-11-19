@@ -7,10 +7,7 @@ import type {
   PoweredEquipmentConnection,
   PoweredEquipmentProjection,
 } from '@/modules/power/application/powered-equipment-projection-service';
-import type {
-  BreakerTelemetryReading,
-  TelemetrySample,
-} from '@/modules/telemetry/domain/entities';
+import type { BreakerTelemetryReading, TelemetrySample } from '@/modules/telemetry/domain/entities';
 
 type TelemetryView = {
   readonly targetId: string;
@@ -64,7 +61,9 @@ function sumDefined(values: readonly (number | undefined)[]): {
   readonly value?: number;
   readonly reporting: number;
 } {
-  const defined = values.filter((value): value is number => value !== undefined && Number.isFinite(value));
+  const defined = values.filter(
+    (value): value is number => value !== undefined && Number.isFinite(value),
+  );
   return {
     ...(defined.length ? { value: defined.reduce((sum, value) => sum + value, 0) } : {}),
     reporting: defined.length,
@@ -87,7 +86,8 @@ function feedConnections(
 
 function statusClass(status: string): string {
   const normalized = status.toUpperCase();
-  if (normalized === 'LIVE' || normalized === 'ONLINE' || normalized === 'REPORTING') return 'is-live';
+  if (normalized === 'LIVE' || normalized === 'ONLINE' || normalized === 'REPORTING')
+    return 'is-live';
   return 'is-no-data';
 }
 
@@ -104,7 +104,9 @@ export function PoweredEquipmentConnectionDiagram({
   useEffect(() => {
     const controller = new AbortController();
     let timer: ReturnType<typeof setTimeout>;
-    const breakerIds = [...new Set(equipment.connections.map((connection) => connection.breakerId))];
+    const breakerIds = [
+      ...new Set(equipment.connections.map((connection) => connection.breakerId)),
+    ];
 
     async function load() {
       const entries = await Promise.all(
@@ -137,8 +139,12 @@ export function PoweredEquipmentConnectionDiagram({
 
   const aggregate = useMemo(() => {
     const byFeed = (feed: FeedKey) => {
-      const connections = equipment.connections.filter((connection) => feedKey(connection) === feed);
-      const powers = sumDefined(connections.map((connection) => telemetry[connection.breakerId]?.powerW));
+      const connections = equipment.connections.filter(
+        (connection) => feedKey(connection) === feed,
+      );
+      const powers = sumDefined(
+        connections.map((connection) => telemetry[connection.breakerId]?.powerW),
+      );
       const energy = sumDefined(
         connections.map((connection) => telemetry[connection.breakerId]?.energyKwh),
       );
@@ -162,16 +168,23 @@ export function PoweredEquipmentConnectionDiagram({
     await document.documentElement.requestFullscreen?.().catch(() => undefined);
   }
 
-  function renderFeed(
-    connections: readonly PoweredEquipmentConnection[],
-    feed: FeedKey,
-  ) {
+  function renderFeed(connections: readonly PoweredEquipmentConnection[], feed: FeedKey) {
     if (!connections.length) return null;
     const isA = feed === 'A';
     const isB = feed === 'B';
-    const label = isA ? t('feedSide', { side: 'A' }) : isB ? t('feedSide', { side: 'B' }) : t('feedUnspecified');
-    const partLabel = isA ? t('poweredPart', { side: 'A' }) : isB ? t('poweredPart', { side: 'B' }) : t('poweredPartUnspecified');
-    const power = sumDefined(connections.map((connection) => telemetry[connection.breakerId]?.powerW));
+    const label = isA
+      ? t('feedSide', { side: 'A' })
+      : isB
+        ? t('feedSide', { side: 'B' })
+        : t('feedUnspecified');
+    const partLabel = isA
+      ? t('poweredPart', { side: 'A' })
+      : isB
+        ? t('poweredPart', { side: 'B' })
+        : t('poweredPartUnspecified');
+    const power = sumDefined(
+      connections.map((connection) => telemetry[connection.breakerId]?.powerW),
+    );
     const energy = sumDefined(
       connections.map((connection) => telemetry[connection.breakerId]?.energyKwh),
     );
@@ -190,7 +203,8 @@ export function PoweredEquipmentConnectionDiagram({
                 Σ {power.value === undefined ? '—' : `${(power.value / 1000).toFixed(3)} kW`}
               </b>
               <span>
-                {t('energyCounterShort')} {energy.value === undefined ? '—' : `${energy.value.toFixed(3)} kWh`}
+                {t('energyCounterShort')}{' '}
+                {energy.value === undefined ? '—' : `${energy.value.toFixed(3)} kWh`}
               </span>
               {power.reporting < connections.length || energy.reporting < connections.length ? (
                 <em>{t('partialData')}</em>
@@ -212,7 +226,9 @@ export function PoweredEquipmentConnectionDiagram({
               return (
                 <button
                   type="button"
-                  className={selected ? 'sm-powered-breaker-row is-selected' : 'sm-powered-breaker-row'}
+                  className={
+                    selected ? 'sm-powered-breaker-row is-selected' : 'sm-powered-breaker-row'
+                  }
                   key={`${connection.breakerId}-${connection.endpoint.aid}`}
                   onClick={() =>
                     setSelectedAid((current) =>
@@ -268,7 +284,9 @@ export function PoweredEquipmentConnectionDiagram({
               return (
                 <button
                   type="button"
-                  className={selected ? 'sm-powered-endpoint-row is-selected' : 'sm-powered-endpoint-row'}
+                  className={
+                    selected ? 'sm-powered-endpoint-row is-selected' : 'sm-powered-endpoint-row'
+                  }
                   key={`endpoint-${connection.breakerId}-${connection.endpoint.aid}`}
                   onClick={() =>
                     setSelectedAid((current) =>
@@ -334,7 +352,9 @@ export function PoweredEquipmentConnectionDiagram({
           <div>
             <dt>{t('totalLivePower')}</dt>
             <dd>
-              {totalPower.value === undefined ? '—' : `${(totalPower.value / 1000).toFixed(3)} kW`}
+              {totalPower.value === undefined
+                ? '—'
+                : `${(totalPower.value / 1000).toFixed(3)} kW`}
               {totalPower.reporting < equipment.connections.length ? (
                 <small>{t('partialData')}</small>
               ) : null}
@@ -418,7 +438,9 @@ export function PoweredEquipmentConnectionDiagram({
               <b>{t('total')}</b>
               <strong>{equipment.connections.length}</strong>
               <strong>
-                {totalPower.value === undefined ? '—' : `${(totalPower.value / 1000).toFixed(3)} kW`}
+                {totalPower.value === undefined
+                  ? '—'
+                  : `${(totalPower.value / 1000).toFixed(3)} kW`}
               </strong>
               <strong>
                 {totalEnergy.value === undefined ? '—' : `${totalEnergy.value.toFixed(3)} kWh`}

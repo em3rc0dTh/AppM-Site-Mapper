@@ -79,21 +79,21 @@ function breaker(
 
 describe('powered equipment projection', () => {
   it('parses endpoint composition without promoting the endpoint to equipment identity', () => {
-    expect(
-      parseDeclaredPowerTarget('GRTLuren3 PSU0 A0', { targetFootprint: '010202.09' }),
-    ).toEqual({
-      equipmentKey: 'grtluren3',
-      equipmentName: 'GRTLuren3',
-      targetKind: 'EQUIPMENT',
-      aid: 'GRTLuren3::NoShelf::PSU0::A0',
-      localAid: 'GRTLuren3::NoShelf::PSU0::A0',
-      rackAid: 'RACK::010202.09',
-      targetLabel: 'GRTLuren3 PSU0 A0',
-      displayLabel: 'PSU0 / A0',
-      module: 'PSU0',
-      endpoint: 'A0',
-      side: 'A',
-    });
+    expect(parseDeclaredPowerTarget('GRTLuren3 PSU0 A0', { targetFootprint: '010202.09' })).toEqual(
+      {
+        equipmentKey: 'grtluren3',
+        equipmentName: 'GRTLuren3',
+        targetKind: 'EQUIPMENT',
+        aid: 'GRTLuren3::NoShelf::PSU0::A0',
+        localAid: 'GRTLuren3::NoShelf::PSU0::A0',
+        rackAid: 'RACK::010202.09',
+        targetLabel: 'GRTLuren3 PSU0 A0',
+        displayLabel: 'PSU0 / A0',
+        module: 'PSU0',
+        endpoint: 'A0',
+        side: 'A',
+      },
+    );
 
     expect(parseDeclaredPowerTarget('DTX-LUR-FP2-01 SH15 PEM B1.2')).toMatchObject({
       equipmentKey: 'dtx-lur-fp2-01',
@@ -120,9 +120,7 @@ describe('powered equipment projection', () => {
   it('resolves PDU identity only when the physical rack context is known', () => {
     expect(parseDeclaredPowerTarget('Rack CDN PDU-1A')).toBeNull();
 
-    expect(
-      parseDeclaredPowerTarget('Rack CDN PDU-1A', { targetFootprint: '010202.10' }),
-    ).toEqual({
+    expect(parseDeclaredPowerTarget('Rack CDN PDU-1A', { targetFootprint: '010202.10' })).toEqual({
       equipmentKey: 'rack-010202.10-pdu01',
       equipmentName: 'PDU 01',
       targetKind: 'PDU',
@@ -182,22 +180,14 @@ describe('powered equipment projection', () => {
     const seed: TopologyNode[] = [
       device(),
       panel(),
-      breaker(
-        'breaker-pdu-a',
-        'A3-17',
-        '010208.14 PDU1-A',
-        'A',
-        '010208.14',
-        ['Pos-1: MTC-9 SH10 PEM A', 'Pos-2: XTM-LUR01 PEM A'],
-      ),
-      breaker(
-        'breaker-pdu-b',
-        'B3-17',
-        '010208.14 PDU1-B',
-        'B',
-        '010208.14',
-        ['Pos-1: MTC-9 SH10 PEM B', 'Pos-2: XTM-LUR01 PEM B'],
-      ),
+      breaker('breaker-pdu-a', 'A3-17', '010208.14 PDU1-A', 'A', '010208.14', [
+        'Pos-1: MTC-9 SH10 PEM A',
+        'Pos-2: XTM-LUR01 PEM A',
+      ]),
+      breaker('breaker-pdu-b', 'B3-17', '010208.14 PDU1-B', 'B', '010208.14', [
+        'Pos-1: MTC-9 SH10 PEM B',
+        'Pos-2: XTM-LUR01 PEM B',
+      ]),
     ];
     const repository = new MemoryTopologyRepository(seed);
     const projection = await new PoweredEquipmentProjectionService(repository).list();

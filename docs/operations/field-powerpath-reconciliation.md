@@ -67,14 +67,18 @@ Only `CREATE` rows are eligible for APPLY.
 
 ## PLAN — default and read-only
 
-Run on the MongoDB host with the URI provided privately by the runtime environment:
+Run on the MongoDB host with `MONGODB_URI` and `MONGODB_DB_NAME` loaded from the private
+FIELD runtime environment. The explicit `--database` flag remains available for controlled
+overrides:
 
 ```bash
 node scripts/operations/reconcile-field-power-paths.mjs \
-  --database seed-01 \
   --expected-breakers 74 \
   > .runtime/field-powerpath-plan.json
 ```
+
+Database resolution order is `--database`, then `MONGODB_DB_NAME`, then the legacy
+`SITEMAPPER_DATABASE` fallback, and finally `seed-01` for the existing office profile.
 
 The command refuses to continue when the declared QDF breaker inventory does not equal the expected
 74 breakers.
@@ -87,7 +91,6 @@ Then run:
 
 ```bash
 node scripts/operations/reconcile-field-power-paths.mjs \
-  --database seed-01 \
   --expected-breakers 74 \
   --apply \
   --ack RECONCILE_FIELD_POWER_PATHS \

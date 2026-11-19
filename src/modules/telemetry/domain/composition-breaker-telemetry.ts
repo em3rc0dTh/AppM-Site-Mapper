@@ -65,9 +65,9 @@ function numericMetric(value: unknown, expectedUnit: string): number | undefined
 function isSiteMapperDerived(value: unknown): boolean {
   return Boolean(
     value &&
-      typeof value === 'object' &&
-      !Array.isArray(value) &&
-      (value as Record<string, unknown>).origin === 'DERIVED',
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    (value as Record<string, unknown>).origin === 'DERIVED',
   );
 }
 

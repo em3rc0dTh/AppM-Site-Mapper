@@ -33,12 +33,14 @@ type DeclaredPowerMetadata = {
   readonly qdf?: string;
   readonly feed?: PowerFeed;
   readonly targetFootprint?: string;
+  readonly targetLabel?: string;
   readonly targetRackAid?: string;
   readonly targetAid?: string;
   readonly targetLocalAid?: string;
   readonly targetBaseAid?: string;
   readonly targetKind?: PoweredTargetKind;
   readonly targetEntityName?: string;
+  readonly targetCanonicalEntityName?: string;
   readonly remarks: readonly string[];
 };
 
@@ -50,6 +52,10 @@ function declaredPowerMetadata(value: unknown): DeclaredPowerMetadata {
   const targetFootprint =
     typeof record.targetFootprint === 'string' && record.targetFootprint.trim()
       ? record.targetFootprint.trim()
+      : undefined;
+  const targetLabel =
+    typeof record.targetLabel === 'string' && record.targetLabel.trim()
+      ? record.targetLabel.trim()
       : undefined;
   const targetRackAid =
     typeof record.targetRackAid === 'string' && record.targetRackAid.trim()
@@ -75,6 +81,10 @@ function declaredPowerMetadata(value: unknown): DeclaredPowerMetadata {
     typeof record.targetEntityName === 'string' && record.targetEntityName.trim()
       ? record.targetEntityName.trim()
       : undefined;
+  const targetCanonicalEntityName =
+    typeof record.targetCanonicalEntityName === 'string' && record.targetCanonicalEntityName.trim()
+      ? record.targetCanonicalEntityName.trim()
+      : undefined;
   const remarks = Array.isArray(record.remarks)
     ? record.remarks.filter(
         (item): item is string => typeof item === 'string' && Boolean(item.trim()),
@@ -84,12 +94,14 @@ function declaredPowerMetadata(value: unknown): DeclaredPowerMetadata {
     ...(qdf ? { qdf } : {}),
     ...(feed ? { feed } : {}),
     ...(targetFootprint ? { targetFootprint } : {}),
+    ...(targetLabel ? { targetLabel } : {}),
     ...(targetRackAid ? { targetRackAid } : {}),
     ...(targetAid ? { targetAid } : {}),
     ...(targetLocalAid ? { targetLocalAid } : {}),
     ...(targetBaseAid ? { targetBaseAid } : {}),
     ...(targetKind ? { targetKind } : {}),
     ...(targetEntityName ? { targetEntityName } : {}),
+    ...(targetCanonicalEntityName ? { targetCanonicalEntityName } : {}),
     remarks,
   };
 }
@@ -166,10 +178,14 @@ export class PoweredEquipmentProjectionService {
         (sourceDevice?.kind === 'DEVICE' ? sourceDevice.name : undefined) ??
         breaker.deviceId;
 
-      for (const alias of breaker.aliases ?? []) {
+      const declaredTargets = metadata.targetLabel
+        ? [metadata.targetLabel]
+        : (breaker.aliases ?? []);
+      for (const alias of declaredTargets) {
         const parsed = parseDeclaredPowerTarget(alias, {
           ...(metadata.targetFootprint ? { targetFootprint: metadata.targetFootprint } : {}),
           ...(metadata.targetRackAid ? { rackAid: metadata.targetRackAid } : {}),
+          ...(metadata.feed ? { feed: metadata.feed } : {}),
         });
         if (!parsed) continue;
 
@@ -181,6 +197,9 @@ export class PoweredEquipmentProjectionService {
           ...(metadata.targetRackAid ? { rackAid: metadata.targetRackAid } : {}),
           ...(metadata.targetKind ? { targetKind: metadata.targetKind } : {}),
           ...(metadata.targetEntityName ? { equipmentName: metadata.targetEntityName } : {}),
+          ...(metadata.targetCanonicalEntityName
+            ? { canonicalEquipmentName: metadata.targetCanonicalEntityName }
+            : {}),
         };
         const feed = metadata.feed ?? endpoint.side ?? panelFeed(panelName);
         const group = groups.get(endpoint.equipmentKey) ?? {

@@ -3,11 +3,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
+import { resolveBreakerLiveMetrics } from '@/components/telemetry/telemetry-presentation';
 import type {
   PoweredEquipmentConnection,
   PoweredEquipmentProjection,
 } from '@/modules/power/application/powered-equipment-projection-service';
-import type { BreakerTelemetryReading, TelemetrySample } from '@/modules/telemetry/domain/entities';
+import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 
 type TelemetryView = {
   readonly targetId: string;
@@ -26,26 +27,10 @@ type LiveMetrics = {
 
 type FeedKey = 'A' | 'B' | 'UNSPECIFIED';
 
-function metricValue(
-  reading: BreakerTelemetryReading | undefined,
-  key: keyof BreakerTelemetryReading['metrics'],
-): number | undefined {
-  return reading?.metrics[key]?.value;
-}
-
 function liveMetrics(view: TelemetryView | null, breakerId: string): LiveMetrics {
-  const reading = view?.sample?.breakerReadings?.find((item) => item.breakerId === breakerId);
-  const voltageV = metricValue(reading, 'voltageV');
-  const currentA = metricValue(reading, 'currentA');
-  const powerW = metricValue(reading, 'powerW');
-  const energyKwh = metricValue(reading, 'energyKwh');
   return {
     status: view?.status ?? 'NO_DATA',
-    ...(reading?.receivedAt ? { receivedAt: reading.receivedAt } : {}),
-    ...(voltageV !== undefined ? { voltageV } : {}),
-    ...(currentA !== undefined ? { currentA } : {}),
-    ...(powerW !== undefined ? { powerW } : {}),
-    ...(energyKwh !== undefined ? { energyKwh } : {}),
+    ...resolveBreakerLiveMetrics(view?.sample, breakerId),
   };
 }
 

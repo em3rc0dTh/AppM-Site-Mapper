@@ -436,10 +436,19 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
                 const wireProfile = result.value.wireProfile ?? detectBfdbWireProfile(freshPoints);
                 for (const item of directSamples) {
                   const sourcePointId = item.sourcePointId!;
-                  const point = findBfdbWirePointByBindingId(sourcePointId, freshPoints, wireProfile);
+                  const point = findBfdbWirePointByBindingId(
+                    sourcePointId,
+                    freshPoints,
+                    wireProfile,
+                  );
                   if (!point) continue;
                   const metrics: Record<string, { value: number }> = {};
-                  for (const normalized of ['voltageV', 'currentA', 'powerW', 'energyKwh'] as const) {
+                  for (const normalized of [
+                    'voltageV',
+                    'currentA',
+                    'powerW',
+                    'energyKwh',
+                  ] as const) {
                     // Forward the canonical Equipment metric. In BFDB mode power
                     // and energy may be Site Mapper-derived and must never be
                     // overwritten by untrusted raw P/EP fields from the gateway.

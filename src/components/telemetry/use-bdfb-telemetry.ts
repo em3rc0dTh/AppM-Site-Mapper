@@ -1,16 +1,29 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { bdfbSourceView } from '@/modules/telemetry/domain/bdfb-source-view';
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 
 export function useTelemetryStream(enabled = true) {
+  const serverClockOffsetMs = useRef(0);
   const [now, setNow] = useState(() => Date.now());
   const [samples, setSamples] = useState<readonly TelemetrySample[]>([]);
   const [hasSnapshot, setHasSnapshot] = useState(false);
   useEffect(() => {
     if (!enabled) return;
-    const clock = setInterval(() => setNow(Date.now()), 5000);
+    const clock = setInterval(() => setNow(Date.now() + serverClockOffsetMs.current), 5000);
     const stream = new EventSource('/api/telemetry/stream');
+    const serverClock = (event: MessageEvent<string>) => {
+      try {
+        const data = JSON.parse(event.data) as { serverNow?: unknown };
+        if (typeof data.serverNow !== 'string') return;
+        const serverNow = Date.parse(data.serverNow);
+        if (!Number.isFinite(serverNow)) return;
+        serverClockOffsetMs.current = serverNow - Date.now();
+        setNow(Date.now() + serverClockOffsetMs.current);
+      } catch {
+        // Keep the last valid server offset if one malformed clock event arrives.
+      }
+    };
     const snapshot = (event: MessageEvent<string>) => {
       try {
         const data = JSON.parse(event.data);
@@ -44,6 +57,7 @@ export function useTelemetryStream(enabled = true) {
         // Preserve the most recent valid snapshot when one malformed event arrives.
       }
     };
+    stream.addEventListener('clock', serverClock as EventListener);
     stream.addEventListener('snapshot', snapshot as EventListener);
     stream.addEventListener('telemetry', incoming as EventListener);
     return () => {

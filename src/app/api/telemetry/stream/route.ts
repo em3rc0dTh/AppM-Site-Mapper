@@ -93,9 +93,13 @@ export async function GET() {
         close();
         return;
       }
+      send('clock', { serverNow: new Date().toISOString() }, 'clock');
       send('snapshot', telemetry.service.snapshot(), 'snapshot');
       // A bounded snapshot refresh repairs any client-side gap after reconnects.
+      // The clock event keeps browser-side freshness calculations on server time
+      // instead of mixing the Windows browser clock with Docker/WSL timestamps.
       heartbeat = setInterval(() => {
+        send('clock', { serverNow: new Date().toISOString() }, 'clock');
         send('snapshot', telemetry.service.snapshot(), 'snapshot');
       }, 15_000);
     },

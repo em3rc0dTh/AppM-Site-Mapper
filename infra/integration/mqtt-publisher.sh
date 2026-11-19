@@ -7,7 +7,6 @@ INTERVAL="${MQTT_PUBLISH_INTERVAL_SECONDS:-5}"
 MSGID=1000
 
 publish_cycle() {
-  epoch="$(date +%s)"
   for serial in 26092403950003 26092403950004 26092403950002; do
     for panel in 1 2 3 4; do
       reported="{"
@@ -23,6 +22,10 @@ publish_cycle() {
         pos=$((pos + 1))
       done
       reported="${reported}}"
+      # Timestamp each message at publish time. A cycle builds 12 payloads and can
+      # take long enough on slow local Docker/WSL hosts that a cycle-level epoch
+      # exceeds the 30s source-vs-receive clock-skew contract.
+      epoch="$(date +%s)"
       payload="{\"msgid\":\"${MSGID}\",\"method\":\"update\",\"sn\":\"${serial}\",\"timestamp\":${epoch},\"sendtime\":${epoch},\"version\":1,\"reported\":${reported}}"
       mosquitto_pub -h "$HOST" -p "$PORT" -q 1 -t "data/dev/${serial}" -m "$payload"
       MSGID=$((MSGID + 1))

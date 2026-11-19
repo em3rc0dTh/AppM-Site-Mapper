@@ -29,6 +29,8 @@ describe('FIELD Rack/Parent Authorization PLAN safety contract', () => {
   it('keeps Rack identity separate from Rack U placement', () => {
     expect(source).toContain('declaration.targetRackAid');
     expect(source).toContain('declaration.targetFootprint');
+    expect(source).toContain('declaration.targetEntityName');
+    expect(source).toContain('declaration.targetCanonicalEntityName');
     expect(source).toContain("rackPlacementAuthorization: 'RACK_IDENTITY_ONLY_U_UNKNOWN'");
   });
 

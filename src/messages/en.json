@@ -559,7 +559,12 @@
       "selectedEndpoint": "Selected endpoint",
       "selectConnectionHelp": "Select a breaker or endpoint to highlight its connection and inspect the full AID.",
       "openConnectionDiagram": "VIEW ALL CONNECTIONS ↗",
-      "energyCounterShort": "Σ counter"
+      "energyCounterShort": "Σ counter",
+      "pdu": "PDU",
+      "rackAid": "Rack AID",
+      "localAid": "Local AID",
+      "documentaryRemarks": "DOCUMENTARY REMARKS",
+      "documentaryRemarksHelp": "POS-N entries come from the workbook and are editable remarks. They are not individually telemetered endpoints."
     },
     "rack": {
       "elevation": "ELEVATION",

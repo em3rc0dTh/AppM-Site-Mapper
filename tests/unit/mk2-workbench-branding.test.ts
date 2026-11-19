@@ -21,7 +21,9 @@ describe('Mk2 shared product header', () => {
 
     expect(workbenchHeader).toContain("pathname.startsWith('/workbench/powered-equipment')");
     expect(workbenchHeader).toContain('<SiteMapperBrand variant="compact" tagline={tagline} />');
-    expect(workbenchHeader).toContain('<SiteMapperProductHeader tagline={tagline} ariaLabel={ariaLabel} />');
+    expect(workbenchHeader).toContain(
+      '<SiteMapperProductHeader tagline={tagline} ariaLabel={ariaLabel} />',
+    );
 
     expect(productHeader).toContain('<SiteMapperBrand variant="compact" tagline={tagline} />');
     expect(productHeader).toContain('className="sm-product-header-home"');
@@ -39,7 +41,6 @@ describe('Mk2 shared product header', () => {
     expect(css).toContain('width: 44px;');
     expect(css).toContain('height: 44px;');
   });
-
 
   it('removes Home navigation from the powered-equipment independent workbench only', () => {
     const workbenchHeader = source('src/components/workbench/workbench-product-header.tsx');

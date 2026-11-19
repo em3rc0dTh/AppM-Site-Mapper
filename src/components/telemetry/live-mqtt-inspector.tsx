@@ -251,15 +251,13 @@ export function LiveMqttInspector() {
   const packet =
     packets.find((candidate) => candidate.sourceIdentity === selectedSource) ?? packets[0] ?? null;
   const panels = panelNames(packet);
-
-  useEffect(() => {
-    if (selectedPanel !== 'ALL' && !panels.includes(selectedPanel)) setSelectedPanel('ALL');
-  }, [panels, selectedPanel]);
+  const effectiveSelectedPanel =
+    selectedPanel === 'ALL' || panels.includes(selectedPanel) ? selectedPanel : 'ALL';
 
   const raw = useMemo(() => rawPayload(packet), [packet]);
   const normalized = useMemo(
-    () => normalizedPayload(packet, selectedPanel),
-    [packet, selectedPanel],
+    () => normalizedPayload(packet, effectiveSelectedPanel),
+    [packet, effectiveSelectedPanel],
   );
 
   async function copy(value: unknown) {
@@ -318,7 +316,7 @@ export function LiveMqttInspector() {
 
         <label>
           <span>Alcance</span>
-          <select value={selectedPanel} onChange={(event) => setSelectedPanel(event.target.value)}>
+          <select value={effectiveSelectedPanel} onChange={(event) => setSelectedPanel(event.target.value)}>
             <option value="ALL">ALL</option>
             {panels.map((panel) => (
               <option key={panel} value={panel}>{panel}</option>

@@ -1,11 +1,9 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import type {
-  BreakerTelemetryReading,
-  TelemetrySample,
-} from '@/modules/telemetry/domain/entities';
+import type { BreakerTelemetryReading, TelemetrySample } from '@/modules/telemetry/domain/entities';
 
 import styles from './live-mqtt-inspector.module.css';
 
@@ -78,9 +76,7 @@ function panelFromContext(sample: TelemetrySample, context: string): string | nu
 function panelNames(sample: TelemetrySample | null): string[] {
   if (!sample) return [];
   return [
-    ...new Set(
-      (sample.breakerReadings ?? []).map((reading) => reading.panelLabel).filter(Boolean),
-    ),
+    ...new Set((sample.breakerReadings ?? []).map((reading) => reading.panelLabel).filter(Boolean)),
   ].sort((left, right) => left.localeCompare(right, undefined, { numeric: true }));
 }
 
@@ -167,6 +163,7 @@ function CubeMark() {
 }
 
 export function LiveMqttInspector() {
+  const t = useTranslations('liveMqttInspector');
   const [samples, setSamples] = useState<readonly TelemetrySample[]>([]);
   const [selectedSource, setSelectedSource] = useState('');
   const [selectedPanel, setSelectedPanel] = useState('ALL');
@@ -269,6 +266,14 @@ export function LiveMqttInspector() {
     await navigator.clipboard.writeText(JSON.stringify(value, null, 2));
   }
 
+  const streamLabel = paused
+    ? t('paused')
+    : streamState === 'live'
+      ? t('liveStatus')
+      : streamState === 'connecting'
+        ? t('connectingStatus')
+        : t('reconnectingStatus');
+
   return (
     <main className={styles.root}>
       <header className={styles.header}>
@@ -276,7 +281,7 @@ export function LiveMqttInspector() {
           <CubeMark />
           <span className={styles.divider} aria-hidden="true" />
           <h1>
-            <span>Live</span> Inspector
+            <span>{t('live')}</span> {t('inspector')}
           </h1>
         </div>
 
@@ -288,10 +293,10 @@ export function LiveMqttInspector() {
             ].join(' ')}
           >
             <i aria-hidden="true" />
-            {paused ? 'PAUSED' : streamState === 'live' ? 'LIVE' : streamState.toUpperCase()}
+            {streamLabel}
           </span>
           <label className={styles.toggle}>
-            <span>Actualización automática</span>
+            <span>{t('autoUpdate')}</span>
             <input
               type="checkbox"
               checked={!paused}
@@ -302,9 +307,9 @@ export function LiveMqttInspector() {
         </div>
       </header>
 
-      <section className={styles.toolbar} aria-label="Live inspector scope">
+      <section className={styles.toolbar} aria-label={t('scopeAria')}>
         <label>
-          <span>Fuente</span>
+          <span>{t('source')}</span>
           <select
             value={packet?.sourceIdentity ?? ''}
             onChange={(event) => {
@@ -321,12 +326,12 @@ export function LiveMqttInspector() {
         </label>
 
         <label>
-          <span>Alcance</span>
+          <span>{t('scope')}</span>
           <select
             value={effectiveSelectedPanel}
             onChange={(event) => setSelectedPanel(event.target.value)}
           >
-            <option value="ALL">ALL</option>
+            <option value="ALL">{t('all')}</option>
             {panels.map((panel) => (
               <option key={panel} value={panel}>
                 {panel}
@@ -337,53 +342,48 @@ export function LiveMqttInspector() {
 
         <div className={styles.packetMeta}>
           <div>
-            <span>Último paquete</span>
+            <span>{t('lastPacket')}</span>
             <strong>
               {packet?.receivedAt ? new Date(packet.receivedAt).toLocaleString() : '—'}
             </strong>
           </div>
           <div>
-            <span>Hace</span>
+            <span>{t('ago')}</span>
             <strong className={styles.fresh}>{ageLabel(packet?.receivedAt, now)}</strong>
           </div>
           <div>
-            <span>Mensaje</span>
+            <span>{t('message')}</span>
             <strong>{packet?.messageId ?? '—'}</strong>
           </div>
           <div>
-            <span>Wire profile</span>
+            <span>{t('wireProfile')}</span>
             <strong>{packet?.wireProfile ?? '—'}</strong>
           </div>
         </div>
       </section>
 
-      <nav className={styles.tabs} aria-label="Inspector view">
-        <button
-          className={mode === 'raw' ? styles.activeTab : ''}
-          onClick={() => setMode('raw')}
-        >
-          RAW MQTT
+      <nav className={styles.tabs} aria-label={t('viewAria')}>
+        <button className={mode === 'raw' ? styles.activeTab : ''} onClick={() => setMode('raw')}>
+          {t('rawMqtt')}
         </button>
         <button
           className={mode === 'normalized' ? styles.activeTab : ''}
           onClick={() => setMode('normalized')}
         >
-          NORMALIZADO
+          {t('normalized')}
         </button>
         <button
           className={mode === 'split' ? styles.activeTab : ''}
           onClick={() => setMode('split')}
         >
-          VISTA DIVIDIDA
+          {t('splitView')}
         </button>
       </nav>
 
       {!packet ? (
         <section className={styles.empty}>
-          <strong>
-            {streamState === 'reconnecting' ? 'Reconectando telemetría…' : 'Esperando MQTT…'}
-          </strong>
-          <span>El inspector mostrará el último paquete BFDB aceptado por Site Mapper.</span>
+          <strong>{streamState === 'reconnecting' ? t('reconnecting') : t('waiting')}</strong>
+          <span>{t('waitingHelp')}</span>
         </section>
       ) : (
         <section
@@ -393,13 +393,15 @@ export function LiveMqttInspector() {
             <article className={styles.panel}>
               <header>
                 <div>
-                  <span className={styles.panelGlyph} aria-hidden="true">⌁</span>
+                  <span className={styles.panelGlyph} aria-hidden="true">
+                    ⌁
+                  </span>
                   <div>
-                    <strong>Paquete MQTT recibido</strong>
-                    <small>{packet.topic ?? 'topic no disponible'}</small>
+                    <strong>{t('mqttPacket')}</strong>
+                    <small>{packet.topic ?? t('topicUnavailable')}</small>
                   </div>
                 </div>
-                <button onClick={() => void copy(raw)}>Copiar</button>
+                <button onClick={() => void copy(raw)}>{t('copy')}</button>
               </header>
               <pre>{JSON.stringify(raw, null, 2)}</pre>
             </article>
@@ -409,13 +411,15 @@ export function LiveMqttInspector() {
             <article className={styles.panel}>
               <header>
                 <div>
-                  <span className={styles.panelGlyph} aria-hidden="true">◇</span>
+                  <span className={styles.panelGlyph} aria-hidden="true">
+                    ◇
+                  </span>
                   <div>
-                    <strong>Site Mapper · transformación</strong>
-                    <small>V/A fuente · kW/kWh derivados por Site Mapper</small>
+                    <strong>{t('transformTitle')}</strong>
+                    <small>{t('transformSubtitle')}</small>
                   </div>
                 </div>
-                <button onClick={() => void copy(normalized)}>Copiar</button>
+                <button onClick={() => void copy(normalized)}>{t('copy')}</button>
               </header>
               <pre>{JSON.stringify(normalized, null, 2)}</pre>
             </article>
@@ -426,20 +430,20 @@ export function LiveMqttInspector() {
       <footer className={styles.footer}>
         <div className={styles.rules}>
           <span>
-            <b>V</b> fuente primaria
+            <b>{t('voltageSymbol')}</b> {t('primarySource')}
           </span>
           <span>
-            <b>A</b> fuente primaria
+            <b>{t('currentSymbol')}</b> {t('primarySource')}
           </span>
           <span>
-            <b>kW</b> derivado V × A
+            <b>{t('powerSymbol')}</b> {t('derivedPower')}
           </span>
           <span>
-            <b>kWh</b> energía derivada Site Mapper
+            <b>{t('energySymbol')}</b> {t('derivedEnergy')}
           </span>
         </div>
         <button className={styles.pause} onClick={() => setPaused((value) => !value)}>
-          {paused ? '▶ Reanudar' : 'Ⅱ Pausar'}
+          {paused ? t('resume') : t('pause')}
         </button>
       </footer>
     </main>

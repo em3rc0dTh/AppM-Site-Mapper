@@ -21,10 +21,10 @@ It MUST NOT create, rename, move, archive or delete:
 
 ## Source facts already present
 
-Seed-01 declares 74 physical breakers:
+Seed-01 v14 declares 76 physical breakers:
 
 - QDF-2: 26 breakers / 13 A-B pairs
-- QDF-4: 12 breakers / 6 A-B pairs
+- QDF-4: 14 breakers / 7 A-B pairs (including Orion A3-07 / B3-07)
 - QDF-5: 36 breakers / 18 A-B pairs
 
 Each breaker declaration includes, where available:
@@ -33,14 +33,24 @@ Each breaker declaration includes, where available:
 - `sourceRow`
 - `pairId`
 - `feed`
-- `targetLabel`
+- `targetLabel` (source/display evidence)
+- `targetEntityName`
+- `targetCanonicalEntityName`
+- `targetKind`
+- `targetAid`
+- `targetLocalAid`
+- `targetBaseAid`
+- `targetRackAid`
+- `targetMaterialization`
 - `targetFootprint`
 - current breaker panel/position
 - companion Feed A/B breaker
 - documentary source/provenance
 
-`targetLabel` is the primary identity hint. `targetFootprint` is context/provenance and is
-never treated as a foreign key that authorizes creation of an Equipment.
+For contract v3 declarations, entity identity is resolved from
+`targetCanonicalEntityName` / `targetEntityName`; `targetLabel` remains source/display evidence.
+Endpoint identity is resolved from the declared canonical/local AID. RackAID and footprint are
+disambiguation context only and never authorize inventory creation.
 
 ## Resolution contract
 
@@ -48,12 +58,15 @@ For each declared breaker:
 
 1. Resolve exactly one active external POWER OUTPUT on the existing breaker.
 2. Resolve exactly one existing non-breaker Equipment by exact normalized `name` or `aliases`
-   against `targetLabel`.
-3. If more than one exact target exists, `targetFootprint` may only narrow candidates using already
-   stored topology context. It cannot create or rename anything.
+   against `targetCanonicalEntityName` / `targetEntityName`. Legacy declarations without those
+   fields may fall back to `targetLabel`.
+3. If more than one exact target exists, `targetRackAid` and `targetFootprint` may only narrow
+   candidates using already stored topology context. They cannot create or rename anything.
 4. Resolve the target POWER INPUT:
-   - prefer an explicit `attributes.feed=A|B` or an exact feed-like port name;
-   - if the exact target has only one active external POWER INPUT, that sole port may be used.
+   - when `targetAid` / `targetLocalAid` exists, require an exact endpoint identity match against
+     the POWER INPUT name or its AID identity attributes;
+   - only legacy declarations without AID identity may fall back to explicit `feed=A|B` or a sole
+     active external POWER INPUT.
 5. Reconcile against active PowerPaths.
 
 Results:
@@ -62,6 +75,11 @@ Results:
 - `CREATE`: topology and ports are unambiguous and both terminals are free.
 - `CONFLICT`: ambiguous target/port, wrong feed or occupied source/target.
 - `UNRESOLVED`: required existing topology/port cannot be found.
+  - `TARGET_ENTITY_NOT_MATERIALIZED`: the declared logical target is intentionally not present as
+    canonical Equipment yet.
+  - `TARGET_ENDPOINT_NOT_MATERIALIZED`: the Equipment exists, but the declared AID endpoint does
+    not exist as a POWER INPUT yet.
+  - `TARGET_ENTITY_NOT_FOUND` / `TARGET_PORT_MISSING`: legacy or unexpected missing inventory.
 
 Only `CREATE` rows are eligible for APPLY.
 
@@ -73,7 +91,7 @@ overrides:
 
 ```bash
 node scripts/operations/reconcile-field-power-paths.mjs \
-  --expected-breakers 74 \
+  --expected-breakers 76 \
   > .runtime/field-powerpath-plan.json
 ```
 
@@ -81,7 +99,8 @@ Database resolution order is `--database`, then `MONGODB_DB_NAME`, then the lega
 `SITEMAPPER_DATABASE` fallback, and finally `seed-01` for the existing office profile.
 
 The command refuses to continue when the declared QDF breaker inventory does not equal the expected
-74 breakers.
+76 breakers. The JSON report also exposes `unresolvedByReason` so materialization gaps are visible
+without collapsing them into a generic target-not-found result.
 
 ## APPLY — PowerPath insertions only
 
@@ -91,7 +110,7 @@ Then run:
 
 ```bash
 node scripts/operations/reconcile-field-power-paths.mjs \
-  --expected-breakers 74 \
+  --expected-breakers 76 \
   --apply \
   --ack RECONCILE_FIELD_POWER_PATHS \
   --backup .runtime/field-powerpaths-before-apply.json
@@ -130,3 +149,14 @@ exists. Breaker-origin trace semantics must be handled separately from reconcili
 
 This reconciler fixes persisted electrical relationships. It does not falsify an inbound A/B
 contract on a breaker that only exposes a POWER OUTPUT.
+
+## Materialization boundary
+
+The reconciler deliberately does **not** convert documentary PoweredEquipment/PDU projections into
+physical inventory. A current v14 PLAN may therefore report
+`TARGET_ENTITY_NOT_MATERIALIZED` for declared targets whose AID/RackAID is known but whose
+Equipment/POWER INPUT has not yet been created.
+
+That condition is not eligible for APPLY. Materializing Equipment/PDU and their POWER INPUT
+endpoints is a separate, auditable operation and must complete before PowerPath reconciliation can
+legitimately produce `CREATE` rows.

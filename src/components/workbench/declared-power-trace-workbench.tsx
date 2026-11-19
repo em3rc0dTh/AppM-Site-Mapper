@@ -66,9 +66,9 @@ function BreakerFeedCard({
   metrics,
 }: Readonly<{
   side: 'A' | 'B';
-  feed?: DeclaredPowerTraceFeed;
+  feed: DeclaredPowerTraceFeed | undefined;
   selected: boolean;
-  metrics?: LiveMetrics;
+  metrics: LiveMetrics | undefined;
 }>) {
   const t = useTranslations('powerTraceWorkbench');
 

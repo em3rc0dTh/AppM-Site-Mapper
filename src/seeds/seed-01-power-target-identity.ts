@@ -1,5 +1,5 @@
 export const POWER_TARGET_IDENTITY_SOURCE =
-  'Lista de Equipos QDF mop v2 AID + RackAID.xlsx' as const;
+  'Lista de Equipos NUEVO QDF-2-4-5  mop ver.19.11.2026.xlsx' as const;
 
 export type DeclaredRackAssociationKind = 'EQUIPMENT' | 'PDU';
 
@@ -9,6 +9,7 @@ export interface DeclaredRackAssociation {
   readonly rackAid: string;
   readonly kind: DeclaredRackAssociationKind;
   readonly name: string;
+  readonly aliases?: readonly string[];
   readonly baseAid?: string;
   readonly feedAidA?: string;
   readonly feedAidB?: string;
@@ -39,6 +40,7 @@ export const POWER_TARGET_RACK_ASSOCIATIONS: readonly DeclaredRackAssociation[] 
     rackAid: 'RACK::010202.09',
     kind: 'EQUIPMENT',
     name: 'GRTLuren3',
+    aliases: ['GRTLUREM3'],
   },
   {
     qdf: 'QDF-2',
@@ -122,14 +124,16 @@ export const POWER_TARGET_RACK_ASSOCIATIONS: readonly DeclaredRackAssociation[] 
     footprint: '010208.13',
     rackAid: 'RACK::010208.13',
     kind: 'EQUIPMENT',
-    name: 'GXLUR02',
+    name: 'GX-LUR-02',
+    aliases: ['GXLUR02'],
   },
   {
     qdf: 'QDF-5',
     footprint: '010208.13',
     rackAid: 'RACK::010208.13',
     kind: 'EQUIPMENT',
-    name: 'GXLUR01',
+    name: 'GX-LUR-01',
+    aliases: ['GXLUR01'],
   },
   {
     qdf: 'QDF-5',
@@ -140,8 +144,8 @@ export const POWER_TARGET_RACK_ASSOCIATIONS: readonly DeclaredRackAssociation[] 
     baseAid: 'RACK::010208.13::PDU01',
     feedAidA: 'RACK::010208.13::PDU01::A',
     feedAidB: 'RACK::010208.13::PDU01::B',
-    remarksA: ['Pos-1: MTC-9 SH1 PEM A', 'Pos-2: MTC-9 SH4 PEM A'],
-    remarksB: ['Pos-1: MTC-9 SH1 PEM B', 'Pos-2: MTC-9 SH4 PEM B'],
+    remarksA: ['Pos-1: MTC-9 SH01 PEM A', 'Pos-2: MTC-9 SH04 PEM A'],
+    remarksB: ['Pos-1: MTC-9 SH01 PEM B', 'Pos-2: MTC-9 SH04 PEM B'],
   },
   {
     qdf: 'QDF-5',
@@ -184,7 +188,9 @@ export function findPowerTargetRackAssociation(
     (item) =>
       item.qdf === qdf &&
       item.footprint === footprint.trim() &&
-      normalized(item.name) === normalized(targetName),
+      [item.name, ...(item.aliases ?? [])].some(
+        (candidate) => normalized(candidate) === normalized(targetName),
+      ),
   );
   return matches.length === 1 ? matches[0]! : null;
 }

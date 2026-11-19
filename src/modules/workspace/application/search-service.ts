@@ -1,5 +1,6 @@
 import { isOperationallyVisible } from '@/modules/topology/application/equipment-visibility';
 import { BdfbProjectionService } from '@/modules/power/application/bdfb-projection-service';
+import { PoweredEquipmentProjectionService } from '@/modules/power/application/powered-equipment-projection-service';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import type { TopologyKind } from '@/modules/topology/domain/entities';
@@ -56,12 +57,35 @@ export async function searchTopology(
 
   const service = new TopologyService(repository);
   const bdfbProjection = new BdfbProjectionService(repository);
+  const poweredEquipmentProjection = new PoweredEquipmentProjectionService(repository);
   const nodes = (await Promise.all(kinds.map((kind) => repository.listByKind(kind))))
     .flat()
     .filter((node) => node.lifecycle === 'ACTIVE' && isOperationallyVisible(node));
 
   const byId = new Map(nodes.map((node) => [node.id, node]));
   const results: SearchResult[] = [];
+
+  for (const equipment of await poweredEquipmentProjection.list()) {
+    const searchable = [
+      equipment.name,
+      equipment.id,
+      ...equipment.connections.flatMap((connection) => [
+        connection.endpoint.targetLabel,
+        connection.endpoint.aid,
+        connection.endpoint.displayLabel,
+      ]),
+    ].join(' ');
+    if (!searchMatches(searchable, normalized)) continue;
+
+    const qdfLabel = equipment.qdfs.length ? equipment.qdfs.join(', ') : 'QDF/BDFB';
+    results.push({
+      id: equipment.id,
+      name: equipment.name,
+      kind: 'POWERED_EQUIPMENT',
+      href: `/workbench/powered-equipment?key=${encodeURIComponent(equipment.key)}`,
+      breadcrumb: `${equipment.connections.length} endpoints · ${qdfLabel}`,
+    });
+  }
   for (const node of nodes) {
     const trail = await service.getTrail(node.id);
     if (trail.some((item) => item.lifecycle !== 'ACTIVE')) continue;

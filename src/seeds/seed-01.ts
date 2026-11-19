@@ -1811,7 +1811,12 @@ async function ensureDeclaredFeedPairs(
       : [];
     const targetAidAliases = [
       ...new Set(
-        [...priorAidAliases, ...(priorAid && priorAid !== declaredPower.targetAid ? [priorAid] : [])]
+        [
+          ...priorAidAliases,
+          ...(sourceManagedTarget && priorAid && priorAid !== declaredPower.targetAid
+            ? [priorAid]
+            : []),
+        ]
           .map((value) => value.trim())
           .filter(Boolean),
       ),

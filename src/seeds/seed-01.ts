@@ -1,6 +1,7 @@
 import type { ClientSession, Db, Document } from 'mongodb';
 
 import type { CommunicationProfile } from '@/modules/industrial/domain/commissioning';
+import { parseDeclaredPowerTarget } from '@/modules/power/domain/powered-equipment';
 import type { TelemetryBinding } from '@/modules/telemetry/domain/entities';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
@@ -15,10 +16,11 @@ import type {
 import { MongoTopologyRepository } from '@/modules/topology/infrastructure/mongo-topology-repository';
 import { CasService } from '@/modules/rack/application/cas-service';
 import { withIntegrityTransaction } from '@/shared/infrastructure/mongodb/integrity-transaction';
+import { findPowerTargetRackAssociation, POWER_TARGET_IDENTITY_SOURCE } from '@/seeds/seed-01-power-target-identity';
 import { createDomainId, nowIso } from '@/shared/domain/entity';
 
 export const SEED_01_PROFILE = 'seed-01' as const;
-export const SEED_01_VERSION = 12 as const;
+export const SEED_01_VERSION = 13 as const;
 
 const PANELS = ['A3', 'A2', 'A1', 'B3', 'B2', 'B1'] as const;
 type PanelName = (typeof PANELS)[number];
@@ -1649,15 +1651,69 @@ async function ensureDeclaredFeedPairs(
       throw new Error(
         `SEED_01_FIELD_SCHEDULE_MISSING: ${spec.key}/${breaker.panel}/${breaker.position}`,
       );
+
+    const targetIdentity = parseDeclaredPowerTarget(breaker.destination, {
+      targetFootprint: field.targetFootprint,
+    });
+    if (!targetIdentity || !targetIdentity.rackAid) {
+      throw new Error(
+        `SEED_01_TARGET_IDENTITY_CONFLICT: cannot resolve ${spec.key}/${breaker.panel}/${breaker.position}`,
+      );
+    }
+    const rackAssociation = findPowerTargetRackAssociation(
+      spec.key,
+      field.targetFootprint,
+      targetIdentity.equipmentName,
+    );
+    if (
+      !rackAssociation ||
+      rackAssociation.rackAid !== targetIdentity.rackAid ||
+      rackAssociation.kind !== targetIdentity.targetKind
+    ) {
+      throw new Error(
+        `SEED_01_TARGET_IDENTITY_CONFLICT: rack association mismatch for ${breaker.destination}`,
+      );
+    }
+    if (
+      targetIdentity.targetKind === 'PDU' &&
+      (rackAssociation.baseAid !== targetIdentity.baseAid ||
+        (feed === 'A' ? rackAssociation.feedAidA : rackAssociation.feedAidB) !==
+          targetIdentity.aid)
+    ) {
+      throw new Error(
+        `SEED_01_TARGET_IDENTITY_CONFLICT: PDU AID mismatch for ${breaker.destination}`,
+      );
+    }
+
+    const associationRemarks =
+      feed === 'A' ? rackAssociation.remarksA : rackAssociation.remarksB;
+    if (
+      breaker.remarks?.length &&
+      associationRemarks?.length &&
+      JSON.stringify(breaker.remarks) !== JSON.stringify(associationRemarks)
+    ) {
+      throw new Error(
+        `SEED_01_TARGET_IDENTITY_CONFLICT: remarks mismatch for ${breaker.destination}`,
+      );
+    }
+    const documentaryRemarks = breaker.remarks ?? associationRemarks ?? [];
+
     const declaredPower = {
-      contractVersion: 1,
+      contractVersion: 2,
       state: 'DECLARED' as const,
-      sourceDocument: 'Lista de Equipos QDF mop 1 - actualizado',
+      sourceDocument: POWER_TARGET_IDENTITY_SOURCE,
+      identitySourceDocument: POWER_TARGET_IDENTITY_SOURCE,
       qdf: spec.key,
       sourceRow: breaker.sourceRow,
       pairId: `seed01:${spec.key}:row:${breaker.sourceRow}`,
       feed,
       targetLabel: breaker.destination,
+      targetEntityName: targetIdentity.equipmentName,
+      targetKind: targetIdentity.targetKind,
+      targetAid: targetIdentity.aid,
+      targetLocalAid: targetIdentity.localAid,
+      targetRackAid: targetIdentity.rackAid,
+      ...(targetIdentity.baseAid ? { targetBaseAid: targetIdentity.baseAid } : {}),
       documentedRatingA: field.ratedCurrentA,
       targetFootprint: field.targetFootprint,
       documentedStatus: field.documentedStatus,
@@ -1678,8 +1734,9 @@ async function ensureDeclaredFeedPairs(
         position: companion.position,
         targetLabel: companion.destination,
       },
-      remarks: [...(breaker.remarks ?? [])],
-      targetPlacement: 'UNKNOWN' as const,
+      remarks: [...documentaryRemarks],
+      remarksSemantics: 'DOCUMENTARY_EDITABLE_NO_INDIVIDUAL_TELEMETRY' as const,
+      targetPlacement: 'RACK_ASSOCIATED_U_UNKNOWN' as const,
       targetMaterialization: 'NOT_CREATED' as const,
     };
 
@@ -1696,6 +1753,24 @@ async function ensureDeclaredFeedPairs(
       ? {
           ...declaredPower,
           ...existingDeclared,
+          contractVersion: Math.max(
+            typeof existingDeclared.contractVersion === 'number'
+              ? existingDeclared.contractVersion
+              : 0,
+            2,
+          ),
+          identitySourceDocument:
+            existingDeclared.identitySourceDocument ?? POWER_TARGET_IDENTITY_SOURCE,
+          targetEntityName: existingDeclared.targetEntityName ?? declaredPower.targetEntityName,
+          targetKind: existingDeclared.targetKind ?? declaredPower.targetKind,
+          targetAid: existingDeclared.targetAid ?? declaredPower.targetAid,
+          targetLocalAid: existingDeclared.targetLocalAid ?? declaredPower.targetLocalAid,
+          targetRackAid: existingDeclared.targetRackAid ?? declaredPower.targetRackAid,
+          ...(declaredPower.targetBaseAid && existingDeclared.targetBaseAid === undefined
+            ? { targetBaseAid: declaredPower.targetBaseAid }
+            : {}),
+          remarksSemantics:
+            existingDeclared.remarksSemantics ?? declaredPower.remarksSemantics,
           documentedRatingA: existingDeclared.documentedRatingA ?? field.ratedCurrentA,
           targetFootprint: existingDeclared.targetFootprint ?? field.targetFootprint,
           documentedStatus: existingDeclared.documentedStatus ?? field.documentedStatus,

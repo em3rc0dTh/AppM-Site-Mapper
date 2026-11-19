@@ -70,8 +70,12 @@ function parsePduTarget(
   const rackAid = rackAidFromContext(context);
   if (!rackAid) return null;
 
-  const pduNumber = String(Number(match[1])).padStart(2, '0');
-  const side = match[2]!.toUpperCase() as PowerFeed;
+  const numberToken = match[1];
+  const sideToken = match[2];
+  if (!numberToken || !sideToken) return null;
+
+  const pduNumber = String(Number(numberToken)).padStart(2, '0');
+  const side = sideToken.toUpperCase() as PowerFeed;
   const pduToken = `PDU${pduNumber}`;
   const equipmentName = `PDU ${pduNumber}`;
   const baseAid = `${rackAid}::${pduToken}`;

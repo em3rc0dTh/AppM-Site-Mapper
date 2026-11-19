@@ -34,6 +34,10 @@ describe('FIELD PowerPath reconciliation safety contract', () => {
     expect(source).toContain("'TARGET_ALREADY_CONNECTED'");
   });
 
+  it('uses the canonical runtime Mongo database before legacy/default fallbacks', () => {
+    expect(source).toContain('process.env.MONGODB_DB_NAME ?? process.env.SITEMAPPER_DATABASE');
+  });
+
   it('requires the complete declared QDF breaker baseline by default', () => {
     expect(source).toContain("option('--expected-breakers', '74')");
     expect(source).toContain('refuse to infer against incomplete/changed inventory');

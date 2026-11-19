@@ -25,7 +25,10 @@ const apply = args.includes('--apply');
 const ack = option('--ack');
 const backupPath = option('--backup');
 const mongoUri = process.env.MONGODB_URI;
-const databaseName = option('--database', process.env.SITEMAPPER_DATABASE ?? 'seed-01');
+const databaseName = option(
+  '--database',
+  process.env.MONGODB_DB_NAME ?? process.env.SITEMAPPER_DATABASE ?? 'seed-01',
+);
 const qdfs = String(option('--qdfs', 'QDF-2,QDF-4,QDF-5'))
   .split(',')
   .map((value) => value.trim())

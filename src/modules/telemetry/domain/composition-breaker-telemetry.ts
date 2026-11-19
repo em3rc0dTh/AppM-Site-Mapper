@@ -239,7 +239,9 @@ export function compositionBreakerTelemetry(
     return {
       status: 'NO DATA',
       diagnostic: receivedPoint
-        ? `Point observed but no valid breaker sample. Check ${expectations.join(', ')} target binding.`
+        ? `Point observed but no valid breaker sample. Check ${expectations.join(
+            ', ',
+          )} target binding.`
         : `Awaiting ${expectations.join(', ')}`,
     };
   }

@@ -3,6 +3,7 @@ import {
   type PoweredEquipmentEndpoint,
 } from '@/modules/power/domain/powered-equipment';
 import type { PowerFeed } from '@/modules/power/domain/entities';
+import type { PoweredTargetKind } from '@/modules/power/domain/powered-equipment';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type { DeviceNode, EquipmentNode, TopologyNode } from '@/modules/topology/domain/entities';
 
@@ -13,6 +14,7 @@ export interface PoweredEquipmentConnection {
   readonly panelName: string;
   readonly qdfName: string;
   readonly feed?: PowerFeed;
+  readonly remarks: readonly string[];
   readonly endpoint: PoweredEquipmentEndpoint;
 }
 
@@ -20,14 +22,24 @@ export interface PoweredEquipmentProjection {
   readonly id: string;
   readonly key: string;
   readonly name: string;
+  readonly kind: PoweredTargetKind;
   readonly connections: readonly PoweredEquipmentConnection[];
   readonly qdfs: readonly string[];
+  readonly rackAids: readonly string[];
   readonly feeds: readonly PowerFeed[];
 }
 
 type DeclaredPowerMetadata = {
   readonly qdf?: string;
   readonly feed?: PowerFeed;
+  readonly targetFootprint?: string;
+  readonly targetRackAid?: string;
+  readonly targetAid?: string;
+  readonly targetLocalAid?: string;
+  readonly targetBaseAid?: string;
+  readonly targetKind?: PoweredTargetKind;
+  readonly targetEntityName?: string;
+  readonly remarks: readonly string[];
 };
 
 function declaredPowerMetadata(value: unknown): DeclaredPowerMetadata {
@@ -35,9 +47,48 @@ function declaredPowerMetadata(value: unknown): DeclaredPowerMetadata {
   const record = value as Record<string, unknown>;
   const qdf = typeof record.qdf === 'string' && record.qdf.trim() ? record.qdf.trim() : undefined;
   const feed = record.feed === 'A' || record.feed === 'B' ? record.feed : undefined;
+  const targetFootprint =
+    typeof record.targetFootprint === 'string' && record.targetFootprint.trim()
+      ? record.targetFootprint.trim()
+      : undefined;
+  const targetRackAid =
+    typeof record.targetRackAid === 'string' && record.targetRackAid.trim()
+      ? record.targetRackAid.trim()
+      : undefined;
+  const targetAid =
+    typeof record.targetAid === 'string' && record.targetAid.trim()
+      ? record.targetAid.trim()
+      : undefined;
+  const targetLocalAid =
+    typeof record.targetLocalAid === 'string' && record.targetLocalAid.trim()
+      ? record.targetLocalAid.trim()
+      : undefined;
+  const targetBaseAid =
+    typeof record.targetBaseAid === 'string' && record.targetBaseAid.trim()
+      ? record.targetBaseAid.trim()
+      : undefined;
+  const targetKind =
+    record.targetKind === 'EQUIPMENT' || record.targetKind === 'PDU'
+      ? record.targetKind
+      : undefined;
+  const targetEntityName =
+    typeof record.targetEntityName === 'string' && record.targetEntityName.trim()
+      ? record.targetEntityName.trim()
+      : undefined;
+  const remarks = Array.isArray(record.remarks)
+    ? record.remarks.filter((item): item is string => typeof item === 'string' && Boolean(item.trim()))
+    : [];
   return {
     ...(qdf ? { qdf } : {}),
     ...(feed ? { feed } : {}),
+    ...(targetFootprint ? { targetFootprint } : {}),
+    ...(targetRackAid ? { targetRackAid } : {}),
+    ...(targetAid ? { targetAid } : {}),
+    ...(targetLocalAid ? { targetLocalAid } : {}),
+    ...(targetBaseAid ? { targetBaseAid } : {}),
+    ...(targetKind ? { targetKind } : {}),
+    ...(targetEntityName ? { targetEntityName } : {}),
+    remarks,
   };
 }
 
@@ -95,6 +146,7 @@ export class PoweredEquipmentProjectionService {
       string,
       {
         name: string;
+        kind: PoweredTargetKind;
         connections: PoweredEquipmentConnection[];
         seen: Set<string>;
       }
@@ -113,12 +165,25 @@ export class PoweredEquipmentProjectionService {
         breaker.deviceId;
 
       for (const alias of breaker.aliases ?? []) {
-        const endpoint = parseDeclaredPowerTarget(alias);
-        if (!endpoint) continue;
+        const parsed = parseDeclaredPowerTarget(alias, {
+          ...(metadata.targetFootprint ? { targetFootprint: metadata.targetFootprint } : {}),
+          ...(metadata.targetRackAid ? { rackAid: metadata.targetRackAid } : {}),
+        });
+        if (!parsed) continue;
 
+        const endpoint: PoweredEquipmentEndpoint = {
+          ...parsed,
+          ...(metadata.targetAid ? { aid: metadata.targetAid } : {}),
+          ...(metadata.targetLocalAid ? { localAid: metadata.targetLocalAid } : {}),
+          ...(metadata.targetBaseAid ? { baseAid: metadata.targetBaseAid } : {}),
+          ...(metadata.targetRackAid ? { rackAid: metadata.targetRackAid } : {}),
+          ...(metadata.targetKind ? { targetKind: metadata.targetKind } : {}),
+          ...(metadata.targetEntityName ? { equipmentName: metadata.targetEntityName } : {}),
+        };
         const feed = metadata.feed ?? endpoint.side ?? panelFeed(panelName);
         const group = groups.get(endpoint.equipmentKey) ?? {
           name: endpoint.equipmentName,
+          kind: endpoint.targetKind,
           connections: [],
           seen: new Set<string>(),
         };
@@ -132,6 +197,7 @@ export class PoweredEquipmentProjectionService {
           panelName,
           qdfName,
           ...(feed ? { feed } : {}),
+          remarks: metadata.remarks,
           endpoint,
         });
         groups.set(endpoint.equipmentKey, group);
@@ -142,6 +208,13 @@ export class PoweredEquipmentProjectionService {
       .map(([key, group]) => {
         const connections = [...group.connections].sort(compareConnections);
         const qdfs = [...new Set(connections.map((connection) => connection.qdfName))].sort();
+        const rackAids = [
+          ...new Set(
+            connections.flatMap((connection) =>
+              connection.endpoint.rackAid ? [connection.endpoint.rackAid] : [],
+            ),
+          ),
+        ].sort();
         const feeds = [
           ...new Set(
             connections.flatMap((connection) => (connection.feed ? [connection.feed] : [])),
@@ -151,8 +224,10 @@ export class PoweredEquipmentProjectionService {
           id: `powered-equipment:${key}`,
           key,
           name: group.name,
+          kind: group.kind,
           connections,
           qdfs,
+          rackAids,
           feeds,
         };
       })
@@ -165,5 +240,15 @@ export class PoweredEquipmentProjectionService {
     const normalized = key.trim().toLocaleLowerCase();
     if (!normalized) return null;
     return (await this.list()).find((equipment) => equipment.key === normalized) ?? null;
+  }
+
+  async getByBreakerId(breakerId: string): Promise<PoweredEquipmentProjection | null> {
+    const normalized = breakerId.trim();
+    if (!normalized) return null;
+    return (
+      (await this.list()).find((equipment) =>
+        equipment.connections.some((connection) => connection.breakerId === normalized),
+      ) ?? null
+    );
   }
 }

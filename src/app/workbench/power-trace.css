@@ -1,4 +1,4 @@
-/* Power Trace v2.1 — detached operational content inside the shared MK2 workbench shell. */
+/* Power Trace v2.1 â detached operational content inside the shared MK2 workbench shell. */
 html:has(.sm-power-trace-workbench),
 body:has(.sm-power-trace-workbench) {
   background: #f7faff;
@@ -573,7 +573,6 @@ body:has(.sm-power-trace-workbench) {
     grid-template-columns: 1.25fr 0.9fr;
   }
 }
-
 
 /* Declared breaker mode: the powered target is the visual root, with A/B breakers on each side. */
 .sm-trace-declared-notice {

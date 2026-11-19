@@ -10,10 +10,7 @@ export function useTelemetryStream(enabled = true) {
   const [hasSnapshot, setHasSnapshot] = useState(false);
   useEffect(() => {
     if (!enabled) return;
-    const clock = setInterval(
-      () => setNow(Date.now() + serverClockOffsetMs.current),
-      5000,
-    );
+    const clock = setInterval(() => setNow(Date.now() + serverClockOffsetMs.current), 5000);
     const stream = new EventSource('/api/telemetry/stream');
     const serverClock = (event: MessageEvent<string>) => {
       try {

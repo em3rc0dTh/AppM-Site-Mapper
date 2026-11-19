@@ -1,9 +1,9 @@
 import {
   parseDeclaredPowerTarget,
   type PoweredEquipmentEndpoint,
+  type PoweredTargetKind,
 } from '@/modules/power/domain/powered-equipment';
 import type { PowerFeed } from '@/modules/power/domain/entities';
-import type { PoweredTargetKind } from '@/modules/power/domain/powered-equipment';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type { DeviceNode, EquipmentNode, TopologyNode } from '@/modules/topology/domain/entities';
 

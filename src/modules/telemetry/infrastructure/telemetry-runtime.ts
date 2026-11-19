@@ -371,123 +371,144 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
             }
           }
 
-          const result = await service.ingest(topic, payload, receivedAt);
-          if (!result.ok) {
-            rejectedMessages += 1;
-            rejectionReasons[result.error] = (rejectionReasons[result.error] ?? 0) + 1;
-            const decision = rejectionLogThrottle.record(`${topic}\u0000${result.error}`);
-            if (decision.shouldLog) {
-              logger.warn('telemetry.message.rejected', {
-                topic,
-                reason: result.error,
-                ...(decision.suppressedSinceLastLog > 0
-                  ? { suppressedSinceLastLog: decision.suppressedSinceLastLog }
-                  : {}),
-              });
-            }
-          } else {
-            acceptedMessages += 1;
-            lastAcceptedAt = now;
-            const bridgeUrl = process.env.MODBUS_BRIDGE_URL?.trim();
-            const bridgeToken = process.env.MODBUS_BRIDGE_TOKEN?.trim();
-            if (bridgeUrl && bridgeToken && result.value.protocol === 'BFDB') {
-              // The Modbus service is an optional downstream consumer of accepted,
-              // explicitly commissioned breaker metrics. History remains independent.
-              const mappedReadings: Array<{
-                sourceIdentity: string;
-                rawPointId: string;
-                receivedAt: string;
-                metrics: unknown;
-              }> = [...(result.value.breakerReadings ?? [])]
-                .filter((reading) => reading.receivedAt === result.value.receivedAt)
-                .map((reading) => ({
-                  sourceIdentity: reading.sourceIdentity,
-                  rawPointId: reading.modbusPointId ?? reading.rawPointId,
-                  receivedAt: reading.receivedAt,
-                  metrics: reading.metrics,
-                }));
-              // A physically configured breaker may have point-level Equipment
-              // bindings without a legacy BDFB shelf/frame projection.
-              // Read only accepted exact-target patches, never raw unbound points.
-              const directSamples = service
-                .snapshot()
-                .filter(
-                  (item) =>
-                    item.targetType === 'EQUIPMENT' &&
-                    Boolean(item.sourcePointId) &&
-                    item.sourceIdentity === result.value.sourceIdentity &&
-                    item.receivedAt === result.value.receivedAt &&
-                    Boolean(item.metricBindingIds?.length),
-                );
-              const rawPacket: unknown = JSON.parse(new TextDecoder().decode(payload));
-              const rawReported =
-                rawPacket && typeof rawPacket === 'object' && 'reported' in rawPacket
-                  ? rawPacket.reported
-                  : null;
-              const freshPoints =
-                rawReported && typeof rawReported === 'object' && !Array.isArray(rawReported)
-                  ? (rawReported as Record<string, unknown>)
-                  : {};
-              const wireProfile = result.value.wireProfile ?? detectBfdbWireProfile(freshPoints);
-              for (const item of directSamples) {
-                const sourcePointId = item.sourcePointId!;
-                const point = findBfdbWirePointByBindingId(sourcePointId, freshPoints, wireProfile);
-                if (!point) continue;
-                const metrics: Record<string, { value: number }> = {};
-                for (const normalized of ['voltageV', 'currentA', 'powerW', 'energyKwh'] as const) {
-                  // Forward the canonical Equipment metric. In BFDB mode power
-                  // and energy may be Site Mapper-derived and must never be
-                  // overwritten by untrusted raw P/EP fields from the gateway.
-                  const canonical = item.reported[normalized];
-                  const rawValue =
-                    canonical && typeof canonical === 'object' && !Array.isArray(canonical)
-                      ? (canonical as { value?: unknown }).value
-                      : canonical;
-                  const numeric =
-                    typeof rawValue === 'number'
-                      ? rawValue
-                      : typeof rawValue === 'string' && rawValue.trim()
-                        ? Number(rawValue)
-                        : Number.NaN;
-                  if (Number.isFinite(numeric)) metrics[normalized] = { value: numeric };
-                }
-                if (Object.keys(metrics).length) {
-                  mappedReadings.push({
-                    sourceIdentity: item.sourceIdentity,
-                    rawPointId: point.modbusPointId,
-                    receivedAt: item.receivedAt,
-                    metrics,
-                  });
-                }
+          // Transport ACK semantics end at durable capture, not at downstream LIVE work.
+          // Profiled production sources have already fsynced the raw envelope above.
+          // Legacy projection, topology lookups, historian fan-out and Modbus delivery
+          // must never hold MQTT PUBACKs and create broker-side delivery latency.
+          void (async () => {
+            const result = await service.ingest(topic, payload, receivedAt);
+            if (!result.ok) {
+              rejectedMessages += 1;
+              rejectionReasons[result.error] = (rejectionReasons[result.error] ?? 0) + 1;
+              const decision = rejectionLogThrottle.record(`${topic}\u0000${result.error}`);
+              if (decision.shouldLog) {
+                logger.warn('telemetry.message.rejected', {
+                  topic,
+                  reason: result.error,
+                  ...(decision.suppressedSinceLastLog > 0
+                    ? { suppressedSinceLastLog: decision.suppressedSinceLastLog }
+                    : {}),
+                });
               }
-              for (const reading of mappedReadings) {
-                if (!reading.rawPointId) continue;
-                try {
-                  const response = await fetch(bridgeUrl + '/internal/accepted-breaker', {
-                    method: 'POST',
-                    headers: {
-                      authorization: 'Bearer ' + bridgeToken,
-                      'content-type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                      sourceIdentity: reading.sourceIdentity,
-                      rawPointId: reading.rawPointId,
-                      receivedAt: reading.receivedAt,
-                      metrics: reading.metrics,
-                    }),
-                    signal: AbortSignal.timeout(1500),
-                  });
-                  if (!response.ok) {
-                    logger.warn('modbus.bridge.write_rejected', { status: response.status });
+            } else {
+              acceptedMessages += 1;
+              lastAcceptedAt = now;
+              const bridgeUrl = process.env.MODBUS_BRIDGE_URL?.trim();
+              const bridgeToken = process.env.MODBUS_BRIDGE_TOKEN?.trim();
+              if (bridgeUrl && bridgeToken && result.value.protocol === 'BFDB') {
+                // The Modbus service is an optional downstream consumer of accepted,
+                // explicitly commissioned breaker metrics. History remains independent.
+                const mappedReadings: Array<{
+                  sourceIdentity: string;
+                  rawPointId: string;
+                  receivedAt: string;
+                  metrics: unknown;
+                }> = [...(result.value.breakerReadings ?? [])]
+                  .filter((reading) => reading.receivedAt === result.value.receivedAt)
+                  .map((reading) => ({
+                    sourceIdentity: reading.sourceIdentity,
+                    rawPointId: reading.modbusPointId ?? reading.rawPointId,
+                    receivedAt: reading.receivedAt,
+                    metrics: reading.metrics,
+                  }));
+                // A physically configured breaker may have point-level Equipment
+                // bindings without a legacy BDFB shelf/frame projection.
+                // Read only accepted exact-target patches, never raw unbound points.
+                const directSamples = service
+                  .snapshot()
+                  .filter(
+                    (item) =>
+                      item.targetType === 'EQUIPMENT' &&
+                      Boolean(item.sourcePointId) &&
+                      item.sourceIdentity === result.value.sourceIdentity &&
+                      item.receivedAt === result.value.receivedAt &&
+                      Boolean(item.metricBindingIds?.length),
+                  );
+                const rawPacket: unknown = JSON.parse(new TextDecoder().decode(payload));
+                const rawReported =
+                  rawPacket && typeof rawPacket === 'object' && 'reported' in rawPacket
+                    ? rawPacket.reported
+                    : null;
+                const freshPoints =
+                  rawReported && typeof rawReported === 'object' && !Array.isArray(rawReported)
+                    ? (rawReported as Record<string, unknown>)
+                    : {};
+                const wireProfile = result.value.wireProfile ?? detectBfdbWireProfile(freshPoints);
+                for (const item of directSamples) {
+                  const sourcePointId = item.sourcePointId!;
+                  const point = findBfdbWirePointByBindingId(
+                    sourcePointId,
+                    freshPoints,
+                    wireProfile,
+                  );
+                  if (!point) continue;
+                  const metrics: Record<string, { value: number }> = {};
+                  for (const normalized of [
+                    'voltageV',
+                    'currentA',
+                    'powerW',
+                    'energyKwh',
+                  ] as const) {
+                    // Forward the canonical Equipment metric. In BFDB mode power
+                    // and energy may be Site Mapper-derived and must never be
+                    // overwritten by untrusted raw P/EP fields from the gateway.
+                    const canonical = item.reported[normalized];
+                    const rawValue =
+                      canonical && typeof canonical === 'object' && !Array.isArray(canonical)
+                        ? (canonical as { value?: unknown }).value
+                        : canonical;
+                    const numeric =
+                      typeof rawValue === 'number'
+                        ? rawValue
+                        : typeof rawValue === 'string' && rawValue.trim()
+                          ? Number(rawValue)
+                          : Number.NaN;
+                    if (Number.isFinite(numeric)) metrics[normalized] = { value: numeric };
                   }
-                } catch (error) {
-                  logger.warn('modbus.bridge.unavailable', {
-                    reason: error instanceof Error ? error.message : 'unknown',
-                  });
+                  if (Object.keys(metrics).length) {
+                    mappedReadings.push({
+                      sourceIdentity: item.sourceIdentity,
+                      rawPointId: point.modbusPointId,
+                      receivedAt: item.receivedAt,
+                      metrics,
+                    });
+                  }
+                }
+                for (const reading of mappedReadings) {
+                  if (!reading.rawPointId) continue;
+                  try {
+                    const response = await fetch(bridgeUrl + '/internal/accepted-breaker', {
+                      method: 'POST',
+                      headers: {
+                        authorization: 'Bearer ' + bridgeToken,
+                        'content-type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                        sourceIdentity: reading.sourceIdentity,
+                        rawPointId: reading.rawPointId,
+                        receivedAt: reading.receivedAt,
+                        metrics: reading.metrics,
+                      }),
+                      signal: AbortSignal.timeout(1500),
+                    });
+                    if (!response.ok) {
+                      logger.warn('modbus.bridge.write_rejected', { status: response.status });
+                    }
+                  } catch (error) {
+                    logger.warn('modbus.bridge.unavailable', {
+                      reason: error instanceof Error ? error.message : 'unknown',
+                    });
+                  }
                 }
               }
             }
-          }
+          })().catch((error) => {
+            logger.warn('telemetry.live.processing_failed', {
+              topic,
+              sourceIdentity: serial,
+              reason: error instanceof Error ? error.message : 'unknown',
+            });
+          });
         },
       );
       source.start();

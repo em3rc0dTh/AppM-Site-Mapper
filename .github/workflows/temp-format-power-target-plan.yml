@@ -1,0 +1,28 @@
+name: Temp format power target plan
+
+on:
+  push:
+    branches:
+      - feat/power-target-materialization-plan-20261119
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Format target plan
+        run: npx prettier --write scripts/operations/plan-field-power-target-materialization.mjs
+      - name: Emit formatted target plan
+        run: |
+          echo 'FORMATTED_B64_BEGIN'
+          base64 -w0 scripts/operations/plan-field-power-target-materialization.mjs
+          echo
+          echo 'FORMATTED_B64_END'

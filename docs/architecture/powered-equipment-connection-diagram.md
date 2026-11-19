@@ -251,7 +251,6 @@ PoweredEquipment projection
 
 It must not require rewriting historical breaker declarations, AIDs or PowerPaths.
 
-
 ## Seed-01 v13 documentary enrichment
 
 The workbook identity facts are seeded additively into each existing breaker declaration:

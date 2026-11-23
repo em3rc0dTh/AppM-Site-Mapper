@@ -1,39 +1,21 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import {
+  ELTEK_SMARTPACK_OIDS,
+  ELTEK_SMARTPACK_SOURCE,
+  presentEltekReading,
+  type EltekSignal,
+} from '@/modules/telemetry/application/eltek-live-presentation';
 
-const SOURCE = 'ELTEK-SMARTPACK2-LURIN-REAL';
-const OIDS = {
-  system: '1.3.6.1.4.1.12148.10.2.1.0',
-  current: '1.3.6.1.4.1.12148.10.9.2.5.0',
-  battery: '1.3.6.1.4.1.12148.10.10.5.5.0',
-} as const;
-const SYSTEM_STATUS: Readonly<Record<number, string>> = {
-  0: 'Error', 1: 'Normal', 2: 'Alarma menor', 3: 'Alarma mayor',
-  4: 'Deshabilitado', 5: 'Desconectado', 6: 'No presente',
-  7: 'Alarma menor y mayor', 18: 'Crítico', 19: 'Advertencia',
-};
-type IndustrialSignal = {
-  key: string;
-  rawValue: unknown;
-  value: number | string | boolean | null;
-  quality: string;
-  receivedAt: string;
-};
-type LiveState = {
-  signals: IndustrialSignal[];
-  receivedAt: number;
-};
-
-function readRaw(signal: IndustrialSignal | undefined): string {
-  if (!signal) return '—';
-  const raw = signal.rawValue ?? signal.value;
-  return typeof raw === 'string' || typeof raw === 'number' || typeof raw === 'boolean'
-    ? String(raw) : '—';
-}
+const FIELDS = [
+  { key: 'system', label: 'Estado general' },
+  { key: 'current', label: 'Corriente general · RAW (sin unidad verificada)' },
+  { key: 'battery', label: 'Voltaje batería · RAW (sin unidad verificada)' },
+] as const;
 
 export function EltekSmartpackLive() {
-  const [data, setData] = useState<LiveState | null>(null);
+  const [signals, setSignals] = useState<EltekSignal[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState<number | null>(null);
 
@@ -42,14 +24,14 @@ export function EltekSmartpackLive() {
     const refresh = async () => {
       try {
         const response = await fetch(
-          '/api/telemetry/industrial/signals?source=' + encodeURIComponent(SOURCE) + '&limit=100',
+          '/api/telemetry/industrial/signals?source=' + encodeURIComponent(ELTEK_SMARTPACK_SOURCE) + '&limit=100',
           { credentials: 'same-origin', cache: 'no-store' },
         );
         if (!response.ok) throw new Error('HTTP ' + response.status);
-        const payload = (await response.json()) as { signals?: IndustrialSignal[] };
+        const payload = (await response.json()) as { signals?: EltekSignal[] };
         if (!Array.isArray(payload.signals)) throw new Error('Respuesta sin señales');
         if (mounted) {
-          setData({ signals: payload.signals, receivedAt: Date.now() });
+          setSignals(payload.signals);
           setNow(Date.now());
           setError(null);
         }
@@ -58,52 +40,45 @@ export function EltekSmartpackLive() {
       }
     };
     void refresh();
-    const polling = setInterval(() => void refresh(), 60_000);
+    const poll = setInterval(() => void refresh(), 60_000);
     const clock = setInterval(() => setNow(Date.now()), 10_000);
-    return () => {
-      mounted = false;
-      clearInterval(polling);
-      clearInterval(clock);
-    };
+    return () => { mounted = false; clearInterval(poll); clearInterval(clock); };
   }, []);
 
-  const find = (oid: string) => data?.signals.find((signal) => signal.key === oid);
-  const system = find(OIDS.system);
-  const current = find(OIDS.current);
-  const battery = find(OIDS.battery);
-  const samples = [system, current, battery].filter(
-    (signal): signal is IndustrialSignal => Boolean(signal),
-  );
-  const last = samples.map((signal) => Date.parse(signal.receivedAt))
-    .filter(Number.isFinite).reduce((maximum, value) => Math.max(maximum, value), 0);
-  const stale = !last || now === null || now - last > 130_000;
-  const systemRaw = Number(system?.rawValue ?? system?.value);
-  const systemLabel = Number.isInteger(systemRaw)
-    ? SYSTEM_STATUS[systemRaw] ?? 'Estado ' + systemRaw
-    : '—';
+  const readings = now === null ? [] : FIELDS.map(({ key, label }) => ({
+    key, label, reading: presentEltekReading(
+      signals.find((signal) => signal.key === ELTEK_SMARTPACK_OIDS[key]), now, key,
+    ),
+  }));
+  const recent = readings.length === FIELDS.length &&
+    readings.every(({ reading }) => reading.state === 'RECENT');
 
   return (
     <section className="front01-snmp-summary" aria-label="Telemetría general ELTEK SmartPack2 Touch">
       <header className="front01-summary-header">
         <strong>SmartPack2 Touch · SNMP Live</strong>
-        <span>{error ? 'ERROR DE LECTURA' : stale ? 'SIN LECTURA RECIENTE' : 'LECTURA RECIENTE'}</span>
+        <span>{error ? 'ERROR DE CONSULTA' : recent ? 'MUESTRAS RECIENTES' : 'DATOS INCOMPLETOS O ANTIGUOS'}</span>
       </header>
       <dl className="front01-snmp-kpis">
-        <div><dt>Estado general</dt><dd>{system ? systemLabel : '—'}</dd></div>
-        <div><dt>Corriente general · RAW</dt><dd>{readRaw(current)}</dd></div>
-        <div><dt>Voltaje batería · RAW</dt><dd>{readRaw(battery)}</dd></div>
+        {readings.map(({ key, label, reading }) => (
+          <div key={key}>
+            <dt>{label}</dt>
+            <dd>{reading.state === 'RECENT' ? reading.text : '—'}</dd>
+            <small>
+              {reading.state} · {reading.quality} · RAW: {reading.raw}
+              {' · '}{reading.receivedAt
+                ? new Date(reading.receivedAt).toLocaleString('es-PE', { timeZone: 'America/Lima' })
+                : 'Sin fecha válida'}
+            </small>
+          </div>
+        ))}
       </dl>
-      <div className="front01-snmp-footer" style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-        <small>Fuente: {SOURCE}</small>
-        <small>Captura: polling cada 60 s</small>
-        <small>
-          Última muestra: {last ? new Date(last).toLocaleString('es-PE', { timeZone: 'America/Lima' }) : '—'}
-        </small>
+      <div className="front01-snmp-footer">
+        <small>Fuente: {ELTEK_SMARTPACK_SOURCE} · Consulta cada 60 s</small>
         {error ? <small role="alert">Consulta fallida: {error}</small> : null}
       </div>
       <p style={{ margin: '8px 0 0', fontSize: 12, opacity: 0.8 }}>
-        Valores sin escala comisionada: no representan las entradas independientes A/B del QDF.
-        Calidad RAW: {samples.map((item) => item.quality).join(' / ') || 'sin muestras'}.
+        Valores crudos de controlador, no representan entradas independientes A/B ni lecturas normalizadas.
       </p>
     </section>
   );

@@ -294,6 +294,10 @@
   font-weight: 800;
 }
 
+.noticeSymbol::before {
+  content: 'i';
+}
+
 .notice p {
   margin: 0;
   color: #61778a;

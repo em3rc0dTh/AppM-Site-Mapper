@@ -205,9 +205,7 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
         <span className={styles.polling}>{t('polling')}</span>
       </footer>
       <div className={styles.notice}>
-        <span aria-hidden="true" className={styles.noticeSymbol}>
-          i
-        </span>
+        <span aria-hidden="true" className={styles.noticeSymbol} />
         <p>{t('disclaimer')}</p>
       </div>
       {error && (

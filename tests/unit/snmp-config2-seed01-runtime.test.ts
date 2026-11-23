@@ -39,4 +39,18 @@ describe('seed-01 SNMP Config2 runtime contract', () => {
     expect(script).toContain("commissioning: 'SYNTHETIC_LAB_ONLY'");
     expect(script).toContain('MQTT/Modbus untouched');
   });
+
+  it('inherits SNMP source ownership without a second Trap commissioning screen', () => {
+    const route = source('src/app/api/telemetry/industrial/traps/route.ts');
+    const inspector = source('src/components/power/bdfb-telemetry-inspector.tsx');
+    const seed = source('src/seeds/seed-01.ts');
+
+    expect(route).toContain("listActiveByProtocol('SNMP')");
+    expect(route).toContain('linkedSources');
+    expect(route).toContain('validatedSources');
+    expect(inspector).not.toContain('<SnmpTrapSourceEditor');
+    expect(seed).toContain('ensureControlledIntegrationTrapSources');
+    expect(seed).toContain('INT-TRAP-');
+    expect(seed).toContain("process.env.SITE_MAPPER_INTEGRATION_PROFILE?.trim() !== INTEGRATION_PROFILE");
+  });
 });

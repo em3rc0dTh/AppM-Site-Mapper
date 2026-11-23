@@ -99,7 +99,6 @@ export default async function WorkspacePage() {
       <section className="sm-home-main">
         <header className="sm-home-heading">
           <div>
-            <span className="sm-home-breadcrumb">⌂ {t('home')}</span>
             <h1>{t('title')}</h1>
           </div>
           <span className="sm-home-scope">

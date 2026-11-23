@@ -36,7 +36,7 @@
     "occupiedPanels": "Occupied panels",
     "installedCircuits": "Installed circuits",
     "occupancy": "Occupancy",
-    "bdfbSummaryNote": "Inputs, charts and alarms are under Operation.",
+    "bdfbSummaryNote": "Inputs, charts, alarms and traps are under Operation.",
     "equipmentSummaryNote": "Overview, inputs, charts and alarms are under Operation. Technical configuration lives in the Equipment physical composition.",
     "technicalConfiguration": "Technical configuration",
     "ports": "Ports",

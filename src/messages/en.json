@@ -2948,6 +2948,8 @@
     "reconnectingStatus": "RECONNECTING"
   },
   "snmpController": {
+    "controllerEyebrow": "SNMP controller",
+    "qualityLabel": "Reading quality",
     "title": "SNMP controller telemetry",
     "editorTitle": "SNMP CONTROLLER · DECLARATIVE PRESENTATION",
     "editorHelp": "Associate an observation source with this QDF and choose OIDs to show. This does not create or certify A/B shunts.",

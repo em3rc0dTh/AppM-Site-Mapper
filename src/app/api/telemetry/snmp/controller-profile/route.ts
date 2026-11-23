@@ -79,6 +79,7 @@ async function saveProfile(request: Request) {
   if (previous && JSON.stringify(previous) === JSON.stringify(profile))
     return Response.json({ profile, alreadyConfigured: true });
 
+  const priorHistory = device.attributes?.snmpControllerProfileHistory;
   const changed = {
     ...device,
     attributes: {
@@ -86,11 +87,7 @@ async function saveProfile(request: Request) {
       snmpControllerProfile: profile,
       // Bounded inline change history. Never store credentials or telemetry readings here.
       snmpControllerProfileHistory: [
-        ...(
-          Array.isArray(device.attributes?.snmpControllerProfileHistory)
-            ? device.attributes.snmpControllerProfileHistory
-            : []
-        ).slice(-9),
+        ...(Array.isArray(priorHistory) ? priorHistory.slice(-9) : []),
         {
           changedAt: nowIso(),
           previous,

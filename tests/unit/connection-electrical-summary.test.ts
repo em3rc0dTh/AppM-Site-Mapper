@@ -23,9 +23,7 @@ describe('read-only electrical feed summary', () => {
     expect(summary.current).toEqual({ value: 19.5, reporting: 2 });
     expect(summary.power).toEqual({ value: 1017, reporting: 2 });
     expect(summary.energy.value).toBeCloseTo(3.579, 5);
-    expect(summaryValue(summary.power, summary.breakerCount, 3, 'kW', 1000)).toBe(
-      '1.017 kW',
-    );
+    expect(summaryValue(summary.power, summary.breakerCount, 3, 'kW', 1000)).toBe('1.017 kW');
   });
 
   it('does not fabricate readings and labels partial coverage', () => {

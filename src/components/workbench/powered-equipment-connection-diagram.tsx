@@ -196,8 +196,15 @@ export function PoweredEquipmentConnectionDiagram({
                   title={connection.endpoint.aid}
                 >
                   <span className="sm-powered-breaker-name">
-                    <i className={statusClass(metrics?.status ?? 'NO_DATA')} aria-hidden="true" />
+                    <i
+                      className={statusClass(metrics?.status ?? 'NO_DATA')}
+                      title={metrics?.status ?? 'NO_DATA'}
+                      aria-hidden="true"
+                    />
                     <b>{connection.breakerName}</b>
+                    <span className="sm-powered-visually-hidden">
+                      {t('status')}: {metrics?.status ?? 'NO_DATA'}
+                    </span>
                   </span>
                   <span>{connection.endpoint.displayLabel}</span>
                   <span className="sm-powered-nominal">

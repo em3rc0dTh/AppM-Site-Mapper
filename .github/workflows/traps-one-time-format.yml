@@ -1,0 +1,49 @@
+name: One-time SNMP Traps Prettier
+on:
+  push:
+    branches:
+      - feat/bdfb-traps-operator-panel-2026-11-23
+permissions:
+  contents: write
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Normalize SNMP Traps files
+        run: |
+          npx prettier --write \
+            src/app/api/telemetry/industrial/traps/route.ts \
+            src/app/api/telemetry/industrial/traps/sources/route.ts \
+            src/components/power/bdfb-telemetry-inspector.tsx \
+            src/components/power/snmp-trap-panel.module.css \
+            src/components/power/snmp-trap-panel.tsx \
+            src/components/power/snmp-trap-source-editor.tsx \
+            src/modules/telemetry/domain/industrial/trap-view.ts \
+            src/modules/telemetry/infrastructure/industrial/store.ts
+      - name: Commit formatted files and remove temporary action
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm .github/workflows/traps-one-time-format.yml
+          git add -A -- \
+            src/app/api/telemetry/industrial/traps/route.ts \
+            src/app/api/telemetry/industrial/traps/sources/route.ts \
+            src/components/power/bdfb-telemetry-inspector.tsx \
+            src/components/power/snmp-trap-panel.module.css \
+            src/components/power/snmp-trap-panel.tsx \
+            src/components/power/snmp-trap-source-editor.tsx \
+            src/modules/telemetry/domain/industrial/trap-view.ts \
+            src/modules/telemetry/infrastructure/industrial/store.ts \
+            .github/workflows/traps-one-time-format.yml
+          if ! git diff --cached --quiet; then
+            git commit -m "style(traps): format source-scoped operator panel"
+            git push origin HEAD:feat/bdfb-traps-operator-panel-2026-11-23
+          fi

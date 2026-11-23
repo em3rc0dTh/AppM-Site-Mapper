@@ -110,7 +110,7 @@
 .sm-powered-diagram-head,
 .sm-powered-feed-layout {
   display: grid;
-  grid-template-columns: minmax(580px, 1.45fr) minmax(120px, 0.42fr) minmax(340px, 0.85fr);
+  grid-template-columns: minmax(580px, 1.45fr) minmax(76px, 0.22fr) minmax(340px, 0.85fr);
   gap: 12px;
 }
 
@@ -286,6 +286,14 @@
   color: #5e460c;
   border-color: #e6c56e;
   box-shadow: inset 3px 0 #e6c56e;
+}
+
+.sm-powered-equipment-workbench .sm-powered-feed-layout.is-unspecified button.sm-powered-breaker-row:is(:hover:not(:disabled), :focus-visible, .is-selected),
+.sm-powered-equipment-workbench .sm-powered-feed-layout.is-unspecified button.sm-powered-endpoint-row:is(:hover:not(:disabled), :focus-visible, .is-selected) {
+  background: #f3f7fa;
+  color: #243d56;
+  border-color: #a7bacb;
+  box-shadow: inset 3px 0 #a7bacb;
 }
 
 .sm-powered-equipment-workbench button:is(.sm-powered-breaker-row, .sm-powered-endpoint-row):focus-visible {
@@ -544,13 +552,14 @@
 
   .sm-powered-diagram-head,
   .sm-powered-feed-layout {
-    grid-template-columns: minmax(540px, 1.35fr) 90px minmax(320px, 0.8fr);
+    grid-template-columns: minmax(540px, 1.35fr) 70px minmax(320px, 0.8fr);
   }
 }
 
 @media print {
   .sm-powered-equipment-workbench {
     min-width: 0;
+    padding: 0;
   }
 
   .sm-powered-wire span {

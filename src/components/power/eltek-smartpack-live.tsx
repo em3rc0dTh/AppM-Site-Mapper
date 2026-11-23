@@ -14,16 +14,14 @@ const FIELDS = ['system', 'current', 'battery'] as const;
 export function EltekSmartpackLive() {
   const t = useTranslations('eltekLive');
   const locale = useLocale();
-  const eltekMessages = (
-    useMessages() as unknown as {
-      eltekLive: {
-        labels: Record<(typeof FIELDS)[number], string>;
-        freshness: Record<string, string>;
-        statusLabels: Record<string, string>;
-      };
-    }
-  ).eltekLive;
-  const { labels, freshness, statusLabels } = eltekMessages;
+  const messages = useMessages() as unknown as {
+    eltekLive: {
+      labels: Record<(typeof FIELDS)[number], string>;
+      freshness: Record<string, string>;
+      statusLabels: Record<string, string>;
+    };
+  };
+  const { labels, freshness, statusLabels } = messages.eltekLive;
   const [signals, setSignals] = useState<EltekSignal[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState<number | null>(null);

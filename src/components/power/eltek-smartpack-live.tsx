@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useLocale, useTranslations } from 'next-intl';
+import { useLocale, useMessages, useTranslations } from 'next-intl';
 import {
   ELTEK_SMARTPACK_OIDS,
   ELTEK_SMARTPACK_SOURCE,
@@ -14,9 +14,16 @@ const FIELDS = ['system', 'current', 'battery'] as const;
 export function EltekSmartpackLive() {
   const t = useTranslations('eltekLive');
   const locale = useLocale();
-  const labels = t.raw('labels') as Record<(typeof FIELDS)[number], string>;
-  const freshness = t.raw('freshness') as Record<string, string>;
-  const statusLabels = t.raw('statusLabels') as Record<string, string>;
+  const eltekMessages = (
+    useMessages() as unknown as {
+      eltekLive: {
+        labels: Record<(typeof FIELDS)[number], string>;
+        freshness: Record<string, string>;
+        statusLabels: Record<string, string>;
+      };
+    }
+  ).eltekLive;
+  const { labels, freshness, statusLabels } = eltekMessages;
   const [signals, setSignals] = useState<EltekSignal[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState<number | null>(null);

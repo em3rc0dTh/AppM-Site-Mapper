@@ -52,7 +52,7 @@ describe('seed-01 SNMP Config2 runtime contract', () => {
     expect(seed).toContain('ensureControlledIntegrationTrapSources');
     expect(seed).toContain('INT-TRAP-');
     expect(seed).toContain(
-      "process.env.SITE_MAPPER_INTEGRATION_PROFILE?.trim() !== INTEGRATION_PROFILE",
+      'process.env.SITE_MAPPER_INTEGRATION_PROFILE?.trim() !== INTEGRATION_PROFILE',
     );
   });
 });

@@ -3,6 +3,7 @@
 Target baseline: `main` at `647d482b75709a8b270aa316b1a1a857fe590ab2`.
 
 ## Scope
+
 - UI: QDF-5 overview, `EltekSmartpackLive`.
 - Source: `ELTEK-SMARTPACK2-LURIN-REAL`.
 - OIDs: `1.3.6.1.4.1.12148.10.2.1.0`, `1.3.6.1.4.1.12148.10.9.2.5.0`, `1.3.6.1.4.1.12148.10.10.5.5.0`.
@@ -10,6 +11,7 @@ Target baseline: `main` at `647d482b75709a8b270aa316b1a1a857fe590ab2`.
 - Values: RAW; no scale, amperes, volts, or input A/B inference.
 
 ## Certification evidence required
+
 - [ ] GitHub CI successful for exact source tree: typecheck, lint, formatting, unit/integration/certification suites, build.
 - [ ] `tests/unit/eltek-live-presentation.test.ts` successful.
 - [ ] UI renders all three OIDs from actual API responses.
@@ -20,4 +22,5 @@ Target baseline: `main` at `647d482b75709a8b270aa316b1a1a857fe590ab2`.
 - [ ] Source identity is confirmed to belong in the operational scope of QDF-5 (until then, the device-specific association is provisional).
 
 ## Release gate
+
 **NOT CERTIFIED** until every check above has evidence. No merge or deployment is authorized solely by this document. TFARM04 remains unchanged during this CI validation.

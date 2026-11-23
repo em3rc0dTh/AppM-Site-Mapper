@@ -24,7 +24,9 @@ export function EltekSmartpackLive() {
     const refresh = async () => {
       try {
         const response = await fetch(
-          '/api/telemetry/industrial/signals?source=' + encodeURIComponent(ELTEK_SMARTPACK_SOURCE) + '&limit=100',
+          '/api/telemetry/industrial/signals?source=' +
+            encodeURIComponent(ELTEK_SMARTPACK_SOURCE) +
+            '&limit=100',
           { credentials: 'same-origin', cache: 'no-store' },
         );
         if (!response.ok) throw new Error('HTTP ' + response.status);
@@ -42,22 +44,43 @@ export function EltekSmartpackLive() {
     void refresh();
     const poll = setInterval(() => void refresh(), 60_000);
     const clock = setInterval(() => setNow(Date.now()), 10_000);
-    return () => { mounted = false; clearInterval(poll); clearInterval(clock); };
+    return () => {
+      mounted = false;
+      clearInterval(poll);
+      clearInterval(clock);
+    };
   }, []);
 
-  const readings = now === null ? [] : FIELDS.map(({ key, label }) => ({
-    key, label, reading: presentEltekReading(
-      signals.find((signal) => signal.key === ELTEK_SMARTPACK_OIDS[key]), now, key,
-    ),
-  }));
-  const recent = readings.length === FIELDS.length &&
+  const readings =
+    now === null
+      ? []
+      : FIELDS.map(({ key, label }) => ({
+          key,
+          label,
+          reading: presentEltekReading(
+            signals.find((signal) => signal.key === ELTEK_SMARTPACK_OIDS[key]),
+            now,
+            key,
+          ),
+        }));
+  const recent =
+    readings.length === FIELDS.length &&
     readings.every(({ reading }) => reading.state === 'RECENT');
 
   return (
-    <section className="front01-snmp-summary" aria-label="Telemetría general ELTEK SmartPack2 Touch">
+    <section
+      className="front01-snmp-summary"
+      aria-label="Telemetría general ELTEK SmartPack2 Touch"
+    >
       <header className="front01-summary-header">
         <strong>SmartPack2 Touch · SNMP Live</strong>
-        <span>{error ? 'ERROR DE CONSULTA' : recent ? 'MUESTRAS RECIENTES' : 'DATOS INCOMPLETOS O ANTIGUOS'}</span>
+        <span>
+          {error
+            ? 'ERROR DE CONSULTA'
+            : recent
+              ? 'MUESTRAS RECIENTES'
+              : 'DATOS INCOMPLETOS O ANTIGUOS'}
+        </span>
       </header>
       <dl className="front01-snmp-kpis">
         {readings.map(({ key, label, reading }) => (
@@ -66,7 +89,8 @@ export function EltekSmartpackLive() {
             <dd>{reading.state === 'RECENT' ? reading.text : '—'}</dd>
             <small>
               {reading.state} · {reading.quality} · RAW: {reading.raw}
-              {' · '}{reading.receivedAt
+              {' · '}
+              {reading.receivedAt
                 ? new Date(reading.receivedAt).toLocaleString('es-PE', { timeZone: 'America/Lima' })
                 : 'Sin fecha válida'}
             </small>
@@ -78,7 +102,8 @@ export function EltekSmartpackLive() {
         {error ? <small role="alert">Consulta fallida: {error}</small> : null}
       </div>
       <p style={{ margin: '8px 0 0', fontSize: 12, opacity: 0.8 }}>
-        Valores crudos de controlador, no representan entradas independientes A/B ni lecturas normalizadas.
+        Valores crudos de controlador, no representan entradas independientes A/B ni lecturas
+        normalizadas.
       </p>
     </section>
   );

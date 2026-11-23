@@ -10,8 +10,8 @@ describe('MK2 operator-approved connection UI', () => {
     const palette = source('src/shared/ui/command-palette.tsx');
     expect(search).not.toContain("kind: 'POWER_TARGET'");
     expect(search).toContain("kind: 'POWERED_EQUIPMENT'");
-    expect(palette).toContain("result.kind !== 'POWER_TARGET'");
-    expect(palette).toContain('mk-command-status');
+    expect(palette).toContain('setResults(data.results)');
+    expect(palette).toContain('<p role="status">');
   });
 
   it('presents a single full-width electrical summary instead of a legend', () => {

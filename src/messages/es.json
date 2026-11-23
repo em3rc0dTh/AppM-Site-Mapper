@@ -2946,5 +2946,52 @@
     "liveStatus": "EN VIVO",
     "connectingStatus": "CONECTANDO",
     "reconnectingStatus": "RECONECTANDO"
+  },
+  "eltekLive": {
+    "ariaLabel": "Telemetría del controlador ELTEK SmartPack2 Touch",
+    "title": "SmartPack2 Touch · SNMP en vivo",
+    "queryError": "ERROR DE CONSULTA",
+    "samplesRecent": "MUESTRAS RECIENTES",
+    "incomplete": "DATOS INCOMPLETOS O ANTIGUOS",
+    "labels": {
+      "system": "Estado general",
+      "current": "Corriente general · RAW (escala sin verificar)",
+      "battery": "Voltaje batería · RAW (escala sin verificar)"
+    },
+    "freshness": {
+      "RECENT": "Reciente",
+      "STALE": "Obsoleto",
+      "UNAVAILABLE": "No disponible",
+      "INVALID": "Inválido"
+    },
+    "statusLabels": {
+      "0": "Error",
+      "1": "Normal",
+      "2": "Alarma menor",
+      "3": "Alarma mayor",
+      "4": "Deshabilitado",
+      "5": "Desconectado",
+      "6": "No presente",
+      "7": "Alarma menor y mayor",
+      "8": "Mayor baja",
+      "9": "Menor baja",
+      "10": "Mayor alta",
+      "11": "Menor alta",
+      "12": "Evento",
+      "13": "Valor de voltaje",
+      "14": "Valor de corriente",
+      "15": "Valor de temperatura",
+      "16": "Valor de unidad",
+      "17": "Valor porcentual",
+      "18": "Crítico",
+      "19": "Advertencia"
+    },
+    "unknownStatus": "Estado desconocido ({value})",
+    "raw": "RAW",
+    "noTimestamp": "Sin fecha válida",
+    "source": "Fuente",
+    "polling": "Consulta cada 60 s",
+    "failed": "Consulta fallida",
+    "disclaimer": "Lecturas crudas del controlador; no representan las entradas independientes A/B del QDF ni valores eléctricos normalizados."
   }
 }

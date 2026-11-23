@@ -231,6 +231,9 @@
   color: #d43540;
   font-size: 19px;
 }
+.bell::before {
+  content: '🔔';
+}
 .detailIdentity h4 {
   margin: 0 0 3px;
   font-size: 13px;

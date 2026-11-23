@@ -88,6 +88,12 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
     ),
   }));
   const recent = readings.every(({ reading }) => reading.state === 'RECENT');
+  const freshnessLabels = {
+    RECENT: t('freshness.RECENT'),
+    STALE: t('freshness.STALE'),
+    UNAVAILABLE: t('freshness.UNAVAILABLE'),
+    INVALID: t('freshness.INVALID'),
+  };
 
   return (
     <section className="front01-snmp-summary" aria-label={profile.title}>
@@ -101,7 +107,7 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
             <dt>{spec.label}</dt>
             <dd>{error || reading.state !== 'RECENT' ? '—' : reading.text}</dd>
             <small>
-              {t('freshness.' + reading.state)} · {reading.quality} · {t('raw')}: {reading.raw}
+              {freshnessLabels[reading.state]} · {reading.quality} · {t('raw')}: {reading.raw}
               {' · '}
               {reading.receivedAt
                 ? new Date(reading.receivedAt).toLocaleString(locale)

@@ -13,15 +13,13 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
   const t = useTranslations('snmpController');
   const locale = useLocale();
   const [profile, setProfile] = useState<SnmpControllerProfile | null>(null);
+  const [loadedDeviceId, setLoadedDeviceId] = useState<string | null>(null);
   const [signals, setSignals] = useState<SnmpControllerObservation[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
-    setProfile(null);
-    setSignals([]);
-    setError(null);
     void (async () => {
       try {
         const response = await fetch(
@@ -30,7 +28,13 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
         );
         if (!response.ok) throw new Error('HTTP ' + response.status);
         const data = (await response.json()) as { profile: SnmpControllerProfile | null };
-        if (!controller.signal.aborted) setProfile(data.profile);
+        if (!controller.signal.aborted) {
+          setProfile(data.profile);
+          setLoadedDeviceId(deviceId);
+          setSignals([]);
+          setNow(null);
+          setError(null);
+        }
       } catch (cause) {
         if (!controller.signal.aborted)
           setError(cause instanceof Error ? cause.message : t('unavailable'));
@@ -71,6 +75,8 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
     };
   }, [profile, t]);
 
+  if (loadedDeviceId !== deviceId) return null;
+
   if (!profile) {
     return error ? (
       <section className="front01-snmp-summary" aria-label={t('title')}>
@@ -79,15 +85,15 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
     ) : null;
   }
 
-  const readings = profile.signals.map((spec) => ({
+  const readings = now === null ? [] : profile.signals.map((spec) => ({
     spec,
     reading: presentControllerReading(
       signals.find((signal) => signal.key === spec.oid),
       spec,
-      now ?? Date.now(),
+      now,
     ),
   }));
-  const recent = readings.every(({ reading }) => reading.state === 'RECENT');
+  const recent = readings.length === profile.signals.length && readings.every(({ reading }) => reading.state === 'RECENT');
   const freshnessLabels = {
     RECENT: t('freshness.RECENT'),
     STALE: t('freshness.STALE'),

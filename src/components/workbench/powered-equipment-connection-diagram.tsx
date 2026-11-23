@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { resolveBreakerLiveMetrics } from '@/components/telemetry/telemetry-presentation';
+import { electricalSummary, summaryValue } from '@/modules/power/application/connection-electrical-summary';
 import type {
   PoweredEquipmentConnection,
   PoweredEquipmentProjection,
@@ -40,57 +41,6 @@ function feedKey(connection: PoweredEquipmentConnection): FeedKey {
 
 function formatNumber(value: number | undefined, digits: number): string {
   return value === undefined || !Number.isFinite(value) ? '—' : value.toFixed(digits);
-}
-
-function sumDefined(values: readonly (number | undefined)[]): {
-  readonly value?: number;
-  readonly reporting: number;
-} {
-  const defined = values.filter(
-    (value): value is number => value !== undefined && Number.isFinite(value),
-  );
-  return {
-    ...(defined.length ? { value: defined.reduce((sum, value) => sum + value, 0) } : {}),
-    reporting: defined.length,
-  };
-}
-
-/**
- * An electrical summary counts each physical breaker only once even if it has
- * more than one documentary endpoint. Voltage is a range, never an addition.
- */
-function electricalSummary(
-  connections: readonly PoweredEquipmentConnection[],
-  telemetry: Readonly<Record<string, LiveMetrics>>,
-) {
-  const breakerIds = [...new Set(connections.map((connection) => connection.breakerId))];
-  const readings = breakerIds.map((id) => telemetry[id]);
-  const voltages = readings
-    .map((reading) => reading?.voltageV)
-    .filter((value): value is number => value !== undefined && Number.isFinite(value));
-  const voltage = voltages.length
-    ? `${Math.min(...voltages).toFixed(1)}${Math.min(...voltages) === Math.max(...voltages) ? '' : '–' + Math.max(...voltages).toFixed(1)} V${voltages.length < breakerIds.length ? ' *' : ''}`
-    : '—';
-
-  return {
-    breakerCount: breakerIds.length,
-    voltage,
-    current: sumDefined(readings.map((reading) => reading?.currentA)),
-    power: sumDefined(readings.map((reading) => reading?.powerW)),
-    energy: sumDefined(readings.map((reading) => reading?.energyKwh)),
-  };
-}
-
-/** Report sums as partial whenever a breaker has no valid value for the metric. */
-function summaryValue(
-  sample: { readonly value?: number; readonly reporting: number },
-  breakerCount: number,
-  decimals: number,
-  unit: string,
-  scale = 1,
-): string {
-  if (sample.value === undefined) return '—';
-  return `${(sample.value / scale).toFixed(decimals)} ${unit}${sample.reporting < breakerCount ? ' *' : ''}`;
 }
 
 function qdfGroups(equipment: PoweredEquipmentProjection) {

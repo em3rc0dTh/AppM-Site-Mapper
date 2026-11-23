@@ -562,6 +562,11 @@
     padding: 0;
   }
 
+  .sm-powered-equipment-workbench .sm-workbench-header {
+    margin: 0 0 12px;
+    padding: 0 0 12px;
+  }
+
   .sm-powered-wire span {
     print-color-adjust: exact;
   }

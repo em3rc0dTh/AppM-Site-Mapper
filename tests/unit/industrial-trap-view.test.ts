@@ -101,6 +101,7 @@ describe('SNMP trap presentation', () => {
     const id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
     expect(parseTrapCursor(trapCursor(timestamp, id))).toEqual({ receivedAt: timestamp, id });
     expect(parseTrapCursor('not-a-cursor')).toBeNull();
+    expect(parseTrapCursor('')).toBeNull();
   });
 });
 

@@ -2303,7 +2303,7 @@
 }
 
 /* Global search: make the count secondary; preserve its accessible live status. */
-.mk-command .mk-command-status {
+.mk-command p[role='status'] {
   margin: 5px 16px 8px;
   padding: 0;
   color: #63758a;

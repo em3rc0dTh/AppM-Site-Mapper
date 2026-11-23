@@ -742,6 +742,7 @@
 }
 .sm-product-header-home {
   text-decoration: none;
+  cursor: pointer;
 }
 .sm-product-header-home:hover,
 .sm-product-header-home:focus-visible {

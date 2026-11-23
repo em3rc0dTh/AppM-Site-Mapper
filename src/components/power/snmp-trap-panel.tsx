@@ -136,9 +136,9 @@ export function SnmpTrapPanel({
           <span className={styles.liveDot} aria-hidden="true" />
           {t('title')}
         </h3>
-        <span className={styles.liveBadge} data-state={error ? 'error' : 'ready'}>
+        <span className={styles.liveBadge} data-state={error ? 'error' : sourceConfigured === false ? 'unmapped' : 'ready'}>
           <span className={styles.liveDot} aria-hidden="true" />
-          {error ? t('unavailable') : t('live')}
+          {error ? t('unavailable') : sourceConfigured === false ? t('noMapping') : t('monitoring')}
         </span>
       </header>
 

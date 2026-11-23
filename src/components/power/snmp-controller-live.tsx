@@ -129,7 +129,9 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
     <section className={styles.section} aria-label={profile.title}>
       <header className={styles.header}>
         <div className={styles.identity}>
-          <span className={styles.sourceIcon} aria-hidden="true">◉</span>
+          <span className={styles.sourceIcon} aria-hidden="true">
+            ◉
+          </span>
           <div className={styles.titleGroup}>
             <span className={styles.eyebrow}>{t('controllerEyebrow')}</span>
             <h3 className={styles.title}>{profile.title}</h3>
@@ -149,7 +151,7 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
         {profile.signals.map((spec) => {
           const item = readings.find(({ spec: candidate }) => candidate.oid === spec.oid);
           const reading = item?.reading;
-          const state = error ? 'UNAVAILABLE' : reading?.state ?? 'UNAVAILABLE';
+          const state = error ? 'UNAVAILABLE' : (reading?.state ?? 'UNAVAILABLE');
           const visible = !error && reading?.state === 'RECENT';
           const timestamp = reading?.receivedAt
             ? formattedTimestamp(reading.receivedAt, locale)
@@ -158,7 +160,9 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
           return (
             <div className={styles.metric} key={spec.oid} data-state={state}>
               <div className={styles.metricHeader}>
-                <dt className={styles.metricLabel} title={spec.label}>{spec.label}</dt>
+                <dt className={styles.metricLabel} title={spec.label}>
+                  {spec.label}
+                </dt>
                 <span
                   className={styles.quality}
                   data-quality={isValid ? 'valid' : visible ? 'unknown' : 'inactive'}
@@ -168,16 +172,17 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
                   {visible ? reading?.quality : freshnessLabels[state]}
                 </span>
               </div>
-              <dd className={styles.metricValue}>
-                {visible ? reading.text : '—'}
-              </dd>
+              <dd className={styles.metricValue}>{visible ? reading.text : '—'}</dd>
               <div className={styles.metricMeta}>
                 <span className={styles.rawPill}>
                   {t('raw')}: {reading?.raw ?? '—'}
                 </span>
                 <span className={styles.metricTime}>
                   {timestamp && reading?.receivedAt ? (
-                    <time dateTime={reading.receivedAt} title={new Date(reading.receivedAt).toLocaleString(locale)}>
+                    <time
+                      dateTime={reading.receivedAt}
+                      title={new Date(reading.receivedAt).toLocaleString(locale)}
+                    >
                       {timestamp}
                     </time>
                   ) : (
@@ -193,12 +198,16 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
       <footer className={styles.footer}>
         <div className={styles.sourceDetail}>
           <span className={styles.sourceCaption}>{t('source')}</span>
-          <code className={styles.sourceName} title={profile.sourceIdentity}>{profile.sourceIdentity}</code>
+          <code className={styles.sourceName} title={profile.sourceIdentity}>
+            {profile.sourceIdentity}
+          </code>
         </div>
         <span className={styles.polling}>{t('polling')}</span>
       </footer>
       <div className={styles.notice}>
-        <span aria-hidden="true" className={styles.noticeSymbol}>i</span>
+        <span aria-hidden="true" className={styles.noticeSymbol}>
+          i
+        </span>
         <p>{t('disclaimer')}</p>
       </div>
       {error && (

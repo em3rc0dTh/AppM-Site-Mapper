@@ -7,8 +7,11 @@ import type {
   SnmpControllerSignal,
 } from '@/modules/telemetry/domain/snmp-controller-profile';
 
-type EditableSignal = { oid: string; label: string; displayMode: 'RAW' | 'ENUM' };
-type DiscoveredSignal = { key: string; mibName: string | null; protocol: string };
+type EditableSignal = SnmpControllerSignal;
+type DiscoveredSignal = { key: string; mibName?: string | null; protocol: string };
+import smartpackTemplate from '../../../config/industrial/smartpack2-controller.template.json';
+import { parseSnmpControllerProfile } from '@/modules/telemetry/domain/snmp-controller-profile';
+import { fetchControllerSignals } from '@/modules/telemetry/application/controller-signals-client';
 
 export function SnmpControllerEditor({ deviceId }: Readonly<{ deviceId: string }>) {
   const t = useTranslations('snmpController');
@@ -62,24 +65,10 @@ export function SnmpControllerEditor({ deviceId }: Readonly<{ deviceId: string }
     setError('');
     setMessage('');
     try {
-      const response = await fetch(
-        '/api/telemetry/industrial/signals?' +
-          new URLSearchParams({ source: sourceIdentity.trim(), limit: '500' }),
-        { cache: 'no-store' },
-      );
-      if (!response.ok) throw new Error('HTTP ' + response.status);
-      const body = (await response.json()) as {
-        signals?: DiscoveredSignal[];
-        truncated?: boolean;
-      };
-      if (!Array.isArray(body.signals)) throw new Error(t('invalidResponse'));
-      setDiscovered(
-        body.signals.filter(
-          (signal) => signal.protocol === 'SNMP' && /^\d+(?:\.\d+){5,}$/.test(signal.key),
-        ),
-      );
+      const observed = await fetchControllerSignals(sourceIdentity.trim());
+      setDiscovered(observed.filter((signal) => /^\d+(?:\.\d+){5,}$/.test(signal.key)));
       setSelectedOid('');
-      setMessage(body.truncated ? t('discoveryPartial') : t('discoveryComplete'));
+      setMessage(t('discoveryComplete'));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t('unavailable'));
     } finally {
@@ -96,6 +85,21 @@ export function SnmpControllerEditor({ deviceId }: Readonly<{ deviceId: string }
     ]);
   }
 
+  function addSmartpackSignals() {
+    const template = parseSnmpControllerProfile(smartpackTemplate)!;
+    const additions = template.signals.filter(
+      (candidate) => !signals.some((signal) => signal.oid === candidate.oid),
+    );
+    if (signals.length + additions.length > 16) {
+      setError(t('tooManySignals'));
+      return;
+    }
+    // Preserve existing OIDs, labels and presentation choices. No source identity is inferred.
+    setSignals((current) => [...current, ...additions]);
+    if (!title.trim()) setTitle(template.title);
+    setMessage(t('templateAdded'));
+  }
+
   async function save() {
     if (!window.confirm(t('confirmSave'))) return;
     setBusy(true);
@@ -110,6 +114,7 @@ export function SnmpControllerEditor({ deviceId }: Readonly<{ deviceId: string }
           oid: item.oid.trim(),
           label: item.label.trim(),
           displayMode: item.displayMode,
+          ...(item.metric ? { metric: item.metric } : {}),
         })),
       };
       const response = await fetch('/api/telemetry/snmp/controller-profile', {
@@ -210,13 +215,32 @@ export function SnmpControllerEditor({ deviceId }: Readonly<{ deviceId: string }
                 value={signal.displayMode}
                 disabled={!canConfigure || busy}
                 onChange={(event) =>
-                  edit(index, { displayMode: event.target.value as EditableSignal['displayMode'] })
+                  edit(index, {
+                    displayMode: event.target.value as EditableSignal['displayMode'],
+                    metric: event.target.value === 'NORMALIZED' ? 'CURRENT' : undefined,
+                  })
                 }
               >
                 <option value="RAW">{t('rawMode')}</option>
                 <option value="ENUM">{t('enumMode')}</option>
+                <option value="NORMALIZED">{t('normalizedMode')}</option>
               </select>
             </label>
+            {signal.displayMode === 'NORMALIZED' && (
+              <label>
+                {t('generalMagnitude')}
+                <select
+                  value={signal.metric ?? 'CURRENT'}
+                  disabled={!canConfigure || busy}
+                  onChange={(event) =>
+                    edit(index, { metric: event.target.value as 'CURRENT' | 'VOLTAGE' })
+                  }
+                >
+                  <option value="CURRENT">{t('generalCurrent')}</option>
+                  <option value="VOLTAGE">{t('dcVoltage')}</option>
+                </select>
+              </label>
+            )}
             {canConfigure && (
               <button
                 type="button"
@@ -230,6 +254,9 @@ export function SnmpControllerEditor({ deviceId }: Readonly<{ deviceId: string }
         ))}
         {canConfigure && (
           <div className="sm-snmp-maintenance-actions">
+            <button type="button" disabled={busy} onClick={addSmartpackSignals}>
+              {t('addSmartpack')}
+            </button>
             <button
               type="button"
               disabled={busy || signals.length >= 16}

@@ -7,6 +7,13 @@ import {
   type SnmpControllerObservation,
 } from '@/modules/telemetry/application/snmp-controller-presentation';
 import type { SnmpControllerProfile } from '@/modules/telemetry/domain/snmp-controller-profile';
+import { parseSnmpControllerProfile } from '@/modules/telemetry/domain/snmp-controller-profile';
+import { fetchControllerSignals } from '@/modules/telemetry/application/controller-signals-client';
+import {
+  configuredControllerCapacity,
+  controllerSummary,
+} from '@/modules/telemetry/application/controller-summary';
+import type { SnmpBdfbLoadView } from '@/modules/telemetry/application/snmp-feed-service';
 import styles from './snmp-controller-live.module.css';
 
 function formattedTimestamp(value: string | null, locale: string): string | null {
@@ -30,6 +37,7 @@ function formattedTimestamp(value: string | null, locale: string): string | null
 export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>) {
   const t = useTranslations('snmpController');
   const locale = useLocale();
+  const [ratedA, setRatedA] = useState<number | null>(null);
   const [profile, setProfile] = useState<SnmpControllerProfile | null>(null);
   const [loadedDeviceId, setLoadedDeviceId] = useState<string | null>(null);
   const [signals, setSignals] = useState<SnmpControllerObservation[]>([]);
@@ -47,15 +55,20 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
         if (!response.ok) throw new Error('HTTP ' + response.status);
         const data = (await response.json()) as { profile: SnmpControllerProfile | null };
         if (!controller.signal.aborted) {
-          setProfile(data.profile);
+          const parsed = data.profile === null ? null : parseSnmpControllerProfile(data.profile);
+          if (data.profile !== null && !parsed) throw new Error(t('invalidResponse'));
+          setProfile(parsed);
           setLoadedDeviceId(deviceId);
           setSignals([]);
           setNow(null);
           setError(null);
         }
       } catch (cause) {
-        if (!controller.signal.aborted)
+        if (!controller.signal.aborted) {
+          setLoadedDeviceId(deviceId);
+          setProfile(null);
           setError(cause instanceof Error ? cause.message : t('unavailable'));
+        }
       }
     })();
     return () => controller.abort();
@@ -64,23 +77,41 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
   useEffect(() => {
     if (!profile) return;
     let mounted = true;
+    let pending = false;
+    const controller = new AbortController();
     const refresh = async () => {
+      if (pending) return;
+      pending = true;
       try {
-        const response = await fetch(
-          '/api/telemetry/industrial/signals?' +
-            new URLSearchParams({ source: profile.sourceIdentity, limit: '500' }),
-          { cache: 'no-store' },
-        );
-        if (!response.ok) throw new Error('HTTP ' + response.status);
-        const data = (await response.json()) as { signals?: SnmpControllerObservation[] };
-        if (!Array.isArray(data.signals)) throw new Error(t('invalidResponse'));
+        const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(45_000)]);
+        const observations = await fetchControllerSignals(profile.sourceIdentity, signal);
+        let configuredRating: number | null = null;
+        try {
+          const response = await fetch(
+            '/api/telemetry/snmp/feeds?' + new URLSearchParams({ deviceId }),
+            { cache: 'no-store', signal },
+          );
+          if (response.ok)
+            configuredRating = configuredControllerCapacity(
+              (await response.json()) as SnmpBdfbLoadView,
+            );
+        } catch {
+          /* Capacity remains unavailable independently of controller readings. */
+        }
         if (mounted) {
-          setSignals(data.signals);
+          setSignals(observations);
+          setRatedA(configuredRating);
           setNow(Date.now());
           setError(null);
         }
       } catch (cause) {
-        if (mounted) setError(cause instanceof Error ? cause.message : t('unavailable'));
+        if (mounted) {
+          setSignals([]);
+          setRatedA(null);
+          setError(cause instanceof Error ? cause.message : t('unavailable'));
+        }
+      } finally {
+        pending = false;
       }
     };
     void refresh();
@@ -88,10 +119,11 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
     const clock = setInterval(() => setNow(Date.now()), 10_000);
     return () => {
       mounted = false;
+      controller.abort();
       clearInterval(polling);
       clearInterval(clock);
     };
-  }, [profile, t]);
+  }, [profile, deviceId, t]);
 
   if (loadedDeviceId !== deviceId) return null;
 
@@ -116,6 +148,12 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
             now,
           ),
         }));
+  const summary = now === null || error ? null : controllerSummary(profile, signals, now);
+  const hasSummary = profile.signals.some((spec) => spec.displayMode === 'NORMALIZED');
+  const number = (value: number | null | undefined, unit: string) =>
+    value === null || value === undefined
+      ? '—'
+      : `${new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(value)} ${unit}`;
   const freshCount = readings.filter(({ reading }) => reading.state === 'RECENT').length;
   const recent = freshCount === profile.signals.length;
   const freshnessLabels = {
@@ -147,6 +185,30 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
         </div>
       </header>
 
+      {hasSummary && (
+        <dl className={styles.metricGrid} aria-label={t('generalSummary')}>
+          <div className={styles.metric}>
+            <dt>{t('generalCurrent')}</dt>
+            <dd className={styles.metricValue}>{number(summary?.currentA, 'A')}</dd>
+            <small>{t('normalizedSource')}</small>
+          </div>
+          <div className={styles.metric}>
+            <dt>{t('dcVoltage')}</dt>
+            <dd className={styles.metricValue}>{number(summary?.voltageV, 'V')}</dd>
+            <small>{t('verifiedScaleRequired')}</small>
+          </div>
+          <div className={styles.metric}>
+            <dt>{t('nominalCapacity')}</dt>
+            <dd className={styles.metricValue}>{number(error ? null : ratedA, 'A')}</dd>
+            <small>{t('configuredCapacity')}</small>
+          </div>
+          <div className={styles.metric}>
+            <dt>{t('estimatedPower')}</dt>
+            <dd className={styles.metricValue}>{number(summary?.estimatedPowerKw, 'kW')}</dd>
+            <small>{t('diagnosticEstimate')}</small>
+          </div>
+        </dl>
+      )}
       <dl className={styles.metricGrid}>
         {profile.signals.map((spec) => {
           const item = readings.find(({ spec: candidate }) => candidate.oid === spec.oid);

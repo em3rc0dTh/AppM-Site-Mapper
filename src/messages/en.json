@@ -2997,7 +2997,21 @@
     "source": "Source",
     "polling": "Poll every 60 s",
     "failed": "Query failed",
-    "disclaimer": "Raw controller readings only. These are not certified A/B feeds or normalized electrical values."
+    "disclaimer": "General controller telemetry and RAW diagnostics. Magnitudes require valid normalization; they do not certify A/B inputs. B3 is a candidate and A3 is not calculated operationally.",
+    "normalizedMode": "API normalized magnitude",
+    "generalMagnitude": "General magnitude",
+    "generalCurrent": "General current",
+    "dcVoltage": "DC voltage",
+    "nominalCapacity": "Nominal capacity",
+    "configuredCapacity": "Site Mapper configuration",
+    "estimatedPower": "Estimated power",
+    "diagnosticEstimate": "Diagnostic estimate · not contractual",
+    "verifiedScaleRequired": "Verified scale required",
+    "normalizedSource": "Normalized SNMP · does not certify A/B",
+    "generalSummary": "General controller summary",
+    "addSmartpack": "ADD SMARTPACK2 OIDS",
+    "tooManySignals": "The profile supports up to 16 signals.",
+    "templateAdded": "OIDs added without changing existing signals. Select normalized magnitude for general current and voltage; verify the source before saving."
   },
   "snmpTraps": {
     "title": "TRAPS",

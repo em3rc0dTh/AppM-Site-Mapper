@@ -4,6 +4,12 @@ export const SNMP_CONTROLLER_MAX_AGE_MS = 130_000;
 
 export interface SnmpControllerObservation {
   readonly key: string;
+  readonly sourceIdentity?: string;
+  readonly protocol?: string;
+  readonly unit?: string | null;
+  readonly scale?: number | null;
+  readonly interpretation?: string;
+  readonly staleMs?: number;
   readonly rawValue: unknown;
   readonly value: number | string | boolean | null;
   readonly quality: string;
@@ -19,13 +25,15 @@ export interface SnmpControllerObservation {
 export interface PresentedControllerReading {
   readonly text: string;
   readonly raw: string;
+  readonly numericValue?: number | null;
   readonly receivedAt: string | null;
   readonly state: 'RECENT' | 'STALE' | 'UNAVAILABLE' | 'INVALID';
   readonly quality: string;
 }
 
 /**
- * Never infer amperes, volts, sign conventions or physical feed identity.
+ * Never infer scaling, sign conventions or physical feed identity.
+ * Normalized magnitudes consume the existing industrial profile result only.
  * The OID belongs to a device-scoped presentation profile, not to this renderer.
  */
 export function presentControllerReading(
@@ -52,6 +60,33 @@ export function presentControllerReading(
         : 'RECENT';
   const enumLabel =
     spec.displayMode === 'ENUM' && signal?.enumLabel?.trim() ? signal.enumLabel.trim() : null;
+  const normalized =
+    spec.displayMode === 'NORMALIZED' &&
+    signal?.quality === 'VALID' &&
+    signal.interpretation === 'PROFILE' &&
+    typeof signal.scale === 'number' &&
+    Number.isFinite(signal.scale) &&
+    signal.scale !== 0 &&
+    signal.unit === (spec.metric === 'CURRENT' ? 'A' : 'V') &&
+    typeof signal.value === 'number' &&
+    Number.isFinite(signal.value) &&
+    state === 'RECENT' &&
+    typeof signal.staleMs === 'number' &&
+    Number.isFinite(signal.staleMs) &&
+    signal.staleMs > 0 &&
+    age <= signal.staleMs &&
+    // Latest RAW evidence must refer to the same sample as the normalized value.
+    (!signal.lastObservation || signal.lastObservation.observedAt === signal.observedAt);
+  if (spec.displayMode === 'NORMALIZED') {
+    return {
+      text: normalized ? `${signal!.value} ${signal!.unit}` : '—',
+      numericValue: normalized ? (signal!.value as number) : null,
+      raw,
+      receivedAt: validTimestamp ? observed! : null,
+      state: state === 'RECENT' && !normalized ? 'INVALID' : state,
+      quality: signal?.quality ?? 'UNKNOWN',
+    };
+  }
   return {
     text: enumLabel && validRaw ? enumLabel + ' (' + raw + ')' : raw,
     raw,

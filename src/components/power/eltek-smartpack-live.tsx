@@ -70,19 +70,10 @@ export function EltekSmartpackLive() {
     readings.every(({ reading }) => reading.state === 'RECENT');
 
   return (
-    <section
-      className="front01-snmp-summary"
-      aria-label={t("ariaLabel")}
-    >
+    <section className="front01-snmp-summary" aria-label={t('ariaLabel')}>
       <header className="front01-summary-header">
         <strong>{t('title')}</strong>
-        <span>
-          {error
-            ? t('queryError')
-            : recent
-              ? t('samplesRecent')
-              : t('incomplete')}
-        </span>
+        <span>{error ? t('queryError') : recent ? t('samplesRecent') : t('incomplete')}</span>
       </header>
       <dl className="front01-snmp-kpis">
         {readings.map(({ key, label, reading }) => (
@@ -98,22 +89,30 @@ export function EltekSmartpackLive() {
                   : reading.text}
             </dd>
             <small>
-              {freshness[reading.state] ?? reading.state} · {reading.quality} · {t('raw')}: {reading.raw}
+              {freshness[reading.state] ?? reading.state} · {reading.quality} · {t('raw')}:{' '}
+              {reading.raw}
               {' · '}
               {reading.receivedAt
-                ? new Date(reading.receivedAt).toLocaleString(locale.startsWith('es') ? 'es-PE' : 'en-US', { timeZone: 'America/Lima' })
+                ? new Date(reading.receivedAt).toLocaleString(
+                    locale.startsWith('es') ? 'es-PE' : 'en-US',
+                    { timeZone: 'America/Lima' },
+                  )
                 : t('noTimestamp')}
             </small>
           </div>
         ))}
       </dl>
       <div className="front01-snmp-footer">
-        <small>{t('source')}: {ELTEK_SMARTPACK_SOURCE} · {t('polling')}</small>
-        {error ? <small role="alert">{t('failed')}: {error}</small> : null}
+        <small>
+          {t('source')}: {ELTEK_SMARTPACK_SOURCE} · {t('polling')}
+        </small>
+        {error ? (
+          <small role="alert">
+            {t('failed')}: {error}
+          </small>
+        ) : null}
       </div>
-      <p style={{ margin: '8px 0 0', fontSize: 12, opacity: 0.8 }}>
-        {t('disclaimer')}
-      </p>
+      <p style={{ margin: '8px 0 0', fontSize: 12, opacity: 0.8 }}>{t('disclaimer')}</p>
     </section>
   );
 }

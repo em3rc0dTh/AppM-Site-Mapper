@@ -4,12 +4,15 @@ import {
   type PoweredTargetKind,
 } from '@/modules/power/domain/powered-equipment';
 import type { PowerFeed } from '@/modules/power/domain/entities';
+import { readBreakerProtection } from '@/modules/power/domain/breaker-protection';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type { DeviceNode, EquipmentNode, TopologyNode } from '@/modules/topology/domain/entities';
 
 export interface PoweredEquipmentConnection {
   readonly breakerId: string;
   readonly breakerName: string;
+  /** Configured breaker nameplate rating, not measured current or alarm threshold. */
+  readonly nominalCurrentA?: number;
   readonly panelId?: string;
   readonly panelName: string;
   readonly qdfName: string;
@@ -170,6 +173,13 @@ export class PoweredEquipmentProjectionService {
       if (breaker.equipmentType !== 'CIRCUIT_BREAKER') continue;
 
       const metadata = declaredPowerMetadata(breaker.attributes?.declaredPower);
+      const configuredRating = readBreakerProtection(breaker.attributes)?.ratedCurrentA;
+      const legacyRating = breaker.attributes?.ratedCurrentA;
+      const nominalCurrentA =
+        configuredRating ??
+        (typeof legacyRating === 'number' && Number.isFinite(legacyRating) && legacyRating > 0
+          ? legacyRating
+          : undefined);
       const panel = breaker.parentEquipmentId ? byId.get(breaker.parentEquipmentId) : null;
       const panelName = panel?.kind === 'EQUIPMENT' ? panel.name : 'Panel';
       const sourceDevice = byId.get(breaker.deviceId);
@@ -214,6 +224,7 @@ export class PoweredEquipmentProjectionService {
         group.connections.push({
           breakerId: breaker.id,
           breakerName: breaker.name,
+          ...(nominalCurrentA !== undefined ? { nominalCurrentA } : {}),
           ...(panel?.kind === 'EQUIPMENT' ? { panelId: panel.id } : {}),
           panelName,
           qdfName,

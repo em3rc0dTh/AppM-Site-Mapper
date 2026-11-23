@@ -8,6 +8,7 @@ import {
   getObservationStore,
   industrialProfiles,
 } from '@/modules/telemetry/infrastructure/industrial/runtime';
+import { createTelemetryBindingRepository } from '@/modules/telemetry/infrastructure/telemetry-binding-repository-factory';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 
 export const runtime = 'nodejs';
@@ -30,14 +31,52 @@ export async function GET(request: Request) {
       return Response.json({ error: 'BDFB_NOT_FOUND' }, { status: 404 });
     const profiles = industrialProfiles().filter((profile) => profile.protocol === 'SNMP');
     const available = new Set(profiles.map((profile) => profile.sourceIdentity));
-    const configured = configuredTrapSources(device.attributes);
+    const equipment = (await repository.listEquipmentForDevice(deviceId)).filter(
+      (node) => node.lifecycle === 'ACTIVE',
+    );
+    const equipmentIds = new Set(equipment.map((node) => node.id));
+    const portIds = new Set(
+      equipment.flatMap((node) =>
+        node.accessPorts.filter((port) => port.lifecycle === 'ACTIVE').map((port) => port.id),
+      ),
+    );
+
+    // Reuse the authoritative SNMP telemetry bindings. TRAP and polling are
+    // transports of one source: there is no second commissioning action.
+    const bindings = await (await createTelemetryBindingRepository()).listActiveByProtocol('SNMP');
+    const linkedSources = bindings
+      .filter((binding) =>
+        binding.lifecycle === 'ACTIVE' &&
+        ((binding.targetType === 'DEVICE' && binding.targetId === deviceId) ||
+          (binding.targetType === 'EQUIPMENT' && equipmentIds.has(binding.targetId)) ||
+          (binding.targetType === 'ACCESS_PORT' && portIds.has(binding.targetId))),
+      )
+      .map((binding) => binding.sourceIdentity);
+
     const controller = controllerProfileFromAttributes(device.attributes);
+    const serialSources = profiles
+      .filter((profile) =>
+        [device, ...equipment].some((node) => node.serialNumber === profile.sourceIdentity),
+      )
+      .map((profile) => profile.sourceIdentity);
+    const verifiedSerialSources = (
+      await Promise.all(
+        serialSources.map(async (sourceIdentity) => {
+          const matches = await repository.findActiveBySerialNumber(sourceIdentity);
+          return matches.length === 1 ? sourceIdentity : null;
+        }),
+      )
+    ).filter((source): source is string => source !== null);
+
     const sourceNames = [
       ...new Set([
-        ...configured,
+        // Keep legacy declarations readable; no manual configuration required.
+        ...configuredTrapSources(device.attributes),
+        ...linkedSources,
         ...profiles
-          .filter((profile) => profile.targetId === deviceId)
+          .filter((profile) => profile.targetId === deviceId || equipmentIds.has(profile.targetId ?? ''))
           .map((profile) => profile.sourceIdentity),
+        ...verifiedSerialSources,
         ...(controller ? [controller.sourceIdentity] : []),
       ]),
     ].filter((source) => available.has(source));

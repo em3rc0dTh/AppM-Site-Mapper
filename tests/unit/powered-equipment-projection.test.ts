@@ -260,4 +260,19 @@ describe('powered equipment projection', () => {
       'RACK::010208.14::PDU01::B',
     ]);
   });
+  it('reads configured nominal breaker current without inventing values', async () => {
+    const rated = breaker('breaker-a', 'A3-03', 'GX-LUR-02 SH01 PEM 1', 'A');
+    const unrated = breaker('breaker-b', 'B3-03', 'GX-LUR-02 SH01 PEM 3', 'B');
+    const repository = new MemoryTopologyRepository([
+      device(),
+      panel(),
+      { ...rated, attributes: { ...rated.attributes, ratedCurrentA: 80 } },
+      unrated,
+    ]);
+    const projections = await new PoweredEquipmentProjectionService(repository).list();
+    const connections = projections[0]?.connections ?? [];
+    expect(connections.find((item) => item.breakerId === 'breaker-a')?.nominalCurrentA).toBe(80);
+    expect(connections.find((item) => item.breakerId === 'breaker-b')?.nominalCurrentA).toBeUndefined();
+  });
+
 });

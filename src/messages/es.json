@@ -156,7 +156,8 @@
         "maintenanceLabel": "Mantenimiento del BDFB",
         "infrastructure": "Infraestructura"
       },
-      "alarms": "Alarmas"
+      "alarms": "Alarmas",
+      "traps": "Traps"
     }
   },
   "snmp": {
@@ -2997,5 +2998,51 @@
     "polling": "Consulta cada 60 s",
     "failed": "Consulta fallida",
     "disclaimer": "Presentación exclusivamente de lecturas crudas del controlador. No son mediciones de entrada A/B verificadas ni valores eléctricos normalizados."
+  },
+  "snmpTraps": {
+    "title": "TRAPS",
+    "live": "EN VIVO",
+    "unavailable": "SIN CONEXIÓN",
+    "loading": "Cargando traps…",
+    "error": "No se pudieron cargar los traps",
+    "noSource": "No hay una fuente SNMP de traps asociada a este BDFB. Configúrala en Mantenimiento.",
+    "empty": "No hay traps capturados para este BDFB.",
+    "time": "HORA",
+    "source": "FUENTE",
+    "notification": "NOTIFICACIÓN",
+    "oid": "OID / CÓDIGO",
+    "severity": "SEVERIDAD",
+    "state": "ESTADO",
+    "inspect": "Inspeccionar trap de las {time}",
+    "critical": "Crítica",
+    "warning": "Advertencia",
+    "active": "ACTIVA",
+    "resolved": "RESUELTA",
+    "unclassified": "Sin clasificar",
+    "detail": "Detalle del trap",
+    "varbinds": "VARBINDS (valores del trap)",
+    "noVarbinds": "Este evento no tiene varbinds.",
+    "limited": "Mostrando solo 32 de {count} varbinds.",
+    "context": "CONTEXTO",
+    "contextHelp": "Notificación SNMP recibida de una fuente asociada explícitamente a este equipo.",
+    "origin": "Origen",
+    "device": "Equipo",
+    "notificationOid": "OID (notificación)",
+    "type": "Tipo",
+    "alarmCorrelation": "Correlación de alarma",
+    "unverified": "Sin correlación verificada",
+    "seeAlarms": "Ver en Alarmas",
+    "copy": "Copiar detalles",
+    "export": "Exportar JSON",
+    "copied": "Detalles copiados.",
+    "copyFailed": "No fue posible copiar.",
+    "older": "Mostrar traps anteriores",
+    "settingsTitle": "FUENTES DE TRAPS · ASOCIACIÓN DECLARATIVA",
+    "settingsHelp": "Selecciona únicamente fuentes SNMP cuya correspondencia física con este BDFB hayas verificado. No infiere ni convierte traps en alarmas.",
+    "noAvailableSources": "No hay fuentes SNMP autorizadas disponibles.",
+    "saveSources": "GUARDAR FUENTES",
+    "sourcesSaved": "Fuentes guardadas para este BDFB.",
+    "sourceLoadError": "No fue posible cargar las fuentes.",
+    "confirmMapping": "¿Confirmas que estas fuentes SNMP pertenecen físicamente a este BDFB?"
   }
 }

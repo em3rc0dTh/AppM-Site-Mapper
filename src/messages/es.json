@@ -36,7 +36,7 @@
     "occupiedPanels": "Paneles ocupados",
     "installedCircuits": "Circuitos instalados",
     "occupancy": "Ocupación",
-    "bdfbSummaryNote": "Entradas, gráficas y alarmas están en Operación.",
+    "bdfbSummaryNote": "Entradas, gráficas, alarmas y traps están en Operación.",
     "equipmentSummaryNote": "Resumen, entradas, gráficas y alarmas están en Operación. La configuración técnica vive en la composición física del Equipment.",
     "technicalConfiguration": "Configuración técnica",
     "ports": "Puertos",

@@ -66,13 +66,10 @@ export function CommandPalette() {
         });
         if (!response.ok) throw new Error();
         const data = (await response.json()) as { results: SearchResult[] };
-        const searchable = data.results.filter((result) => result.kind !== 'POWER_TARGET');
-        setResults(searchable);
-        if (searchable.length === 0) {
-          setStatus(t('noResults'));
-        } else {
-          setStatus(t('results', { count: searchable.length }));
-        }
+        setResults(data.results);
+        setStatus(
+          data.results.length ? t('results', { count: data.results.length }) : t('noResults'),
+        );
       } catch {
         if (!controller.signal.aborted) {
           setResults([]);
@@ -94,7 +91,7 @@ export function CommandPalette() {
   function navigate(result: SearchResult) {
     close();
 
-    if (result.kind === 'POWERED_EQUIPMENT') {
+    if (result.kind === 'POWER_TARGET' || result.kind === 'POWERED_EQUIPMENT') {
       const width = Math.min(1500, Math.max(980, window.screen.availWidth - 120));
       const height = Math.min(980, Math.max(720, window.screen.availHeight - 120));
       const left = Math.max(0, window.screenX + Math.round((window.outerWidth - width) / 2));
@@ -173,7 +170,7 @@ export function CommandPalette() {
           </button>
         </div>
 
-        <p role="status" className="mk-command-status">{visibleStatus}</p>
+        <p role="status">{visibleStatus}</p>
         <div id="search-results" role="listbox" className="zip-command-results">
           {groups.map(([group, items]) => (
             <section className="zip-command-group" key={group}>

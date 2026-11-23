@@ -554,7 +554,7 @@
       "summaryVoltage": "Voltage",
       "summaryCurrent": "Current",
       "summaryPower": "Power",
-      "summaryEnergy": "Σ energy counters",
+      "summaryEnergy": "Accumulated energy (kWh)",
       "electricalSummaryNote": "Voltage is a range, never a sum. Current and power total distinct breakers with available readings; * indicates partial coverage. Energy is the sum of cumulative meters, not consumption over a period. A and B are separate feeds.",
       "breakers": "Breakers",
       "totalPower": "Total power",

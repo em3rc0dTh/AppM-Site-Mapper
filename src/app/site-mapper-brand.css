@@ -78,7 +78,7 @@
 
 /* Canonical MK2 product header.
    Approved reference: AppManager on the first line, SiteMapper Mk2 beneath it,
-   followed by the cube and the green Home control. */
+   with one dedicated Home control before the wordmark and cube. */
 .sm-product-header {
   display: inline-flex;
   align-items: center;
@@ -153,9 +153,9 @@
   stroke-linejoin: round;
 }
 
-.sm-product-header:focus-visible {
+.sm-product-header-home:focus-visible {
   outline: 2px solid #087e66;
-  outline-offset: -3px;
+  outline-offset: 2px;
 }
 
 /* Global compact identity — same component in every AppShell view. */
@@ -721,4 +721,37 @@
   .zip-brand-home {
     transition: none;
   }
+}
+
+/* MK2 navigation contract: the identity is visual, the Home icon alone is actionable. */
+.sm-product-header .sm-brand {
+  cursor: default;
+}
+.sm-product-header.zip-brand,
+.sm-product-header.zip-brand:hover,
+.sm-product-header.zip-brand:focus-visible {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  cursor: default;
+  transition: none;
+}
+.sm-product-header.zip-brand:hover .sm-product-header-home,
+.sm-product-header.zip-brand:focus-visible .sm-product-header-home {
+  transform: none;
+}
+.sm-product-header-home {
+  text-decoration: none;
+  cursor: pointer;
+}
+.sm-product-header-home:hover,
+.sm-product-header-home:focus-visible {
+  background: #098765;
+  color: #fff;
+}
+.sm-product-header--static {
+  cursor: default;
+}
+.sm-product-header--static .sm-brand {
+  cursor: default;
 }

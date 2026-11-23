@@ -15,9 +15,11 @@ export function WorkbenchProductHeader({
   ariaLabel,
 }: Readonly<WorkbenchProductHeaderProps>) {
   const pathname = usePathname();
-  const detachedPoweredEquipment = pathname.startsWith('/workbench/powered-equipment');
+  const staticWorkbench =
+    pathname.startsWith('/workbench/powered-equipment') ||
+    pathname.startsWith('/workbench/power-trace');
 
-  if (detachedPoweredEquipment) {
+  if (staticWorkbench) {
     return (
       <div className="sm-product-header sm-product-header--static" aria-label={ariaLabel}>
         <SiteMapperBrand variant="compact" tagline={tagline} />

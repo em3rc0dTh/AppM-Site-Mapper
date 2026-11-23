@@ -1,14 +1,20 @@
 .sm-powered-equipment-workbench {
   min-width: 1120px;
+  padding: 15px 18px 24px;
+}
+
+.sm-powered-equipment-workbench .sm-workbench-header {
+  margin: -15px -18px 12px;
+  padding: 12px 18px;
 }
 
 .sm-powered-summary-card {
   display: grid;
   grid-template-columns: auto minmax(220px, 1fr) minmax(640px, 2.4fr);
-  gap: 18px;
+  gap: 14px;
   align-items: center;
-  margin-bottom: 18px;
-  padding: 16px 20px;
+  margin-bottom: 12px;
+  padding: 12px 16px;
   border: 1px solid #cad8e5;
   border-radius: 10px;
   background: #fff;
@@ -20,7 +26,7 @@
 }
 
 .sm-powered-summary-card h2 {
-  font-size: 22px;
+  font-size: 20px;
 }
 
 .sm-powered-summary-card p {
@@ -31,13 +37,13 @@
 
 .sm-powered-summary-card dl {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   margin: 0;
 }
 
 .sm-powered-summary-card dl > div {
-  min-height: 58px;
-  padding: 4px 16px;
+  min-height: 48px;
+  padding: 4px 12px;
   border-left: 1px solid #dbe4ec;
 }
 
@@ -91,11 +97,11 @@
 
 .sm-powered-diagram {
   display: grid;
-  gap: 18px;
+  gap: 12px;
 }
 
 .sm-powered-source-group {
-  padding: 16px;
+  padding: 12px;
   border: 1px solid #cad8e5;
   border-radius: 10px;
   background: #fff;
@@ -104,22 +110,22 @@
 .sm-powered-diagram-head,
 .sm-powered-feed-layout {
   display: grid;
-  grid-template-columns: minmax(580px, 1.45fr) minmax(120px, 0.42fr) minmax(340px, 0.85fr);
+  grid-template-columns: minmax(580px, 1.45fr) minmax(76px, 0.22fr) minmax(340px, 0.85fr);
   gap: 12px;
 }
 
 .sm-powered-diagram-head {
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .sm-powered-source-title,
 .sm-powered-target-title {
   display: flex;
-  min-height: 54px;
+  min-height: 44px;
   align-items: center;
-  gap: 12px;
-  padding: 10px 13px;
+  gap: 10px;
+  padding: 7px 11px;
   border: 1px solid #d5e0e9;
   border-radius: 8px;
   background: #fbfdff;
@@ -140,18 +146,18 @@
 
 .sm-powered-qdf-icon {
   display: grid;
-  width: 42px;
-  height: 42px;
+  width: 36px;
+  height: 36px;
   place-items: center;
   border: 1px solid #9fb3c5;
   border-radius: 6px;
   background: #eef4f9;
   color: #4c6f8d;
-  font-size: 24px;
+  font-size: 21px;
 }
 
 .sm-powered-feed-layout + .sm-powered-feed-layout {
-  margin-top: 12px;
+  margin-top: 8px;
 }
 
 .sm-powered-feed-panel,
@@ -175,11 +181,11 @@
 .sm-powered-feed-panel > header,
 .sm-powered-endpoint-panel > header {
   display: flex;
-  min-height: 50px;
+  min-height: 40px;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 8px 12px;
+  gap: 10px;
+  padding: 7px 10px;
   border-bottom: 1px solid #d9e3eb;
   background: #f4f8fb;
 }
@@ -217,38 +223,21 @@
   font-weight: 750;
 }
 
-.sm-powered-feed-totals {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 9px;
-  color: #20415e;
-  font-size: 10px;
-}
-
-.sm-powered-feed-totals b {
-  font-size: 12px;
-}
-
-.sm-powered-feed-totals em {
-  padding: 3px 6px;
-  border-radius: 999px;
-  background: #fff0c7;
-  color: #8a5b00;
-  font-size: 8px;
-  font-style: normal;
-  font-weight: 850;
+.sm-powered-nominal {
+  font-weight: 750;
+  color: #194d7e;
+  font-variant-numeric: tabular-nums;
 }
 
 .sm-powered-columns,
 .sm-powered-breaker-row {
   display: grid;
-  grid-template-columns: 92px minmax(180px, 1fr) 62px 62px 72px 78px;
+  grid-template-columns: minmax(78px, 0.75fr) minmax(135px, 1.5fr) 94px 50px 50px 65px 70px;
   align-items: center;
 }
 
 .sm-powered-columns {
-  min-height: 30px;
+  min-height: 26px;
   padding: 0 10px;
   border-bottom: 1px solid #e2e9ef;
   background: #f9fbfd;
@@ -262,7 +251,7 @@
 }
 
 .sm-powered-breaker-row {
-  min-height: 42px;
+  min-height: 38px;
   padding: 0 10px;
   border: 0;
   border-bottom: 1px solid #edf1f4;
@@ -278,14 +267,44 @@
   border-bottom: 0;
 }
 
-.sm-powered-breaker-row:hover,
-.sm-powered-breaker-row.is-selected {
-  background: #f3f9ff;
+/*
+ * The generic button:hover:not(:disabled) rule must not darken diagram rows.
+ * Feed-specific CSS variables keep hover, keyboard focus and selection legible.
+ */
+.sm-powered-feed-layout {
+  --feed-hover-background: #f3f7fa;
+  --feed-hover-text: #243d56;
+  --feed-hover-outline: #a7bacb;
 }
 
-.sm-powered-feed-layout.is-b .sm-powered-breaker-row:hover,
-.sm-powered-feed-layout.is-b .sm-powered-breaker-row.is-selected {
-  background: #fffaf0;
+.sm-powered-feed-layout.is-a {
+  --feed-hover-background: #f2f8ff;
+  --feed-hover-text: #183b63;
+  --feed-hover-outline: #89bdf3;
+}
+
+.sm-powered-feed-layout.is-b {
+  --feed-hover-background: #fff8ea;
+  --feed-hover-text: #5e460c;
+  --feed-hover-outline: #e6c56e;
+}
+
+.sm-powered-equipment-workbench .sm-powered-breaker-row:hover:not(:disabled),
+.sm-powered-equipment-workbench .sm-powered-breaker-row:focus-visible,
+.sm-powered-equipment-workbench .sm-powered-breaker-row.is-selected,
+.sm-powered-equipment-workbench .sm-powered-endpoint-row:hover:not(:disabled),
+.sm-powered-equipment-workbench .sm-powered-endpoint-row:focus-visible,
+.sm-powered-equipment-workbench .sm-powered-endpoint-row.is-selected {
+  background: var(--feed-hover-background);
+  color: var(--feed-hover-text);
+  border-color: var(--feed-hover-outline);
+  box-shadow: inset 3px 0 var(--feed-hover-outline);
+}
+
+.sm-powered-equipment-workbench .sm-powered-breaker-row:focus-visible,
+.sm-powered-equipment-workbench .sm-powered-endpoint-row:focus-visible {
+  outline: 2px solid #2478e9;
+  outline-offset: -2px;
 }
 
 .sm-powered-breaker-name {
@@ -303,7 +322,8 @@
 }
 
 .sm-powered-breaker-name i.is-live {
-  background: #19c85b;
+  /* Telemetry availability is not an alarm; do not use reserved green. */
+  background: #3b718e;
 }
 
 .sm-powered-wire-panel {
@@ -312,12 +332,12 @@
 }
 
 .sm-powered-wire-spacer {
-  height: 80px;
+  height: 66px;
 }
 
 .sm-powered-wire {
   display: flex;
-  height: 42px;
+  height: 38px;
   align-items: center;
 }
 
@@ -367,7 +387,7 @@
 
 .sm-powered-endpoint-label {
   display: flex;
-  min-height: 30px;
+  min-height: 26px;
   align-items: center;
   padding: 0 12px;
   border-bottom: 1px solid #e2e9ef;
@@ -383,11 +403,11 @@
 
 .sm-powered-endpoint-row {
   display: grid;
-  min-height: 42px;
+  min-height: 38px;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 9px;
-  padding: 5px 11px;
+  padding: 4px 10px;
   border: 0;
   border-bottom: 1px solid #edf1f4;
   background: #fff;
@@ -398,16 +418,6 @@
 
 .sm-powered-endpoint-row:last-child {
   border-bottom: 0;
-}
-
-.sm-powered-endpoint-row:hover,
-.sm-powered-endpoint-row.is-selected {
-  background: #f3f9ff;
-}
-
-.sm-powered-feed-layout.is-b .sm-powered-endpoint-row:hover,
-.sm-powered-feed-layout.is-b .sm-powered-endpoint-row.is-selected {
-  background: #fffaf0;
 }
 
 .sm-powered-endpoint-row > i {
@@ -444,105 +454,75 @@
   white-space: nowrap;
 }
 
-.sm-powered-footer-grid {
-  display: grid;
-  grid-template-columns: minmax(420px, 0.8fr) minmax(520px, 1.2fr);
-  gap: 14px;
-  margin-top: 18px;
-}
-
-.sm-powered-footer-card {
-  padding: 14px;
+.sm-powered-electrical-summary {
+  margin-top: 12px;
+  padding: 12px;
   border: 1px solid #cad8e5;
   border-radius: 9px;
   background: #fff;
 }
 
-.sm-powered-footer-card h2 {
-  margin: 0 0 12px;
-  font-size: 15px;
+.sm-powered-electrical-summary > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 6px;
 }
 
-.sm-powered-footer-card > p {
+.sm-powered-electrical-summary h2 {
+  margin: 0;
+  font-size: 16px;
+  color: #163a61;
+}
+
+.sm-powered-electrical-summary > header span {
+  color: #59728a;
+  font-size: 11px;
+}
+
+.sm-powered-electrical-summary > p {
   margin: 10px 0 0;
   color: #647a8e;
-  font-size: 9px;
+  font-size: 10px;
   line-height: 1.45;
 }
 
 .sm-powered-summary-table {
   display: grid;
-  font-size: 10px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
 }
 
 .sm-powered-summary-table > div {
   display: grid;
-  grid-template-columns: 80px 90px 1fr 1fr;
-  gap: 10px;
+  grid-template-columns: minmax(80px, 0.6fr) repeat(4, minmax(140px, 1fr));
+  gap: 12px;
   align-items: center;
-  min-height: 32px;
-  padding: 0 8px;
+  min-height: 35px;
+  padding: 4px 10px;
   border-bottom: 1px solid #e5ebf0;
 }
 
 .sm-powered-summary-table > div.is-header {
-  color: #60778d;
-  font-size: 9px;
+  color: #496781;
+  font-size: 11px;
   font-weight: 800;
 }
 
 .sm-powered-summary-table > div.is-total {
   border-bottom: 0;
-  border-radius: 5px;
+  border-radius: 6px;
   background: #eef6fd;
+  color: #102b48;
 }
 
-.sm-powered-legend {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px 20px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  color: #405c73;
-  font-size: 10px;
+.sm-powered-summary-table [data-feed='A'] {
+  color: #176cc2;
 }
 
-.sm-powered-legend li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.sm-powered-legend i {
-  display: inline-block;
-  width: 46px;
-  height: 3px;
-  border-radius: 999px;
-  background: #8fa2b4;
-}
-
-.sm-powered-legend i.is-a {
-  background: #168fe4;
-}
-
-.sm-powered-legend i.is-b {
-  background: #efad08;
-}
-
-.sm-powered-legend i.is-live-dot,
-.sm-powered-legend i.is-no-data-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-
-.sm-powered-legend i.is-live-dot {
-  background: #19c85b;
-}
-
-.sm-powered-legend i.is-no-data-dot {
-  background: #8fa2b4;
+.sm-powered-summary-table [data-feed='B'] {
+  color: #96640b;
 }
 
 .sm-powered-selection {
@@ -578,20 +558,26 @@
 
   .sm-powered-diagram-head,
   .sm-powered-feed-layout {
-    grid-template-columns: minmax(540px, 1.35fr) 90px minmax(320px, 0.8fr);
+    grid-template-columns: minmax(540px, 1.35fr) 70px minmax(320px, 0.8fr);
   }
 }
 
 @media print {
   .sm-powered-equipment-workbench {
     min-width: 0;
+    padding: 0;
+  }
+
+  .sm-powered-equipment-workbench .sm-workbench-header {
+    margin: 0 0 12px;
+    padding: 0 0 12px;
   }
 
   .sm-powered-wire span {
     print-color-adjust: exact;
   }
 
-  .sm-powered-footer-grid {
+  .sm-powered-electrical-summary {
     break-inside: avoid;
   }
 }
@@ -641,4 +627,17 @@
 
 .sm-powered-documentary-remarks li span {
   display: block;
+}
+
+/* Accessible telemetry label without a permanent legend panel. */
+.sm-powered-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

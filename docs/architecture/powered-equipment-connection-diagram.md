@@ -133,10 +133,10 @@ This is an endpoint projection, not creation of remote Orion Equipment topology.
 
 ## Search and navigation
 
-Ctrl/Cmd+K remains backward compatible:
-
-1. `POWERED_EQUIPMENT` groups all current endpoints of the logical equipment.
-2. Individual `POWER_TARGET` results remain searchable, including retained historical aliases.
+Ctrl/Cmd+K shows physical and operational inventory, including `POWERED_EQUIPMENT`
+grouped by logical equipment. Individual `POWER_TARGET` alias matches are intentionally
+excluded from global search to reduce ambiguous hits. Existing aliases and declared
+targets remain intact and are accessible from breakers, equipment connections and PowerPath.
 
 The detached route remains:
 
@@ -178,12 +178,23 @@ The diagram reads existing breaker telemetry only:
 - power,
 - energy counter.
 
-Rules:
+Rules for the MK2 approved connection diagram (2026-11-23):
 
 - missing readings display unavailable, never invented zero;
-- voltage and current are not aggregated;
-- available breaker power can be summed and marked partial when coverage is incomplete;
-- energy is displayed as counter sum, never mislabeled as 24-hour consumption.
+- each breaker is counted once even when it declares several documentary endpoints;
+- voltage is shown as a min–max range (never an arithmetic sum);
+- current and power show sums of the available distinct breaker readings, with an
+  asterisk when any reading is missing; combined A+B is not a separately measured
+  total equipment input current, nor a proof of redundancy or phase compatibility;
+- energy is displayed as a sum of cumulative meter counters, never labeled
+  24-hour consumption;
+- per-breaker nominal current comes from configured `breakerProtection.ratedCurrentA`
+  or a valid legacy `ratedCurrentA`, never from telemetry or made-up seed values;
+- headline/feed aggregate cards are removed; the full-width electrical summary
+  carries A, B and total values with the above caveats;
+- A/B are blue/amber presentation categories, not red/green alarm states;
+- the separate legend panel is removed; selection AID and documentary remarks
+  remain available under the summary.
 
 Spreadsheet Fluke/AEMC/Thradex measurements are documentary field evidence and are not written into
 live telemetry by seed-01.

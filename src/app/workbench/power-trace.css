@@ -6,9 +6,10 @@ body:has(.sm-power-trace-workbench) {
 }
 
 .sm-power-trace-workbench {
+  /* A/B use topology colors; red and green remain reserved for true alarms. */
   --trace-blue: #2478e9;
-  --trace-a: #ee605d;
-  --trace-b: #20aa71;
+  --trace-a: #168fe4;
+  --trace-b: #d49108;
   --trace-border: #d5e1f1;
   max-width: 1700px;
   margin: 0 auto;
@@ -60,6 +61,12 @@ body:has(.sm-power-trace-workbench) {
   padding: 4px 9px;
   font-size: 11px;
   font-weight: 800;
+}
+
+.sm-trace-header .sm-trace-updated-at {
+  color: #60778d;
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .sm-trace-header-actions {
@@ -159,17 +166,17 @@ body:has(.sm-power-trace-workbench) {
 }
 .sm-trace-feed-header {
   padding: 11px 15px;
-  background: #fff2f2;
+  background: #eaf5ff;
 }
 .sm-trace-feed[data-feed='B'] .sm-trace-feed-header {
-  background: #edfaf3;
+  background: #fff6df;
 }
 .sm-trace-feed-header strong {
-  color: #982d30;
+  color: #145f9e;
   font-size: 15px;
 }
 .sm-trace-feed[data-feed='B'] .sm-trace-feed-header strong {
-  color: #10774e;
+  color: #8f6007;
 }
 .sm-trace-feed-header > span {
   color: #5f7183;
@@ -224,10 +231,10 @@ body:has(.sm-power-trace-workbench) {
   margin-top: 6px;
   padding: 8px 10px;
   border-radius: 7px;
-  background: #ffeded;
+  background: #eaf4ff;
 }
 .sm-trace-feed[data-feed='B'] .sm-trace-endpoint {
-  background: #e9f9ef;
+  background: #fff6e0;
 }
 .sm-trace-steps .sm-trace-endpoint strong {
   font-size: 10px;
@@ -269,11 +276,11 @@ body:has(.sm-power-trace-workbench) {
 }
 .sm-trace-destination::before {
   left: -34px;
-  background: #ee605d;
+  background: #168fe4;
 }
 .sm-trace-destination::after {
   right: -34px;
-  background: #20aa71;
+  background: #d49108;
 }
 .sm-trace-server {
   display: grid;
@@ -309,15 +316,15 @@ body:has(.sm-power-trace-workbench) {
   gap: 6px;
   padding: 7px;
   border-radius: 6px;
-  border: 1px solid #f7a4a1;
-  background: #fff5f5;
-  color: #9b2829;
+  border: 1px solid #a1c9ee;
+  background: #f2f8ff;
+  color: #185f9b;
   font-size: 11px;
 }
 .sm-trace-destination-ports > div[data-feed='B'] {
-  color: #087449;
-  border-color: #7ed9aa;
-  background: #f0fcf4;
+  color: #895c08;
+  border-color: #e6c874;
+  background: #fff9ea;
 }
 .sm-trace-destination-ports span {
   overflow-wrap: anywhere;
@@ -356,21 +363,21 @@ body:has(.sm-power-trace-workbench) {
 .sm-trace-telemetry-feed {
   min-width: 0;
   padding: 10px;
-  border: 1px solid #f3b1b0;
+  border: 1px solid #a2cbed;
   border-radius: 8px;
-  background: #fffafa;
+  background: #f5faff;
 }
 .sm-trace-telemetry-feed[data-feed='B'] {
-  border-color: #a7dec1;
-  background: #f9fffb;
+  border-color: #f2d99a;
+  background: #fffbf2;
 }
 .sm-trace-telemetry-feed h3 {
   margin: 0 0 7px;
   font-size: 12px;
-  color: #7d2834;
+  color: #195f9b;
 }
 .sm-trace-telemetry-feed[data-feed='B'] h3 {
-  color: #106942;
+  color: #895e0e;
 }
 .sm-trace-telemetry-leg + .sm-trace-telemetry-leg {
   margin-top: 9px;
@@ -390,8 +397,8 @@ body:has(.sm-power-trace-workbench) {
   font-weight: 900;
 }
 .sm-trace-status[data-status='LIVE'] {
-  background: #dcf9e6;
-  color: #0b7842;
+  background: #e7f1ff;
+  color: #225f9d;
 }
 .sm-trace-status[data-status='STALE'],
 .sm-trace-status[data-status='CLOCK SKEW'] {
@@ -399,8 +406,8 @@ body:has(.sm-power-trace-workbench) {
   color: #815600;
 }
 .sm-trace-status[data-status='OFFLINE'] {
-  background: #ffe8e8;
-  color: #ad2e2b;
+  background: #edf1f5;
+  color: #506479;
 }
 .sm-trace-metrics {
   display: grid;
@@ -620,18 +627,18 @@ body:has(.sm-power-trace-workbench) {
   justify-content: space-between;
   gap: 10px;
   padding: 11px 15px;
-  background: #fff2f2;
+  background: #eaf5ff;
   box-sizing: border-box;
 }
 .sm-trace-declared-breaker[data-feed='B'] > header {
-  background: #edfaf3;
+  background: #fff6df;
 }
 .sm-trace-declared-breaker > header strong {
-  color: #982d30;
+  color: #145f9e;
   font-size: 15px;
 }
 .sm-trace-declared-breaker[data-feed='B'] > header strong {
-  color: #10774e;
+  color: #8f6007;
 }
 .sm-trace-declared-breaker > header span {
   color: #65778b;
@@ -729,21 +736,21 @@ body:has(.sm-power-trace-workbench) {
   grid-template-columns: 70px minmax(0, 1fr);
   gap: 4px 8px;
   padding: 8px;
-  border: 1px solid #f2aaa8;
+  border: 1px solid #a2cbed;
   border-radius: 7px;
-  background: #fff5f5;
+  background: #f2f8ff;
   text-align: left;
 }
 .sm-trace-declared-endpoints > div[data-feed='B'] {
-  border-color: #8eddb5;
+  border-color: #e6c874;
   background: #f0fbf5;
 }
 .sm-trace-declared-endpoints b {
-  color: #8a3132;
+  color: #195f9b;
   font-size: 10px;
 }
 .sm-trace-declared-endpoints > div[data-feed='B'] b {
-  color: #087449;
+  color: #895c08;
 }
 .sm-trace-declared-endpoints span,
 .sm-trace-declared-endpoints code {

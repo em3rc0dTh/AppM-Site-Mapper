@@ -79,8 +79,7 @@ export function SnmpTrapPanel({
     setLoadingOlder(true);
     try {
       const response = await fetch(
-        '/api/telemetry/industrial/traps?' +
-          new URLSearchParams({ deviceId, cursor: nextCursor }),
+        '/api/telemetry/industrial/traps?' + new URLSearchParams({ deviceId, cursor: nextCursor }),
         { cache: 'no-store' },
       );
       if (!response.ok) throw new Error('HTTP ' + response.status);
@@ -133,20 +132,35 @@ export function SnmpTrapPanel({
   return (
     <section className={styles.panel} aria-label={t('title')}>
       <header className={styles.panelHeader}>
-        <h3><span className={styles.liveDot} aria-hidden="true" />{t('title')}</h3>
+        <h3>
+          <span className={styles.liveDot} aria-hidden="true" />
+          {t('title')}
+        </h3>
         <span className={styles.liveBadge} data-state={error ? 'error' : 'ready'}>
           <span className={styles.liveDot} aria-hidden="true" />
           {error ? t('unavailable') : t('live')}
         </span>
       </header>
 
-      {error && <p className={styles.alert} role="alert">{t('error')}: {error}</p>}
-      {loading && <p className={styles.empty} role="status">{t('loading')}</p>}
+      {error && (
+        <p className={styles.alert} role="alert">
+          {t('error')}: {error}
+        </p>
+      )}
+      {loading && (
+        <p className={styles.empty} role="status">
+          {t('loading')}
+        </p>
+      )}
       {!loading && sourceConfigured === false && (
-        <p className={styles.empty} role="status">{t('noSource')}</p>
+        <p className={styles.empty} role="status">
+          {t('noSource')}
+        </p>
       )}
       {!loading && sourceConfigured && events.length === 0 && (
-        <p className={styles.empty} role="status">{t('empty')}</p>
+        <p className={styles.empty} role="status">
+          {t('empty')}
+        </p>
       )}
 
       {events.length > 0 && (
@@ -170,20 +184,27 @@ export function SnmpTrapPanel({
                       <button
                         className={styles.selectEvent}
                         type="button"
-                        onClick={() => { setSelectedId(event.id); setNotice(''); }}
+                        onClick={() => {
+                          setSelectedId(event.id);
+                          setNotice('');
+                        }}
                         aria-label={t('inspect', { time: localTime(event.receivedAt, locale) })}
                         aria-pressed={event.id === selected?.id}
                       >
-                        <time dateTime={event.receivedAt}>{localTime(event.receivedAt, locale)}</time>
+                        <time dateTime={event.receivedAt}>
+                          {localTime(event.receivedAt, locale)}
+                        </time>
                       </button>
                     </td>
                     <td className={styles.sourceCell}>
                       <strong title={event.sourceIdentity}>{event.sourceIdentity}</strong>
                       <small>{deviceName}</small>
                     </td>
-                    <td><span title={event.notificationName ?? event.notificationOid ?? ''}>
-                      {event.notificationName ?? event.notificationOid ?? '—'}
-                    </span></td>
+                    <td>
+                      <span title={event.notificationName ?? event.notificationOid ?? ''}>
+                        {event.notificationName ?? event.notificationOid ?? '—'}
+                      </span>
+                    </td>
                     <td className={styles.oidCell} title={event.notificationOid ?? undefined}>
                       {event.notificationOid ?? '—'}
                     </td>
@@ -216,10 +237,15 @@ export function SnmpTrapPanel({
         <section className={styles.detail} aria-label={t('detail')}>
           <header className={styles.detailHeader}>
             <div className={styles.detailIdentity}>
-              <span className={styles.bell} aria-hidden="true">♧</span>
+              <span className={styles.bell} aria-hidden="true">
+                ♧
+              </span>
               <div>
                 <h4>{t('detail')}</h4>
-                <small>{selected.notificationName ?? selected.notificationOid ?? '—'} · {selected.sourceIdentity}</small>
+                <small>
+                  {selected.notificationName ?? selected.notificationOid ?? '—'} ·{' '}
+                  {selected.sourceIdentity}
+                </small>
               </div>
             </div>
             <div className={styles.detailBadges}>
@@ -257,18 +283,43 @@ export function SnmpTrapPanel({
               <h5>{t('context')}</h5>
               <div className={styles.contextIntro}>{t('contextHelp')}</div>
               <dl className={styles.contextList}>
-                <div><dt>{t('origin')}</dt><dd>{selected.sourceIdentity}</dd></div>
-                <div><dt>{t('device')}</dt><dd>{deviceName}</dd></div>
-                <div><dt>{t('notificationOid')}</dt><dd><code>{selected.notificationOid ?? '—'}</code></dd></div>
-                <div><dt>{t('type')}</dt><dd>{selected.transport.toUpperCase()}</dd></div>
-                <div><dt>{t('alarmCorrelation')}</dt><dd>{selected.alarmCode ?? t('unverified')}</dd></div>
+                <div>
+                  <dt>{t('origin')}</dt>
+                  <dd>{selected.sourceIdentity}</dd>
+                </div>
+                <div>
+                  <dt>{t('device')}</dt>
+                  <dd>{deviceName}</dd>
+                </div>
+                <div>
+                  <dt>{t('notificationOid')}</dt>
+                  <dd>
+                    <code>{selected.notificationOid ?? '—'}</code>
+                  </dd>
+                </div>
+                <div>
+                  <dt>{t('type')}</dt>
+                  <dd>{selected.transport.toUpperCase()}</dd>
+                </div>
+                <div>
+                  <dt>{t('alarmCorrelation')}</dt>
+                  <dd>{selected.alarmCode ?? t('unverified')}</dd>
+                </div>
               </dl>
               <div className={styles.actions}>
                 <Link href="/alarms">{t('seeAlarms')}</Link>
-                <button type="button" onClick={() => void copySelected()}>{t('copy')}</button>
-                <button type="button" onClick={exportSelected}>{t('export')}</button>
+                <button type="button" onClick={() => void copySelected()}>
+                  {t('copy')}
+                </button>
+                <button type="button" onClick={exportSelected}>
+                  {t('export')}
+                </button>
               </div>
-              {notice && <p role="status" className={styles.notice}>{notice}</p>}
+              {notice && (
+                <p role="status" className={styles.notice}>
+                  {notice}
+                </p>
+              )}
             </div>
           </div>
         </section>

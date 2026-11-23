@@ -61,7 +61,9 @@ export function SnmpTrapSourceEditor({ deviceId }: Readonly<{ deviceId: string }
 
   return (
     <section className="zip-bdfb-live-average sm-snmp-setup" aria-label={t('settingsTitle')}>
-      <header><strong>{t('settingsTitle')}</strong></header>
+      <header>
+        <strong>{t('settingsTitle')}</strong>
+      </header>
       <p>{t('settingsHelp')}</p>
       <div className="sm-snmp-maintenance-port">
         {available.length === 0 && <p>{t('noAvailableSources')}</p>}
@@ -71,11 +73,13 @@ export function SnmpTrapSourceEditor({ deviceId }: Readonly<{ deviceId: string }
               type="checkbox"
               checked={sources.includes(identity)}
               disabled={!canConfigure || busy}
-              onChange={(event) => setSources((current) =>
-                event.target.checked
-                  ? [...current, identity].slice(0, 8)
-                  : current.filter((item) => item !== identity),
-              )}
+              onChange={(event) =>
+                setSources((current) =>
+                  event.target.checked
+                    ? [...current, identity].slice(0, 8)
+                    : current.filter((item) => item !== identity),
+                )
+              }
             />
             <code>{identity}</code>
           </label>

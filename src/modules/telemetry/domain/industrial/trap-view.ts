@@ -38,7 +38,8 @@ export function parseTrapCursor(value: string | null): { receivedAt: string; id:
       !Number.isFinite(Date.parse(parsed[0])) ||
       typeof parsed[1] !== 'string' ||
       !/^[a-f0-9-]{36,64}$/.test(parsed[1])
-    ) return null;
+    )
+      return null;
     return { receivedAt: parsed[0], id: parsed[1] };
   } catch {
     return null;
@@ -51,7 +52,10 @@ export function presentTrap(
   envelope: Envelope,
   signals: readonly Signal[] = [],
 ): TrapView | null {
-  if (envelope.protocol !== 'SNMP' || (envelope.transport !== 'trap' && envelope.transport !== 'inform'))
+  if (
+    envelope.protocol !== 'SNMP' ||
+    (envelope.transport !== 'trap' && envelope.transport !== 'inform')
+  )
     return null;
   const alarmCandidates = signals.filter(
     (signal) =>
@@ -62,7 +66,10 @@ export function presentTrap(
   const alarm = alarmCandidates.length === 1 ? alarmCandidates[0]! : null;
   const raw = envelope.raw;
   const varbinds =
-    raw && typeof raw === 'object' && !Array.isArray(raw) && 'varbinds' in raw &&
+    raw &&
+    typeof raw === 'object' &&
+    !Array.isArray(raw) &&
+    'varbinds' in raw &&
     Array.isArray(raw.varbinds)
       ? (raw.varbinds as unknown[])
       : [];
@@ -75,14 +82,20 @@ export function presentTrap(
     if (typeof value === 'string') printable = value;
     else if (typeof value === 'number' || typeof value === 'boolean') printable = String(value);
     else {
-      try { printable = JSON.stringify(value) ?? 'null'; } catch { printable = '—'; }
+      try {
+        printable = JSON.stringify(value) ?? 'null';
+      } catch {
+        printable = '—';
+      }
     }
-    return [{
-      oid: record.oid,
-      name: eltekDefinition(record.oid)?.name ?? null,
-      type: String(record.type ?? ''),
-      value: printable.slice(0, 512),
-    }];
+    return [
+      {
+        oid: record.oid,
+        name: eltekDefinition(record.oid)?.name ?? null,
+        type: String(record.type ?? ''),
+        value: printable.slice(0, 512),
+      },
+    ];
   });
   const oid = typeof envelope.notificationOid === 'string' ? envelope.notificationOid : null;
   return {
@@ -94,9 +107,8 @@ export function presentTrap(
     notificationOid: oid,
     notificationName: oid ? (eltekDefinition(oid)?.name ?? null) : null,
     severity: alarm?.severity ?? null,
-    alarmState: alarm?.alarmState === 'ACTIVE' || alarm?.alarmState === 'RESOLVED'
-      ? alarm.alarmState
-      : null,
+    alarmState:
+      alarm?.alarmState === 'ACTIVE' || alarm?.alarmState === 'RESOLVED' ? alarm.alarmState : null,
     alarmCode: alarm?.alarmCode ?? null,
     varbinds: points,
     varbindCount: varbinds.length,
@@ -108,16 +120,23 @@ export function configuredTrapSources(
 ): string[] {
   const value = attributes?.snmpTrapSourceIdentities;
   if (!Array.isArray(value)) return [];
-  return value.filter(
-    (item): item is string =>
-      typeof item === 'string' && /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,119}$/.test(item),
-  ).slice(0, 8);
+  return value
+    .filter(
+      (item): item is string =>
+        typeof item === 'string' && /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,119}$/.test(item),
+    )
+    .slice(0, 8);
 }
 
 export function parseTrapSources(value: unknown): string[] | null {
-  if (!Array.isArray(value) || value.length > 8 || value.some((item) =>
-    typeof item !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,119}$/.test(item),
-  )) return null;
+  if (
+    !Array.isArray(value) ||
+    value.length > 8 ||
+    value.some(
+      (item) => typeof item !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,119}$/.test(item),
+    )
+  )
+    return null;
   const sources = value as string[];
   return new Set(sources).size === sources.length ? sources : null;
 }

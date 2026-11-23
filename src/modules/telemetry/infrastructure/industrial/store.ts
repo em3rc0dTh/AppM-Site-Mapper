@@ -141,15 +141,18 @@ export class MemoryObservationStore implements ObservationStore {
   ): Promise<TrapPage> {
     if (!sources.length) return { events: [], nextCursor: null };
     const batches = [...this.events.values()]
-      .filter((batch) =>
-        sources.includes(batch.envelope.sourceIdentity) &&
-        batch.envelope.protocol === 'SNMP' &&
-        ['trap', 'inform'].includes(batch.envelope.transport) &&
-        (!cursor || batch.envelope.receivedAt < cursor.receivedAt ||
-          (batch.envelope.receivedAt === cursor.receivedAt && batch.id < cursor.id)),
+      .filter(
+        (batch) =>
+          sources.includes(batch.envelope.sourceIdentity) &&
+          batch.envelope.protocol === 'SNMP' &&
+          ['trap', 'inform'].includes(batch.envelope.transport) &&
+          (!cursor ||
+            batch.envelope.receivedAt < cursor.receivedAt ||
+            (batch.envelope.receivedAt === cursor.receivedAt && batch.id < cursor.id)),
       )
-      .sort((a, b) =>
-        b.envelope.receivedAt.localeCompare(a.envelope.receivedAt) || b.id.localeCompare(a.id),
+      .sort(
+        (a, b) =>
+          b.envelope.receivedAt.localeCompare(a.envelope.receivedAt) || b.id.localeCompare(a.id),
       );
     const events = batches.slice(0, limit).flatMap((batch) => {
       const result = presentTrap(batch.id, batch.envelope, batch.signals);
@@ -158,7 +161,8 @@ export class MemoryObservationStore implements ObservationStore {
     const last = batches[limit - 1];
     return {
       events,
-      nextCursor: batches.length > limit && last ? trapCursor(last.envelope.receivedAt, last.id) : null,
+      nextCursor:
+        batches.length > limit && last ? trapCursor(last.envelope.receivedAt, last.id) : null,
     };
   }
   async list(sourceIdentity?: string, limit = 1000, targetId?: string, afterSignalId?: string) {
@@ -201,8 +205,12 @@ export class MongoObservationStore implements ObservationStore {
       .createIndex({ availableAt: 1, createdAt: 1 });
     await this.db.collection('industrial_sources').createIndex({ key: 1 }, { unique: true });
     await this.db.collection('industrial_events').createIndex({ eventId: 1 }, { unique: true });
-    await this.db.collection('industrial_events').createIndex({ sourceIdentity: 1, receivedAt: -1, eventId: -1 });
-    await this.db.collection('industrial_signal_history').createIndex({ eventId: 1, 'signal.kind': 1 });
+    await this.db
+      .collection('industrial_events')
+      .createIndex({ sourceIdentity: 1, receivedAt: -1, eventId: -1 });
+    await this.db
+      .collection('industrial_signal_history')
+      .createIndex({ eventId: 1, 'signal.kind': 1 });
     await this.db.collection('industrial_signals').createIndex({ signalId: 1 }, { unique: true });
     await this.db
       .collection('industrial_events')
@@ -372,14 +380,19 @@ export class MongoObservationStore implements ObservationStore {
     if (!sources.length) return { events: [], nextCursor: null };
     // Historical events did not persist transport in a dedicated column.
     // Bounded scan supports those records without scanning the whole collection.
-    const rows = await this.db.collection('industrial_events')
+    const rows = await this.db
+      .collection('industrial_events')
       .find({
         protocol: 'SNMP',
         sourceIdentity: { $in: [...sources] },
-        ...(cursor ? { $or: [
-          { receivedAt: { $lt: cursor.receivedAt } },
-          { receivedAt: cursor.receivedAt, eventId: { $lt: cursor.id } },
-        ] } : {}),
+        ...(cursor
+          ? {
+              $or: [
+                { receivedAt: { $lt: cursor.receivedAt } },
+                { receivedAt: cursor.receivedAt, eventId: { $lt: cursor.id } },
+              ],
+            }
+          : {}),
       })
       .sort({ receivedAt: -1, eventId: -1 })
       .limit(500)
@@ -393,15 +406,20 @@ export class MongoObservationStore implements ObservationStore {
         if (envelope.transport === 'trap' || envelope.transport === 'inform') {
           selected.push({ id: String(row.eventId), envelope });
         }
-      } catch { /* Retained malformed legacy capture is not a valid trap. */ }
+      } catch {
+        /* Retained malformed legacy capture is not a valid trap. */
+      }
       if (selected.length === limit) break;
     }
     const ids = selected.map((event) => event.id);
-    const alarmRows = ids.length ? await this.db.collection('industrial_signal_history')
-      .find({ eventId: { $in: ids }, 'signal.kind': 'alarm' })
-      .project({ eventId: 1, signal: 1 })
-      .limit(Math.min(500, ids.length * 24))
-      .toArray() : [];
+    const alarmRows = ids.length
+      ? await this.db
+          .collection('industrial_signal_history')
+          .find({ eventId: { $in: ids }, 'signal.kind': 'alarm' })
+          .project({ eventId: 1, signal: 1 })
+          .limit(Math.min(500, ids.length * 24))
+          .toArray()
+      : [];
     const alarms = new Map<string, Signal[]>();
     for (const record of alarmRows) {
       const key = String(record.eventId);
@@ -416,9 +434,10 @@ export class MongoObservationStore implements ObservationStore {
     const last = rows[scanned - 1];
     return {
       events,
-      nextCursor: last && (scanned < rows.length || rows.length === 500)
-        ? trapCursor(String(last.receivedAt), String(last.eventId))
-        : null,
+      nextCursor:
+        last && (scanned < rows.length || rows.length === 500)
+          ? trapCursor(String(last.receivedAt), String(last.eventId))
+          : null,
     };
   }
   async list(

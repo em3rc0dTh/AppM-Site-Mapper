@@ -327,13 +327,13 @@ export function BdfbTelemetryInspector({
                 ? t('traps')
                 : item === 'alarms'
                   ? t('alarms')
-                : item === 'feeds'
-                  ? t('feeds')
-                  : item === 'history'
-                    ? t('history')
-                    : item === 'overview'
-                      ? t('overview')
-                      : t('settings')}
+                  : item === 'feeds'
+                    ? t('feeds')
+                    : item === 'history'
+                      ? t('history')
+                      : item === 'overview'
+                        ? t('overview')
+                        : t('settings')}
             </button>
           ))}
         </nav>
@@ -421,7 +421,9 @@ export function BdfbTelemetryInspector({
           </>
         )}
 
-        {tab === 'traps' && <SnmpTrapPanel key={node.id} deviceId={node.id} deviceName={node.name} />}
+        {tab === 'traps' && (
+          <SnmpTrapPanel key={node.id} deviceId={node.id} deviceName={node.name} />
+        )}
 
         {tab === 'feeds' && (
           <>

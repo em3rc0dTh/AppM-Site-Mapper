@@ -21,11 +21,8 @@ export async function GET(request: Request) {
   const deviceId = params.get('deviceId');
   const cursorText = params.get('cursor');
   const cursor = parseTrapCursor(cursorText);
-  if (
-    !deviceId ||
-    deviceId.length > 128 ||
-    (cursorText !== null && !cursor)
-  ) return Response.json({ error: 'INVALID_TRAP_QUERY' }, { status: 400 });
+  if (!deviceId || deviceId.length > 128 || (cursorText !== null && !cursor))
+    return Response.json({ error: 'INVALID_TRAP_QUERY' }, { status: 400 });
   try {
     const repository = await createTopologyRepository();
     const device = await repository.getById(deviceId);
@@ -35,11 +32,15 @@ export async function GET(request: Request) {
     const available = new Set(profiles.map((profile) => profile.sourceIdentity));
     const configured = configuredTrapSources(device.attributes);
     const controller = controllerProfileFromAttributes(device.attributes);
-    const sourceNames = [...new Set([
-      ...configured,
-      ...profiles.filter((profile) => profile.targetId === deviceId).map((profile) => profile.sourceIdentity),
-      ...(controller ? [controller.sourceIdentity] : []),
-    ])].filter((source) => available.has(source));
+    const sourceNames = [
+      ...new Set([
+        ...configured,
+        ...profiles
+          .filter((profile) => profile.targetId === deviceId)
+          .map((profile) => profile.sourceIdentity),
+        ...(controller ? [controller.sourceIdentity] : []),
+      ]),
+    ].filter((source) => available.has(source));
 
     const store = await getObservationStore();
     const page = await store.listTraps(sourceNames, 30, cursor ?? undefined);

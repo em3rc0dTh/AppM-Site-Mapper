@@ -38,20 +38,25 @@ export async function GET(request: Request) {
     if (device?.kind !== 'DEVICE' || device.deviceType !== 'BDFB' || device.lifecycle !== 'ACTIVE')
       return Response.json({ error: 'BDFB_NOT_FOUND' }, { status: 404 });
     const canConfigure = await requireOperator();
-    return Response.json({
-      sources: configuredTrapSources(device.attributes),
-      availableSources: canConfigure
-        ? industrialProfiles().filter((profile) => profile.protocol === 'SNMP').map((profile) => profile.sourceIdentity)
-        : [],
-      canConfigure,
-    }, { headers: { 'Cache-Control': 'private, no-store' } });
+    return Response.json(
+      {
+        sources: configuredTrapSources(device.attributes),
+        availableSources: canConfigure
+          ? industrialProfiles()
+              .filter((profile) => profile.protocol === 'SNMP')
+              .map((profile) => profile.sourceIdentity)
+          : [],
+        canConfigure,
+      },
+      { headers: { 'Cache-Control': 'private, no-store' } },
+    );
   } catch {
     return Response.json({ error: 'TRAP_SOURCE_UNAVAILABLE' }, { status: 503 });
   }
 }
 
 export async function POST(request: Request) {
-  if (!await requireOperator()) return Response.json({ error: 'FORBIDDEN' }, { status: 403 });
+  if (!(await requireOperator())) return Response.json({ error: 'FORBIDDEN' }, { status: 403 });
   if (!isSafeMutationRequest(request))
     return Response.json({ error: 'INVALID_ORIGIN' }, { status: 403 });
   const parsed = await readBoundedJson(request, { maxBytes: 2048, maxDepth: 3, maxNodes: 30 });
@@ -59,17 +64,22 @@ export async function POST(request: Request) {
     return Response.json({ error: parsed.error }, { status: jsonBodyErrorStatus(parsed.error) });
   const body = parsed.value;
   if (
-    !body || typeof body !== 'object' || Array.isArray(body) ||
+    !body ||
+    typeof body !== 'object' ||
+    Array.isArray(body) ||
     !hasOnlyKeys(body as Record<string, unknown>, ['deviceId', 'sources', 'confirmMapping'])
-  ) return Response.json({ error: 'INVALID_SOURCE_REQUEST' }, { status: 400 });
+  )
+    return Response.json({ error: 'INVALID_SOURCE_REQUEST' }, { status: 400 });
   const input = body as Record<string, unknown>;
   const sources = parseTrapSources(input.sources);
   if (!isBoundedString(input.deviceId, 128) || !sources || input.confirmMapping !== true)
     return Response.json({ error: 'INVALID_TRAP_SOURCES' }, { status: 400 });
   try {
-    const allowed = new Set(industrialProfiles()
-      .filter((profile) => profile.protocol === 'SNMP')
-      .map((profile) => profile.sourceIdentity));
+    const allowed = new Set(
+      industrialProfiles()
+        .filter((profile) => profile.protocol === 'SNMP')
+        .map((profile) => profile.sourceIdentity),
+    );
     if (sources.some((source) => !allowed.has(source)))
       return Response.json({ error: 'SOURCE_NOT_COMMISSIONED' }, { status: 400 });
     const topology = await createTopologyRepository();
@@ -93,7 +103,7 @@ export async function POST(request: Request) {
       },
       updatedAt,
     };
-    if (!topology.replaceIfVersion || !await topology.replaceIfVersion(changed, device.updatedAt))
+    if (!topology.replaceIfVersion || !(await topology.replaceIfVersion(changed, device.updatedAt)))
       return Response.json({ error: 'TRAP_SOURCE_CONFLICT' }, { status: 409 });
     return Response.json({ sources, saved: true }, { status: 201 });
   } catch (error) {

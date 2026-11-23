@@ -2948,6 +2948,8 @@
     "reconnectingStatus": "RECONECTANDO"
   },
   "snmpController": {
+    "controllerEyebrow": "Controlador SNMP",
+    "qualityLabel": "Calidad de lectura",
     "title": "Telemetría SNMP de controlador",
     "editorTitle": "CONTROLADOR SNMP · PRESENTACIÓN DECLARATIVA",
     "editorHelp": "Vincula una fuente de observaciones a este QDF y selecciona OID para mostrar. No crea ni certifica shunts A/B.",

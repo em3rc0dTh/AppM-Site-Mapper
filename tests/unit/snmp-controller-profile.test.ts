@@ -33,7 +33,9 @@ describe('Device-scoped SNMP controller profile', () => {
   });
 
   it('rejects duplicate OIDs, unknown fields, invalid sources and absent signals', () => {
-    expect(parseSnmpControllerProfile({ ...profile, signals: [profile.signals[0], profile.signals[0]] })).toBeNull();
+    expect(
+      parseSnmpControllerProfile({ ...profile, signals: [profile.signals[0], profile.signals[0]] }),
+    ).toBeNull();
     expect(parseSnmpControllerProfile({ ...profile, feed: 'A' })).toBeNull();
     expect(parseSnmpControllerProfile({ ...profile, sourceIdentity: '../controller' })).toBeNull();
     expect(parseSnmpControllerProfile({ ...profile, signals: [] })).toBeNull();
@@ -69,7 +71,9 @@ describe('Device-scoped SNMP controller profile', () => {
         now,
       ).state,
     ).toBe('STALE');
-    expect(presentControllerReading({ ...sample, rawValue: null }, rawSpec, now).state).toBe('INVALID');
+    expect(presentControllerReading({ ...sample, rawValue: null }, rawSpec, now).state).toBe(
+      'INVALID',
+    );
     expect(
       presentControllerReading(
         { ...sample, receivedAt: new Date(now + 100_000).toISOString() },

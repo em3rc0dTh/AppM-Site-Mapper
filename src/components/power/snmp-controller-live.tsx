@@ -80,20 +80,27 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
   if (!profile) {
     return error ? (
       <section className="front01-snmp-summary" aria-label={t('title')}>
-        <p role="alert">{t('failed')}: {error}</p>
+        <p role="alert">
+          {t('failed')}: {error}
+        </p>
       </section>
     ) : null;
   }
 
-  const readings = now === null ? [] : profile.signals.map((spec) => ({
-    spec,
-    reading: presentControllerReading(
-      signals.find((signal) => signal.key === spec.oid),
-      spec,
-      now,
-    ),
-  }));
-  const recent = readings.length === profile.signals.length && readings.every(({ reading }) => reading.state === 'RECENT');
+  const readings =
+    now === null
+      ? []
+      : profile.signals.map((spec) => ({
+          spec,
+          reading: presentControllerReading(
+            signals.find((signal) => signal.key === spec.oid),
+            spec,
+            now,
+          ),
+        }));
+  const recent =
+    readings.length === profile.signals.length &&
+    readings.every(({ reading }) => reading.state === 'RECENT');
   const freshnessLabels = {
     RECENT: t('freshness.RECENT'),
     STALE: t('freshness.STALE'),
@@ -123,8 +130,14 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
         ))}
       </dl>
       <div className="front01-snmp-footer">
-        <small>{t('source')}: {profile.sourceIdentity} · {t('polling')}</small>
-        {error && <small role="alert">{t('failed')}: {error}</small>}
+        <small>
+          {t('source')}: {profile.sourceIdentity} · {t('polling')}
+        </small>
+        {error && (
+          <small role="alert">
+            {t('failed')}: {error}
+          </small>
+        )}
       </div>
       <p style={{ margin: '8px 0 0', fontSize: 12, opacity: 0.8 }}>{t('disclaimer')}</p>
     </section>

@@ -75,8 +75,7 @@ export function SnmpControllerEditor({ deviceId }: Readonly<{ deviceId: string }
       if (!Array.isArray(body.signals)) throw new Error(t('invalidResponse'));
       setDiscovered(
         body.signals.filter(
-          (signal) =>
-            signal.protocol === 'SNMP' && /^\d+(?:\.\d+){5,}$/.test(signal.key),
+          (signal) => signal.protocol === 'SNMP' && /^\d+(?:\.\d+){5,}$/.test(signal.key),
         ),
       );
       setSelectedOid('');
@@ -130,7 +129,9 @@ export function SnmpControllerEditor({ deviceId }: Readonly<{ deviceId: string }
 
   return (
     <section className="zip-bdfb-live-average sm-snmp-setup" aria-label={t('editorTitle')}>
-      <header><strong>{t('editorTitle')}</strong></header>
+      <header>
+        <strong>{t('editorTitle')}</strong>
+      </header>
       <p>{t('editorHelp')}</p>
       <div className="sm-snmp-maintenance-port">
         <label>
@@ -154,17 +155,18 @@ export function SnmpControllerEditor({ deviceId }: Readonly<{ deviceId: string }
             }}
           />
         </label>
-        <button type="button" disabled={busy || !sourceIdentity.trim()} onClick={() => void discover()}>
+        <button
+          type="button"
+          disabled={busy || !sourceIdentity.trim()}
+          onClick={() => void discover()}
+        >
           {t('discover')}
         </button>
         {discovered.length > 0 && (
           <div>
             <label>
               {t('observedSignals')}
-              <select
-                value={selectedOid}
-                onChange={(event) => setSelectedOid(event.target.value)}
-              >
+              <select value={selectedOid} onChange={(event) => setSelectedOid(event.target.value)}>
                 <option value="">{t('selectSignal')}</option>
                 {discovered.map((item) => (
                   <option key={item.key} value={item.key}>
@@ -231,7 +233,9 @@ export function SnmpControllerEditor({ deviceId }: Readonly<{ deviceId: string }
             <button
               type="button"
               disabled={busy || signals.length >= 16}
-              onClick={() => setSignals((current) => [...current, { oid: '', label: '', displayMode: 'RAW' }])}
+              onClick={() =>
+                setSignals((current) => [...current, { oid: '', label: '', displayMode: 'RAW' }])
+              }
             >
               {t('addManual')}
             </button>
@@ -242,7 +246,11 @@ export function SnmpControllerEditor({ deviceId }: Readonly<{ deviceId: string }
         )}
       </div>
       {message && <p role="status">{message}</p>}
-      {error && <p className="form-error" role="alert">{error}</p>}
+      {error && (
+        <p className="form-error" role="alert">
+          {error}
+        </p>
+      )}
       <small>{t('disclaimer')}</small>
     </section>
   );

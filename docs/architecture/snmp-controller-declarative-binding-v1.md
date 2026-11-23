@@ -25,7 +25,7 @@ Stored on DEVICE.attributes.snmpControllerProfile, validated against this exampl
   "title": "Controller display name",
   "sourceIdentity": "controller-source-id",
   "signals": [
-    {"oid": "1.3.6.1.4.1.12345.1.2.3.0", "label": "Operator-defined signal", "displayMode": "RAW"}
+    { "oid": "1.3.6.1.4.1.12345.1.2.3.0", "label": "Operator-defined signal", "displayMode": "RAW" }
   ]
 }
 ```

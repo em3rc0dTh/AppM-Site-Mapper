@@ -63,11 +63,7 @@ async function saveProfile(request: Request) {
     return Response.json({ error: 'INVALID_CONTROLLER_REQUEST' }, { status: 400 });
   const input = body as Record<string, unknown>;
   const profile = parseSnmpControllerProfile(input.profile);
-  if (
-    !isBoundedString(input.deviceId, 128) ||
-    input.confirmConfiguration !== true ||
-    !profile
-  )
+  if (!isBoundedString(input.deviceId, 128) || input.confirmConfiguration !== true || !profile)
     return Response.json({ error: 'INVALID_CONTROLLER_PROFILE' }, { status: 400 });
 
   const topology = await createTopologyRepository();

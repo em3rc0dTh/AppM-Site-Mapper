@@ -8,12 +8,13 @@ import {
   getObservationStore,
   industrialProfiles,
 } from '@/modules/telemetry/infrastructure/industrial/runtime';
+import { createTelemetryBindingRepository } from '@/modules/telemetry/infrastructure/telemetry-binding-repository-factory';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-/** Only sources explicitly associated to this active BDFB may be shown. */
+/** Inherit SNMP source authority from existing inventory and telemetry bindings. */
 export async function GET(request: Request) {
   const auth = await requirePermission('telemetry:read');
   if (!auth.ok) return Response.json({ error: auth.error }, { status: 401 });
@@ -30,22 +31,84 @@ export async function GET(request: Request) {
       return Response.json({ error: 'BDFB_NOT_FOUND' }, { status: 404 });
     const profiles = industrialProfiles().filter((profile) => profile.protocol === 'SNMP');
     const available = new Set(profiles.map((profile) => profile.sourceIdentity));
-    const configured = configuredTrapSources(device.attributes);
+    const equipment = (await repository.listEquipmentForDevice(deviceId)).filter(
+      (node) => node.lifecycle === 'ACTIVE',
+    );
+    const equipmentIds = new Set(equipment.map((node) => node.id));
+    const portIds = new Set(
+      equipment.flatMap((node) =>
+        node.accessPorts.filter((port) => port.lifecycle === 'ACTIVE').map((port) => port.id),
+      ),
+    );
+
+    // Reuse the authoritative SNMP telemetry bindings. TRAP and polling are
+    // transports of one source: there is no second commissioning action.
+    const bindings = await (await createTelemetryBindingRepository()).listActiveByProtocol('SNMP');
+    const linkedSources = bindings
+      .filter(
+        (binding) =>
+          binding.lifecycle === 'ACTIVE' &&
+          ((binding.targetType === 'DEVICE' && binding.targetId === deviceId) ||
+            (binding.targetType === 'EQUIPMENT' && equipmentIds.has(binding.targetId)) ||
+            (binding.targetType === 'ACCESS_PORT' && portIds.has(binding.targetId))),
+      )
+      .map((binding) => binding.sourceIdentity);
+
     const controller = controllerProfileFromAttributes(device.attributes);
+    const serialSources = profiles
+      .filter((profile) =>
+        [device, ...equipment].some((node) => node.serialNumber === profile.sourceIdentity),
+      )
+      .map((profile) => profile.sourceIdentity);
+    const verifiedSerialSources = (
+      await Promise.all(
+        serialSources.map(async (sourceIdentity) => {
+          const matches = await repository.findActiveBySerialNumber(sourceIdentity);
+          return matches.length === 1 ? sourceIdentity : null;
+        }),
+      )
+    ).filter((source): source is string => source !== null);
+
     const sourceNames = [
       ...new Set([
-        ...configured,
+        // Keep legacy declarations readable; no manual configuration required.
+        ...configuredTrapSources(device.attributes),
+        ...linkedSources,
         ...profiles
-          .filter((profile) => profile.targetId === deviceId)
+          .filter(
+            (profile) => profile.targetId === deviceId || equipmentIds.has(profile.targetId ?? ''),
+          )
           .map((profile) => profile.sourceIdentity),
+        ...verifiedSerialSources,
         ...(controller ? [controller.sourceIdentity] : []),
       ]),
     ].filter((source) => available.has(source));
 
+    // A source bound to a different QDF is ambiguous: never duplicate its
+    // notifications across dashboards. Source identity is not a QDF label.
+    const validatedSources: string[] = [];
+    for (const source of sourceNames) {
+      const foreign = bindings.filter((binding) => binding.sourceIdentity === source);
+      let belongsElsewhere = false;
+      for (const binding of foreign) {
+        if (binding.targetType === 'DEVICE') {
+          if (binding.targetId !== deviceId) belongsElsewhere = true;
+        } else if (binding.targetType === 'EQUIPMENT') {
+          const owner = await repository.getById(binding.targetId);
+          if (owner?.kind !== 'EQUIPMENT' || owner.deviceId !== deviceId) belongsElsewhere = true;
+        } else if (binding.targetType === 'ACCESS_PORT') {
+          const owner = await repository.getEquipmentByAccessPortId(binding.targetId);
+          if (!owner || owner.deviceId !== deviceId) belongsElsewhere = true;
+        }
+        if (belongsElsewhere) break;
+      }
+      if (!belongsElsewhere) validatedSources.push(source);
+    }
+
     const store = await getObservationStore();
-    const page = await store.listTraps(sourceNames, 30, cursor ?? undefined);
+    const page = await store.listTraps(validatedSources, 30, cursor ?? undefined);
     return Response.json(
-      { ...page, sourceConfigured: sourceNames.length > 0 },
+      { ...page, sourceConfigured: validatedSources.length > 0 },
       { headers: { 'Cache-Control': 'private, no-store' } },
     );
   } catch {

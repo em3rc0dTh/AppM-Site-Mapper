@@ -3002,10 +3002,12 @@
   "snmpTraps": {
     "title": "TRAPS",
     "live": "LIVE",
+    "noMapping": "NO SOURCE",
+    "monitoring": "MONITORING",
     "unavailable": "UNAVAILABLE",
     "loading": "Loading traps…",
     "error": "Failed to load traps",
-    "noSource": "No SNMP trap source is linked to this BDFB. Configure the association under Maintenance.",
+    "noSource": "No SNMP source has been identified for this BDFB. Existing telemetry identity and bindings are reused; check whether the controller sends traps.",
     "empty": "No captured traps for this BDFB.",
     "time": "TIME",
     "source": "SOURCE",

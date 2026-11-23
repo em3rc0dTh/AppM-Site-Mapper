@@ -2701,6 +2701,77 @@ async function ensureControlledIntegration(
   }
 }
 
+/**
+ * The controlled Docker integration already owns its QDF inventory and trap
+ * source identities. Reuse the standard SNMP SOURCE binding, exactly as MQTT
+ * uses SOURCE, rather than creating a second trap commissioning screen.
+ *
+ * Scope is strictly the controlled integration profile. This never runs against
+ * field sources or invents a physical mapping.
+ */
+async function ensureControlledIntegrationTrapSources(
+  database: Db,
+  session: ClientSession,
+  bdfbs: readonly { key: string; deviceId: string }[],
+): Promise<void> {
+  if (process.env.SITE_MAPPER_INTEGRATION_PROFILE?.trim() !== INTEGRATION_PROFILE) return;
+  const configured = JSON.parse(process.env.INDUSTRIAL_PROFILES_JSON || '[]') as unknown;
+  if (!Array.isArray(configured)) throw new Error('Invalid integration industrial profiles');
+  const sourceIdentities = new Set(
+    configured.flatMap((item) => {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) return [];
+      const entry = item as Record<string, unknown>;
+      return entry.protocol === 'SNMP' && typeof entry.sourceIdentity === 'string'
+        ? [entry.sourceIdentity]
+        : [];
+    }),
+  );
+  const bindings = database.collection<TelemetryBinding & Document>('telemetry_bindings');
+  const nodes = database.collection<TopologyNode & Document>('topology_nodes');
+  for (const { key, deviceId } of bdfbs) {
+    // This naming is part of the synthetic seed contract, never a production
+    // heuristic for inferring source ownership from a QDF label.
+    const identity = `INT-TRAP-${key}`;
+    if (!sourceIdentities.has(identity)) continue;
+    const device = await nodes.findOne(
+      { id: deviceId, kind: 'DEVICE', deviceType: 'BDFB', lifecycle: 'ACTIVE' },
+      { session },
+    );
+    if (!device) throw new Error('INTEGRATION_TRAP_TARGET_MISSING');
+    const existing = await bindings.findOne(
+      { protocol: 'SNMP', sourceIdentity: identity, metric: 'SOURCE', lifecycle: 'ACTIVE' },
+      { session },
+    );
+    if (existing) {
+      if (existing.targetType !== 'DEVICE' || existing.targetId !== deviceId)
+        throw new Error('INTEGRATION_TRAP_SOURCE_CONFLICT');
+      continue;
+    }
+    const timestamp = new Date().toISOString();
+    await bindings.insertOne(
+      {
+        id: `integration:seed01:snmp:trap:${key}:source`,
+        protocol: 'SNMP',
+        sourceIdentity: identity,
+        metric: 'SOURCE',
+        targetType: 'DEVICE',
+        targetId: deviceId,
+        lifecycle: 'ACTIVE',
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        attributes: {
+          commissioning: 'CONTROLLED_INTEGRATION',
+          integrationProfile: INTEGRATION_PROFILE,
+          synthetic: true,
+          qdf: key,
+        },
+        revision: 1,
+      } as TelemetryBinding & Document,
+      { session },
+    );
+  }
+}
+
 export async function applySeed01(database: Db): Promise<Seed01Summary> {
   return withIntegrityTransaction(database, async (session) => {
     const state = database.collection<Seed01StateDocument>('runtime_seed_state');
@@ -2712,6 +2783,10 @@ export async function applySeed01(database: Db): Promise<Seed01Summary> {
       );
     }
     if (previous?.status === 'APPLIED' && previous.version === SEED_01_VERSION) {
+      // Non-destructive backfill on existing Docker labs; do not rerun seed-01
+      // or modify established inventory when only a trap SOURCE link is missing.
+      const bdfbs = Array.isArray(previous.bdfbs) ? previous.bdfbs : [];
+      await ensureControlledIntegrationTrapSources(database, session, bdfbs);
       return {
         profile: SEED_01_PROFILE,
         version: SEED_01_VERSION,
@@ -2741,6 +2816,7 @@ export async function applySeed01(database: Db): Promise<Seed01Summary> {
       });
     }
 
+    await ensureControlledIntegrationTrapSources(database, session, bdfbs);
     const appliedAt = new Date().toISOString();
     await state.replaceOne(
       { _id: SEED_01_PROFILE },

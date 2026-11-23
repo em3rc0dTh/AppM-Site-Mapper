@@ -15,6 +15,19 @@
 4. SNMP ingest accepts engineering units A/V, never unverified RAW values.
 5. QDF sums, utilization, voltage coherence and power remain fail-closed until all expected independent feeds have real, verified, coherent samples.
 
+## Trap ownership — reuse the existing binding
+
+The Traps tab uses the active SNMP telemetry source binding, a uniquely
+matched physical inventory serial, the existing industrial profile target,
+or the saved controller display profile. It must not demand a second
+commissioning operation or infer a QDF solely from its label or IP.
+Ambiguous cross-QDF bindings fail closed.
+
+The controlled seed-01 Docker integration adds one idempotent
+`SNMP / SOURCE` binding for an existing synthetic trap publisher.
+It does not invent field hardware or re-run the inventory seed.
+SNMP feed A/B still require separate, verified electrical evidence.
+
 ## New read-only controller profile
 
 Stored on DEVICE.attributes.snmpControllerProfile, validated against this example schema (illustrative, NOT a deployment default):

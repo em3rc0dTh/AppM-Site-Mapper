@@ -36,6 +36,24 @@ describe('MK2 operator-approved connection UI', () => {
     expect(es.pages.power.summaryEnergy).toBe('Energía acumulada (kWh)');
   });
 
+  it('keeps diagram button hover and keyboard focus readable for every feed', () => {
+    const css = source('src/app/workbench/powered-equipment.css');
+
+    // Scoped selectors must outrank the global button:hover:not(:disabled) rule.
+    expect(css).toContain(
+      '.sm-powered-equipment-workbench .sm-powered-feed-layout.is-a button.sm-powered-breaker-row:is(:hover:not(:disabled), :focus-visible, .is-selected)',
+    );
+    expect(css).toContain(
+      '.sm-powered-equipment-workbench .sm-powered-feed-layout.is-b button.sm-powered-endpoint-row:is(:hover:not(:disabled), :focus-visible, .is-selected)',
+    );
+    expect(css).toContain('sm-powered-feed-layout.is-unspecified button.sm-powered-breaker-row');
+    expect(css).toContain('background: #f2f8ff;');
+    expect(css).toContain('background: #fff8ea;');
+    expect(css).toContain('color: #183b63;');
+    expect(css).toContain('color: #5e460c;');
+    expect(css).toContain('outline: 2px solid #2478e9;');
+  });
+
   it('reserves red and green for alarm semantics, not feed identity in Power Trace', () => {
     const css = source('src/app/workbench/power-trace.css');
     expect(css).toContain('--trace-a: #168fe4');

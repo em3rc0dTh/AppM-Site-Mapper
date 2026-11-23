@@ -3002,10 +3002,12 @@
   "snmpTraps": {
     "title": "TRAPS",
     "live": "EN VIVO",
+    "noMapping": "SIN FUENTE",
+    "monitoring": "MONITOREANDO",
     "unavailable": "SIN CONEXIÓN",
     "loading": "Cargando traps…",
     "error": "No se pudieron cargar los traps",
-    "noSource": "No hay una fuente SNMP de traps asociada a este BDFB. Configúrala en Mantenimiento.",
+    "noSource": "No hay fuente SNMP identificada para este BDFB. Se reutiliza la identidad y los vínculos de telemetría existentes; comprueba si el controlador envía traps.",
     "empty": "No hay traps capturados para este BDFB.",
     "time": "HORA",
     "source": "FUENTE",

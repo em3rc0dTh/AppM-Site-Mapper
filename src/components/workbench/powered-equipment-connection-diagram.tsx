@@ -210,7 +210,7 @@ export function PoweredEquipmentConnectionDiagram({
                   <span className="sm-powered-nominal">
                     {connection.nominalCurrentA === undefined
                       ? '—'
-                      : `${formatNumber(connection.nominalCurrentA, 0)} A`}
+                      : `${connection.nominalCurrentA} A`}
                   </span>
                   <span>{formatNumber(metrics?.voltageV, 1)}</span>
                   <span>{formatNumber(metrics?.currentA, 2)}</span>

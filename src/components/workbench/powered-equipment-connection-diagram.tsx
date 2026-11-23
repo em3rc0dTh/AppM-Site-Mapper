@@ -4,7 +4,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { resolveBreakerLiveMetrics } from '@/components/telemetry/telemetry-presentation';
-import { electricalSummary, summaryValue } from '@/modules/power/application/connection-electrical-summary';
+import {
+  electricalSummary,
+  summaryValue,
+} from '@/modules/power/application/connection-electrical-summary';
 import type {
   PoweredEquipmentConnection,
   PoweredEquipmentProjection,

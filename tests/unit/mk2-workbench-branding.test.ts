@@ -28,6 +28,11 @@ describe('Mk2 shared product header', () => {
     expect(productHeader).toContain('<SiteMapperBrand variant="compact" tagline={tagline} />');
     expect(productHeader).toContain('className="sm-product-header-home"');
     expect(productHeader).toContain('href="/workspace"');
+    expect(productHeader).toContain('forwardRef<HTMLDivElement');
+    // Only the icon is linked; the identity follows it as a static sibling.
+    expect(productHeader.indexOf('href="/workspace"')).toBeLessThan(
+      productHeader.indexOf('<SiteMapperBrand variant="compact"'),
+    );
   });
 
   it('locks the approved two-line MK2 product header composition', () => {
@@ -42,10 +47,11 @@ describe('Mk2 shared product header', () => {
     expect(css).toContain('height: 44px;');
   });
 
-  it('removes Home navigation from the powered-equipment independent workbench only', () => {
+  it('removes Home navigation from powered-equipment and Power Trace independent workbenches', () => {
     const workbenchHeader = source('src/components/workbench/workbench-product-header.tsx');
 
     expect(workbenchHeader).toContain("pathname.startsWith('/workbench/powered-equipment')");
+    expect(workbenchHeader).toContain("pathname.startsWith('/workbench/power-trace')");
     expect(workbenchHeader).toContain('sm-product-header--static');
     expect(workbenchHeader).toContain('<SiteMapperBrand variant="compact" tagline={tagline} />');
     expect(workbenchHeader).not.toContain('href="/workspace"');

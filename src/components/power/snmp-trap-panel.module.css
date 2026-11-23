@@ -46,6 +46,14 @@
   font-weight: 800;
   letter-spacing: 0.04em;
 }
+.liveBadge[data-state='unmapped'] {
+  color: #66788a;
+  border-color: #d3dce4;
+  background: #f4f6f8;
+}
+.liveBadge[data-state='unmapped'] .liveDot {
+  background: #8a9ba9;
+}
 .liveBadge[data-state='error'] {
   color: #a92f32;
   border-color: #efcacb;

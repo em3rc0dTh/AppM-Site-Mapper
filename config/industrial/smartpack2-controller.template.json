@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "title": "Smartpack2 Touch · Resumen",
+  "sourceIdentity": "FIELD-CONTROLLER-REPLACE",
+  "signals": [
+    {
+      "oid": "1.3.6.1.4.1.12148.10.2.1.0",
+      "label": "Estado del controlador",
+      "displayMode": "ENUM"
+    },
+    {
+      "oid": "1.3.6.1.4.1.12148.10.9.2.5.0",
+      "label": "Corriente general",
+      "displayMode": "NORMALIZED",
+      "metric": "CURRENT"
+    },
+    {
+      "oid": "1.3.6.1.4.1.12148.10.10.5.5.0",
+      "label": "Voltaje DC",
+      "displayMode": "NORMALIZED",
+      "metric": "VOLTAGE"
+    },
+    {
+      "oid": "1.3.6.1.4.1.12148.10.15.18.7.1.6.1",
+      "label": "B3 — candidato · BattCurr bank 2",
+      "displayMode": "RAW"
+    },
+    {
+      "oid": "1.3.6.1.4.1.12148.10.15.18.7.1.2.1",
+      "label": "BattCurr bank 2 · estado",
+      "displayMode": "ENUM"
+    },
+    {
+      "oid": "1.3.6.1.4.1.12148.10.15.18.7.1.5.1",
+      "label": "BattCurr bank 2 · habilitación de alarma",
+      "displayMode": "ENUM"
+    }
+  ]
+}

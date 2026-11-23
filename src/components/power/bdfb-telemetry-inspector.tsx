@@ -354,7 +354,7 @@ export function BdfbTelemetryInspector({
               chassisId={presentation.chassisId}
               view="summary"
             />
-            <SnmpControllerLive deviceId={node.id} />
+            <SnmpControllerLive key={node.id} deviceId={node.id} />
 
             <section className="front01-mqtt-summary" aria-label={ti('descendantMqttLive')}>
               <header className="front01-summary-header">

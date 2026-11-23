@@ -23,6 +23,12 @@
         "kind": "measurement",
         "unit": "degC",
         "evidence": "Scale intentionally absent. Confirm firmware, current decimal settings and Celsius/Fahrenheit before commissioning."
+      },
+      {
+        "key": "1.3.6.1.4.1.12148.10.15.18.7.1.6.1",
+        "kind": "measurement",
+        "unit": "A",
+        "evidence": "BattCurr bank 2 / B3 candidate only. Scale and physical identity are unverified. Inspect channel status and alarm enable separately; do not commission an A/B input."
       }
     ]
   }

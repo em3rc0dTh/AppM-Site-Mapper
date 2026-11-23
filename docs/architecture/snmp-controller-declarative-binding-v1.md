@@ -43,8 +43,8 @@ Stored on DEVICE.attributes.snmpControllerProfile, validated against this exampl
 }
 ```
 
-- No fixed QDF UUID, source identity, ELTEK OID, A3/B3 alias or feed mapping is compiled into the controller widget.
-- RAW is displayed without units or scaling; ENUM optionally uses an existing enum label, otherwise raw.
+- No fixed QDF UUID, source identity, ELTEK OID, A3/B3 alias or feed mapping is compiled into the controller renderer. The editor offers an explicit Smartpack2 template; source attribution remains operator-owned.
+- RAW is displayed without units or scaling; ENUM optionally uses an existing enum label, otherwise raw. NORMALIZED is an additive presentation mode for explicitly selected general CURRENT/VOLTAGE metrics, consuming valid industrial API engineering values. It never applies a client-side scale or commissions feeds. See [phase 1](../telemetry/qdf-controller-summary-phase1.md).
 - Each signal has its own recency and quality. Poll 60 seconds, stale after 130 seconds.
 - GET requires telemetry permission. POST requires topology and power write permissions, same-origin request, strict validation, optimistic update and bounded profile history.
 - The display profile never creates commissioned A/B bindings, changes collector behavior, or changes the electrical totals.

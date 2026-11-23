@@ -2997,7 +2997,21 @@
     "source": "Fuente",
     "polling": "Consulta cada 60 s",
     "failed": "Consulta fallida",
-    "disclaimer": "Presentación exclusivamente de lecturas crudas del controlador. No son mediciones de entrada A/B verificadas ni valores eléctricos normalizados."
+    "disclaimer": "Telemetría general del controlador y diagnóstico RAW. Las magnitudes requieren normalización válida; no certifican entradas A/B. B3 es candidato y A3 no se calcula operativamente.",
+    "normalizedMode": "Magnitud normalizada por API",
+    "generalMagnitude": "Magnitud general",
+    "generalCurrent": "Corriente general",
+    "dcVoltage": "Voltaje DC",
+    "nominalCapacity": "Capacidad nominal",
+    "configuredCapacity": "Configuración Site Mapper",
+    "estimatedPower": "Potencia estimada",
+    "diagnosticEstimate": "Estimación diagnóstica · no contractual",
+    "verifiedScaleRequired": "Requiere escala verificada",
+    "normalizedSource": "SNMP normalizado · no certifica A/B",
+    "generalSummary": "Resumen general del controlador",
+    "addSmartpack": "AGREGAR OID SMARTPACK2",
+    "tooManySignals": "El perfil admite hasta 16 señales.",
+    "templateAdded": "OID agregados sin modificar los existentes. Selecciona magnitud normalizada para corriente general y voltaje; verifica la fuente antes de guardar."
   },
   "snmpTraps": {
     "title": "TRAPS",

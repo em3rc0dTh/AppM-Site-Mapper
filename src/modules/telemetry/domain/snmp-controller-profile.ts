@@ -7,7 +7,9 @@
 export interface SnmpControllerSignal {
   readonly oid: string;
   readonly label: string;
-  readonly displayMode: 'RAW' | 'ENUM';
+  readonly displayMode: 'RAW' | 'ENUM' | 'NORMALIZED';
+  /** General controller magnitudes only; never physical feed identity. */
+  readonly metric?: 'CURRENT' | 'VOLTAGE' | undefined;
 }
 
 export interface SnmpControllerProfile {
@@ -25,7 +27,7 @@ function hasKeys(value: Record<string, unknown>, allowed: readonly string[]): bo
   return Object.keys(value).every((key) => allowed.includes(key));
 }
 
-/** Accept only explicitly declared source/OID presentation metadata; no engineering scaling. */
+/** Accept only explicitly declared source/OID presentation metadata; no client-side engineering scaling. */
 export function parseSnmpControllerProfile(value: unknown): SnmpControllerProfile | null {
   if (
     !isRecord(value) ||
@@ -45,9 +47,11 @@ export function parseSnmpControllerProfile(value: unknown): SnmpControllerProfil
 
   const seen = new Set<string>();
   const signals: SnmpControllerSignal[] = [];
+  const metrics = new Set<string>();
   for (const candidate of value.signals as unknown[]) {
-    if (!isRecord(candidate) || !hasKeys(candidate, ['oid', 'label', 'displayMode'])) return null;
-    const { oid, label, displayMode } = candidate;
+    if (!isRecord(candidate) || !hasKeys(candidate, ['oid', 'label', 'displayMode', 'metric']))
+      return null;
+    const { oid, label, displayMode, metric } = candidate;
     if (
       typeof oid !== 'string' ||
       oid.length > 256 ||
@@ -55,13 +59,21 @@ export function parseSnmpControllerProfile(value: unknown): SnmpControllerProfil
       typeof label !== 'string' ||
       !label.trim() ||
       label.length > 96 ||
-      (displayMode !== 'RAW' && displayMode !== 'ENUM') ||
+      (displayMode !== 'RAW' && displayMode !== 'ENUM' && displayMode !== 'NORMALIZED') ||
+      (displayMode === 'NORMALIZED'
+        ? (metric !== 'CURRENT' && metric !== 'VOLTAGE') || metrics.has(metric)
+        : metric !== undefined) ||
       seen.has(oid)
     ) {
       return null;
     }
     seen.add(oid);
-    signals.push({ oid, label: label.trim(), displayMode });
+    if (metric === 'CURRENT' || metric === 'VOLTAGE') {
+      metrics.add(metric);
+      signals.push({ oid, label: label.trim(), displayMode, metric });
+    } else {
+      signals.push({ oid, label: label.trim(), displayMode });
+    }
   }
 
   return {

@@ -286,7 +286,8 @@
 }
 
 .sm-powered-breaker-name i.is-live {
-  background: #19c85b;
+  /* Telemetry availability is not an alarm; do not use reserved green. */
+  background: #3b718e;
 }
 
 .sm-powered-wire-panel {
@@ -594,4 +595,17 @@
 
 .sm-powered-documentary-remarks li span {
   display: block;
+}
+
+/* Accessible telemetry label without a permanent legend panel. */
+.sm-powered-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

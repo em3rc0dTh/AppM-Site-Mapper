@@ -40,8 +40,12 @@ describe('MK2 operator-approved connection UI', () => {
     const css = source('src/app/workbench/powered-equipment.css');
 
     // Scoped specificity must beat the global dark button:hover:not(:disabled).
-    expect(css).toContain('.sm-powered-equipment-workbench .sm-powered-breaker-row:hover:not(:disabled)');
-    expect(css).toContain('.sm-powered-equipment-workbench .sm-powered-endpoint-row:hover:not(:disabled)');
+    expect(css).toContain(
+      '.sm-powered-equipment-workbench .sm-powered-breaker-row:hover:not(:disabled)',
+    );
+    expect(css).toContain(
+      '.sm-powered-equipment-workbench .sm-powered-endpoint-row:hover:not(:disabled)',
+    );
     expect(css).toContain('.sm-powered-equipment-workbench .sm-powered-breaker-row:focus-visible');
     expect(css).toContain('background: var(--feed-hover-background);');
     expect(css).toContain('--feed-hover-background: #f2f8ff;');

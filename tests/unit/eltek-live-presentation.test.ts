@@ -1,9 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { presentEltekReading, ELTEK_MAX_AGE_MS, type EltekSignal } from '@/modules/telemetry/application/eltek-live-presentation';
+import {
+  presentEltekReading,
+  ELTEK_MAX_AGE_MS,
+  type EltekSignal,
+} from '@/modules/telemetry/application/eltek-live-presentation';
 
 const now = Date.parse('2026-11-23T18:00:00.000Z');
 const signal = (rawValue: unknown, receivedAt = new Date(now).toISOString()): EltekSignal => ({
-  key: '1.3.6.1.4.1.12148.10.2.1.0', rawValue, value: null, quality: 'VALID', receivedAt,
+  key: '1.3.6.1.4.1.12148.10.2.1.0',
+  rawValue,
+  value: null,
+  quality: 'VALID',
+  receivedAt,
 });
 
 describe('SmartPack2 raw presentation', () => {
@@ -19,7 +27,9 @@ describe('SmartPack2 raw presentation', () => {
   });
   it('rejects invalid and future timestamps', () => {
     expect(presentEltekReading(signal(1, 'bad'), now, 'system').state).toBe('INVALID');
-    expect(presentEltekReading(signal(1, new Date(now + 100_000).toISOString()), now, 'system').state).toBe('INVALID');
+    expect(
+      presentEltekReading(signal(1, new Date(now + 100_000).toISOString()), now, 'system').state,
+    ).toBe('INVALID');
   });
   it('preserves raw numbers without fabricating A or V units', () => {
     expect(presentEltekReading(signal(273), now, 'current').text).toBe('273');

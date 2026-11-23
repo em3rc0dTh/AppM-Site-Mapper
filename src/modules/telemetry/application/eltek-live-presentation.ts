@@ -16,12 +16,26 @@ export type EltekSignal = {
 };
 
 const SYSTEM_STATUS: Readonly<Record<number, string>> = {
-  0: 'Error', 1: 'Normal', 2: 'Alarma menor', 3: 'Alarma mayor',
-  4: 'Deshabilitado', 5: 'Desconectado', 6: 'No presente',
-  7: 'Alarma menor y mayor', 8: 'Mayor baja', 9: 'Menor baja',
-  10: 'Mayor alta', 11: 'Menor alta', 12: 'Evento',
-  13: 'Valor de voltaje', 14: 'Valor de corriente', 15: 'Valor de temperatura',
-  16: 'Valor de unidad', 17: 'Valor porcentual', 18: 'Crítico', 19: 'Advertencia',
+  0: 'Error',
+  1: 'Normal',
+  2: 'Alarma menor',
+  3: 'Alarma mayor',
+  4: 'Deshabilitado',
+  5: 'Desconectado',
+  6: 'No presente',
+  7: 'Alarma menor y mayor',
+  8: 'Mayor baja',
+  9: 'Menor baja',
+  10: 'Mayor alta',
+  11: 'Menor alta',
+  12: 'Evento',
+  13: 'Valor de voltaje',
+  14: 'Valor de corriente',
+  15: 'Valor de temperatura',
+  16: 'Valor de unidad',
+  17: 'Valor porcentual',
+  18: 'Crítico',
+  19: 'Advertencia',
 };
 
 export type EltekReading = {
@@ -44,17 +58,27 @@ export function presentEltekReading(
   const parsed = received ? Date.parse(received) : NaN;
   const validTimestamp = Number.isFinite(parsed) && parsed <= nowMs + 10_000;
   const age = validTimestamp ? nowMs - parsed : Infinity;
-  const state = !signal ? 'UNAVAILABLE'
-    : !validTimestamp || value === '—' ? 'INVALID'
-      : age > ELTEK_MAX_AGE_MS ? 'STALE' : 'RECENT';
+  const state = !signal
+    ? 'UNAVAILABLE'
+    : !validTimestamp || value === '—'
+      ? 'INVALID'
+      : age > ELTEK_MAX_AGE_MS
+        ? 'STALE'
+        : 'RECENT';
 
   let text = value;
   if (kind === 'system' && value !== '—') {
     const numeric = Number(value);
-    text = Number.isInteger(numeric) && Object.hasOwn(SYSTEM_STATUS, numeric)
-      ? SYSTEM_STATUS[numeric]! + ' (' + value + ')'
-      : 'Estado desconocido (' + value + ')';
+    text =
+      Number.isInteger(numeric) && Object.hasOwn(SYSTEM_STATUS, numeric)
+        ? SYSTEM_STATUS[numeric]! + ' (' + value + ')'
+        : 'Estado desconocido (' + value + ')';
   }
-  return { text, raw: value, receivedAt: validTimestamp ? received : null,
-    state, quality: signal?.quality ?? 'UNKNOWN' };
+  return {
+    text,
+    raw: value,
+    receivedAt: validTimestamp ? received : null,
+    state,
+    quality: signal?.quality ?? 'UNKNOWN',
+  };
 }

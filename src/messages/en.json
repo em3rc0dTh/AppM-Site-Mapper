@@ -2946,5 +2946,52 @@
     "liveStatus": "LIVE",
     "connectingStatus": "CONNECTING",
     "reconnectingStatus": "RECONNECTING"
+  },
+  "eltekLive": {
+    "ariaLabel": "ELTEK SmartPack2 Touch controller telemetry",
+    "title": "SmartPack2 Touch · SNMP Live",
+    "queryError": "QUERY ERROR",
+    "samplesRecent": "SAMPLES RECENT",
+    "incomplete": "INCOMPLETE OR STALE DATA",
+    "labels": {
+      "system": "System status",
+      "current": "General load current · RAW (scale unverified)",
+      "battery": "Battery voltage · RAW (scale unverified)"
+    },
+    "freshness": {
+      "RECENT": "Recent",
+      "STALE": "Stale",
+      "UNAVAILABLE": "Unavailable",
+      "INVALID": "Invalid"
+    },
+    "statusLabels": {
+      "0": "Error",
+      "1": "Normal",
+      "2": "Minor alarm",
+      "3": "Major alarm",
+      "4": "Disabled",
+      "5": "Disconnected",
+      "6": "Not present",
+      "7": "Minor and major alarms",
+      "8": "Major low",
+      "9": "Minor low",
+      "10": "Major high",
+      "11": "Minor high",
+      "12": "Event",
+      "13": "Voltage value",
+      "14": "Current value",
+      "15": "Temperature value",
+      "16": "Unit value",
+      "17": "Percent value",
+      "18": "Critical",
+      "19": "Warning"
+    },
+    "unknownStatus": "Unknown state ({value})",
+    "raw": "RAW",
+    "noTimestamp": "No valid timestamp",
+    "source": "Source",
+    "polling": "Refresh every 60 s",
+    "failed": "Request failed",
+    "disclaimer": "Raw controller readings only. These are not the independent QDF inputs A/B or normalized electrical readings."
   }
 }

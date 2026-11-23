@@ -350,7 +350,7 @@ export function BdfbTelemetryInspector({
               chassisId={presentation.chassisId}
               view="summary"
             />
-            {node.id === "94dd2b7e-68b8-4f7e-afa3-2e0e1d12b7d4" ? <EltekSmartpackLive /> : null}
+            {node.id === '94dd2b7e-68b8-4f7e-afa3-2e0e1d12b7d4' ? <EltekSmartpackLive /> : null}
 
             <section className="front01-mqtt-summary" aria-label={ti('descendantMqttLive')}>
               <header className="front01-summary-header">

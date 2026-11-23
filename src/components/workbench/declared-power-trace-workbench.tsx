@@ -184,6 +184,11 @@ export function DeclaredPowerTraceWorkbench({
         <div className="sm-trace-heading">
           <h1>ϟ {t('title')}</h1>
           <span className="sm-trace-version">{t('version')}</span>
+          {canReadTelemetry ? (
+            <small className="sm-trace-updated-at">
+              {t('updatedAt', { time: formatTime(latestReceivedAt, locale) })}
+            </small>
+          ) : null}
         </div>
         <div className="sm-trace-header-actions">
           <button type="button" onClick={() => window.location.reload()}>
@@ -252,36 +257,6 @@ export function DeclaredPowerTraceWorkbench({
           metrics={trace.feedB ? telemetry[trace.feedB.breakerId] : undefined}
         />
       </div>
-
-      {canReadTelemetry ? (
-        <section className="sm-trace-section">
-          <header>
-            <h2>{t('telemetry')}</h2>
-            <small>{t('updatedAt', { time: formatTime(latestReceivedAt, locale) })}</small>
-          </header>
-          <div className="sm-trace-declared-telemetry">
-            {feeds.map((feed) => {
-              const live = telemetry[feed.breakerId];
-              return (
-                <article key={feed.breakerId} data-feed={feed.feed}>
-                  <header>
-                    <strong>
-                      {t('feedTitle', { feed: feed.feed })} · {feed.breakerName}
-                    </strong>
-                    <span>{live?.status ?? 'NO_DATA'}</span>
-                  </header>
-                  <div>
-                    <b>{metric(live?.voltageV, 'V', 1)}</b>
-                    <b>{metric(live?.currentA, 'A')}</b>
-                    <b>{metric(live?.powerW, 'W', 1)}</b>
-                    <b>{metric(live?.energyKwh, 'kWh', 3)}</b>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        </section>
-      ) : null}
 
       <section className="sm-trace-section">
         <header>

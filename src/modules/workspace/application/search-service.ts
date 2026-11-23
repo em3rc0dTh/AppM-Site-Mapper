@@ -62,7 +62,6 @@ export async function searchTopology(
     .flat()
     .filter((node) => node.lifecycle === 'ACTIVE' && isOperationallyVisible(node));
 
-  const byId = new Map(nodes.map((node) => [node.id, node]));
   const results: SearchResult[] = [];
 
   for (const equipment of await poweredEquipmentProjection.list()) {
@@ -93,39 +92,30 @@ export async function searchTopology(
     });
   }
   for (const node of nodes) {
+    const matchesNode = searchMatches(`${node.name} ${node.id}`, normalized);
+    const isBdfb = node.kind === 'DEVICE' && node.deviceType === 'BDFB';
+    // Avoid expensive trail and deep-link lookups for unrelated inventory.
+    if (!matchesNode && !isBdfb) continue;
+
     const trail = await service.getTrail(node.id);
     if (trail.some((item) => item.lifecycle !== 'ACTIVE')) continue;
     const breadcrumb = trail.map((item) => item.name).join(' / ');
-    const href =
-      node.kind === 'CONTAINER_RACK'
-        ? `/rack/${node.id}/focus`
-        : node.kind === 'DEVICE' && node.deviceType === 'BDFB'
-          ? await service.buildDeepLink(node.id)
-          : node.kind === 'DEVICE' || node.kind === 'EQUIPMENT'
-            ? `/device/${node.id}`
-            : await service.buildDeepLink(node.id);
 
-    if (searchMatches(`${node.name} ${node.id}`, normalized)) {
+    if (matchesNode) {
+      const href =
+        node.kind === 'CONTAINER_RACK'
+          ? `/rack/${node.id}/focus`
+          : isBdfb
+            ? await service.buildDeepLink(node.id)
+            : node.kind === 'DEVICE' || node.kind === 'EQUIPMENT'
+              ? `/device/${node.id}`
+              : await service.buildDeepLink(node.id);
       results.push({ id: node.id, name: node.name, kind: node.kind, href, breadcrumb });
     }
 
-    if (node.kind === 'EQUIPMENT' && node.equipmentType === 'CIRCUIT_BREAKER') {
-      for (const alias of node.aliases ?? []) {
-        const target = alias.trim();
-        if (!target || !searchMatches(target, normalized)) continue;
-        const panel = node.parentEquipmentId ? byId.get(node.parentEquipmentId) : null;
-        const device = byId.get(node.deviceId);
-        results.push({
-          id: `power-target:${node.id}:${target}`,
-          name: target,
-          kind: 'POWER_TARGET',
-          href: `/workbench/power-path?breakerId=${encodeURIComponent(node.id)}`,
-          breadcrumb: `${device?.name ?? 'Power source'} / ${panel?.name ?? 'Panel'} / ${node.name} → declared target`,
-        });
-      }
-    }
-
-    if (node.kind !== 'DEVICE' || node.deviceType !== 'BDFB') continue;
+    // POWER_TARGET aliases are intentionally excluded from global search.
+    // They remain available in the breaker and power-path workflows.
+    if (!isBdfb) continue;
     const presentation = await bdfbProjection.get(node.id);
     if (!presentation) continue;
     const deviceHref = await service.buildDeepLink(node.id);

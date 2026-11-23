@@ -14,7 +14,7 @@ import { createTopologyRepository } from '@/modules/topology/infrastructure/topo
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-/** Only sources explicitly associated to this active BDFB may be shown. */
+/** Inherit SNMP source authority from existing inventory and telemetry bindings. */
 export async function GET(request: Request) {
   const auth = await requirePermission('telemetry:read');
   if (!auth.ok) return Response.json({ error: auth.error }, { status: 401 });
@@ -81,10 +81,32 @@ export async function GET(request: Request) {
       ]),
     ].filter((source) => available.has(source));
 
+    // A source bound to a different QDF is ambiguous: never duplicate its
+    // notifications across dashboards. Source identity is not a QDF label.
+    const validatedSources: string[] = [];
+    for (const source of sourceNames) {
+      const foreign = bindings.filter((binding) => binding.sourceIdentity === source);
+      let belongsElsewhere = false;
+      for (const binding of foreign) {
+        if (binding.targetType === 'DEVICE') {
+          if (binding.targetId !== deviceId) belongsElsewhere = true;
+        } else if (binding.targetType === 'EQUIPMENT') {
+          const owner = await repository.getById(binding.targetId);
+          if (owner?.kind !== 'EQUIPMENT' || owner.deviceId !== deviceId)
+            belongsElsewhere = true;
+        } else if (binding.targetType === 'ACCESS_PORT') {
+          const owner = await repository.getEquipmentByAccessPortId(binding.targetId);
+          if (!owner || owner.deviceId !== deviceId) belongsElsewhere = true;
+        }
+        if (belongsElsewhere) break;
+      }
+      if (!belongsElsewhere) validatedSources.push(source);
+    }
+
     const store = await getObservationStore();
-    const page = await store.listTraps(sourceNames, 30, cursor ?? undefined);
+    const page = await store.listTraps(validatedSources, 30, cursor ?? undefined);
     return Response.json(
-      { ...page, sourceConfigured: sourceNames.length > 0 },
+      { ...page, sourceConfigured: validatedSources.length > 0 },
       { headers: { 'Cache-Control': 'private, no-store' } },
     );
   } catch {

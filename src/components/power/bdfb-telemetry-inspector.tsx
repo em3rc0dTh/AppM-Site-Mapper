@@ -4,6 +4,8 @@ import { useBdfbTelemetrySnapshot } from '@/components/telemetry/use-bdfb-teleme
 import { SnmpFeedLoadPanel } from '@/components/power/snmp-feed-load-panel';
 import { SnmpControllerLive } from '@/components/power/snmp-controller-live';
 import { SnmpControllerEditor } from '@/components/power/snmp-controller-editor';
+import { SnmpTrapPanel } from '@/components/power/snmp-trap-panel';
+import { SnmpTrapSourceEditor } from '@/components/power/snmp-trap-source-editor';
 import { SnmpFeedHistory } from '@/components/power/snmp-feed-history';
 import { SnmpFeedCommissioning } from '@/components/power/snmp-feed-commissioning';
 import { AlarmOccurrenceList, AlarmScopeSummary } from '@/components/alarm/alarm-scope-summary';
@@ -24,8 +26,8 @@ import { TELEMETRY_HISTORY_WINDOWS } from '@/modules/telemetry/domain/history';
 import type { DeviceNode } from '@/modules/topology/domain/entities';
 import { useTranslations } from 'next-intl';
 
-type InspectorTab = 'overview' | 'alarms' | 'feeds' | 'history' | 'settings';
-const OPERATION_TABS: readonly InspectorTab[] = ['overview', 'feeds', 'history', 'alarms'];
+type InspectorTab = 'overview' | 'alarms' | 'feeds' | 'history' | 'traps' | 'settings';
+const OPERATION_TABS: readonly InspectorTab[] = ['overview', 'feeds', 'history', 'alarms', 'traps'];
 const MAINTENANCE_TABS: readonly InspectorTab[] = ['settings'];
 type HistoryMetricKey = 'voltageV' | 'currentA' | 'powerW' | 'energyKwh';
 
@@ -321,15 +323,17 @@ export function BdfbTelemetryInspector({
               tabIndex={tab === item ? 0 : -1}
               onClick={() => changeTab(item)}
             >
-              {item === 'alarms'
-                ? t('alarms')
-                : item === 'feeds'
-                  ? t('feeds')
-                  : item === 'history'
-                    ? t('history')
-                    : item === 'overview'
-                      ? t('overview')
-                      : t('settings')}
+              {item === 'traps'
+                ? t('traps')
+                : item === 'alarms'
+                  ? t('alarms')
+                  : item === 'feeds'
+                    ? t('feeds')
+                    : item === 'history'
+                      ? t('history')
+                      : item === 'overview'
+                        ? t('overview')
+                        : t('settings')}
             </button>
           ))}
         </nav>
@@ -417,6 +421,10 @@ export function BdfbTelemetryInspector({
           </>
         )}
 
+        {tab === 'traps' && (
+          <SnmpTrapPanel key={node.id} deviceId={node.id} deviceName={node.name} />
+        )}
+
         {tab === 'feeds' && (
           <>
             <div className="sm-detached-workbench-actions">
@@ -488,6 +496,7 @@ export function BdfbTelemetryInspector({
           <>
             <SnmpFeedCommissioning deviceId={node.id} chassisId={presentation.chassisId} />
             <SnmpControllerEditor deviceId={node.id} />
+            <SnmpTrapSourceEditor deviceId={node.id} />
             <section className="sm-bdfb-device-info" aria-label={ti('properties')}>
               <h3>{ti('diagnostics')}</h3>
               <dl>

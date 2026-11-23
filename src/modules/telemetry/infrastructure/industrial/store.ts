@@ -1,6 +1,11 @@
 import { createHash } from 'node:crypto';
 import type { Db, MongoClient } from 'mongodb';
 import type { ObservationBatch, Signal } from '@/modules/telemetry/domain/industrial/observations';
+import {
+  presentTrap,
+  trapCursor,
+  type TrapPage,
+} from '@/modules/telemetry/domain/industrial/trap-view';
 
 export interface CatalogSignal extends Signal {
   firstSeenAt: string;
@@ -29,6 +34,11 @@ export interface ObservationStore {
   ): Promise<Signal[]>;
   event(eventId: string): Promise<ObservationBatch['envelope'] | null>;
   byIds(ids: readonly string[]): Promise<CatalogSignal[]>;
+  listTraps(
+    sources: readonly string[],
+    limit: number,
+    cursor?: { receivedAt: string; id: string },
+  ): Promise<TrapPage>;
 }
 export function advanceSignal(previous: CatalogSignal | undefined, next: Signal): CatalogSignal {
   const firstSeenAt = previous?.firstSeenAt ?? next.receivedAt;
@@ -124,6 +134,37 @@ export class MemoryObservationStore implements ObservationStore {
   async event(eventId: string) {
     return this.events.get(eventId)?.envelope ?? null;
   }
+  async listTraps(
+    sources: readonly string[],
+    limit: number,
+    cursor?: { receivedAt: string; id: string },
+  ): Promise<TrapPage> {
+    if (!sources.length) return { events: [], nextCursor: null };
+    const batches = [...this.events.values()]
+      .filter(
+        (batch) =>
+          sources.includes(batch.envelope.sourceIdentity) &&
+          batch.envelope.protocol === 'SNMP' &&
+          ['trap', 'inform'].includes(batch.envelope.transport) &&
+          (!cursor ||
+            batch.envelope.receivedAt < cursor.receivedAt ||
+            (batch.envelope.receivedAt === cursor.receivedAt && batch.id < cursor.id)),
+      )
+      .sort(
+        (a, b) =>
+          b.envelope.receivedAt.localeCompare(a.envelope.receivedAt) || b.id.localeCompare(a.id),
+      );
+    const events = batches.slice(0, limit).flatMap((batch) => {
+      const result = presentTrap(batch.id, batch.envelope, batch.signals);
+      return result ? [result] : [];
+    });
+    const last = batches[limit - 1];
+    return {
+      events,
+      nextCursor:
+        batches.length > limit && last ? trapCursor(last.envelope.receivedAt, last.id) : null,
+    };
+  }
   async list(sourceIdentity?: string, limit = 1000, targetId?: string, afterSignalId?: string) {
     return [...this.signals.values()]
       .filter(
@@ -164,6 +205,12 @@ export class MongoObservationStore implements ObservationStore {
       .createIndex({ availableAt: 1, createdAt: 1 });
     await this.db.collection('industrial_sources').createIndex({ key: 1 }, { unique: true });
     await this.db.collection('industrial_events').createIndex({ eventId: 1 }, { unique: true });
+    await this.db
+      .collection('industrial_events')
+      .createIndex({ sourceIdentity: 1, receivedAt: -1, eventId: -1 });
+    await this.db
+      .collection('industrial_signal_history')
+      .createIndex({ eventId: 1, 'signal.kind': 1 });
     await this.db.collection('industrial_signals').createIndex({ signalId: 1 }, { unique: true });
     await this.db
       .collection('industrial_events')
@@ -324,6 +371,74 @@ export class MongoObservationStore implements ObservationStore {
   async event(eventId: string) {
     const row = await this.db.collection('industrial_events').findOne({ eventId });
     return row ? (JSON.parse(row.envelopeJson as string) as ObservationBatch['envelope']) : null;
+  }
+  async listTraps(
+    sources: readonly string[],
+    limit: number,
+    cursor?: { receivedAt: string; id: string },
+  ): Promise<TrapPage> {
+    if (!sources.length) return { events: [], nextCursor: null };
+    // Historical events did not persist transport in a dedicated column.
+    // Bounded scan supports those records without scanning the whole collection.
+    const rows = await this.db
+      .collection('industrial_events')
+      .find({
+        protocol: 'SNMP',
+        sourceIdentity: { $in: [...sources] },
+        ...(cursor
+          ? {
+              $or: [
+                { receivedAt: { $lt: cursor.receivedAt } },
+                { receivedAt: cursor.receivedAt, eventId: { $lt: cursor.id } },
+              ],
+            }
+          : {}),
+      })
+      .sort({ receivedAt: -1, eventId: -1 })
+      .limit(500)
+      .toArray();
+    const selected: { id: string; envelope: ObservationBatch['envelope'] }[] = [];
+    let scanned = 0;
+    for (const row of rows) {
+      scanned++;
+      try {
+        const envelope = JSON.parse(row.envelopeJson as string) as ObservationBatch['envelope'];
+        if (envelope.transport === 'trap' || envelope.transport === 'inform') {
+          selected.push({ id: String(row.eventId), envelope });
+        }
+      } catch {
+        /* Retained malformed legacy capture is not a valid trap. */
+      }
+      if (selected.length === limit) break;
+    }
+    const ids = selected.map((event) => event.id);
+    const alarmRows = ids.length
+      ? await this.db
+          .collection('industrial_signal_history')
+          .find({ eventId: { $in: ids }, 'signal.kind': 'alarm' })
+          .project({ eventId: 1, signal: 1 })
+          .limit(Math.min(500, ids.length * 24))
+          .toArray()
+      : [];
+    const alarms = new Map<string, Signal[]>();
+    for (const record of alarmRows) {
+      const key = String(record.eventId);
+      const list = alarms.get(key) ?? [];
+      list.push(record.signal as Signal);
+      alarms.set(key, list);
+    }
+    const events = selected.flatMap((event) => {
+      const item = presentTrap(event.id, event.envelope, alarms.get(event.id) ?? []);
+      return item ? [item] : [];
+    });
+    const last = rows[scanned - 1];
+    return {
+      events,
+      nextCursor:
+        last && (scanned < rows.length || rows.length === 500)
+          ? trapCursor(String(last.receivedAt), String(last.eventId))
+          : null,
+    };
   }
   async list(
     sourceIdentity?: string,

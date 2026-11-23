@@ -68,7 +68,11 @@ export function CommandPalette() {
         const data = (await response.json()) as { results: SearchResult[] };
         const searchable = data.results.filter((result) => result.kind !== 'POWER_TARGET');
         setResults(searchable);
-        setStatus(searchable.length ? t('results', { count: searchable.length }) : t('noResults'));
+        if (searchable.length === 0) {
+          setStatus(t('noResults'));
+        } else {
+          setStatus(t('results', { count: searchable.length }));
+        }
       } catch {
         if (!controller.signal.aborted) {
           setResults([]);

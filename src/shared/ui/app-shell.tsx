@@ -20,7 +20,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [busy, setBusy] = useState(false);
   const [role, setRole] = useState<Role | null>(null);
   const shellRef = useRef<HTMLDivElement>(null);
-  const brandRef = useRef<HTMLAnchorElement>(null);
+  const brandRef = useRef<HTMLDivElement>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
 
   // The root layout persists across client-side login/navigation. Resolve the

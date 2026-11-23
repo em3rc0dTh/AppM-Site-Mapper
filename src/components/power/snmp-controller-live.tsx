@@ -7,8 +7,26 @@ import {
   type SnmpControllerObservation,
 } from '@/modules/telemetry/application/snmp-controller-presentation';
 import type { SnmpControllerProfile } from '@/modules/telemetry/domain/snmp-controller-profile';
+import styles from './snmp-controller-live.module.css';
 
-/** Source and OIDs are resolved per DEVICE from persisted configuration. */
+function formattedTimestamp(value: string | null, locale: string): string | null {
+  if (!value) return null;
+  const time = Date.parse(value);
+  if (!Number.isFinite(time)) return null;
+  return new Intl.DateTimeFormat(locale, {
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).format(time);
+}
+
+/**
+ * Read-only controller observations. The Device profile determines the source,
+ * labels and OIDs. Electrical feed bindings are commissioned elsewhere.
+ */
 export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>) {
   const t = useTranslations('snmpController');
   const locale = useLocale();
@@ -79,8 +97,8 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
 
   if (!profile) {
     return error ? (
-      <section className="front01-snmp-summary" aria-label={t('title')}>
-        <p role="alert">
+      <section className={styles.section} aria-label={t('title')}>
+        <p role="alert" className={styles.error}>
           {t('failed')}: {error}
         </p>
       </section>
@@ -98,9 +116,8 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
             now,
           ),
         }));
-  const recent =
-    readings.length === profile.signals.length &&
-    readings.every(({ reading }) => reading.state === 'RECENT');
+  const freshCount = readings.filter(({ reading }) => reading.state === 'RECENT').length;
+  const recent = freshCount === profile.signals.length;
   const freshnessLabels = {
     RECENT: t('freshness.RECENT'),
     STALE: t('freshness.STALE'),
@@ -109,37 +126,86 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
   };
 
   return (
-    <section className="front01-snmp-summary" aria-label={profile.title}>
-      <header className="front01-summary-header">
-        <strong>{profile.title}</strong>
-        <span>{error ? t('queryError') : recent ? t('samplesRecent') : t('incomplete')}</span>
-      </header>
-      <dl className="front01-snmp-kpis">
-        {readings.map(({ spec, reading }) => (
-          <div key={spec.oid}>
-            <dt>{spec.label}</dt>
-            <dd>{error || reading.state !== 'RECENT' ? '—' : reading.text}</dd>
-            <small>
-              {freshnessLabels[reading.state]} · {reading.quality} · {t('raw')}: {reading.raw}
-              {' · '}
-              {reading.receivedAt
-                ? new Date(reading.receivedAt).toLocaleString(locale)
-                : t('noTimestamp')}
-            </small>
+    <section className={styles.section} aria-label={profile.title}>
+      <header className={styles.header}>
+        <div className={styles.identity}>
+          <span className={styles.sourceIcon} aria-hidden="true">◉</span>
+          <div className={styles.titleGroup}>
+            <span className={styles.eyebrow}>{t('controllerEyebrow')}</span>
+            <h3 className={styles.title}>{profile.title}</h3>
           </div>
-        ))}
+        </div>
+        <div
+          className={styles.overallStatus}
+          data-status={error ? 'error' : recent ? 'live' : 'pending'}
+          role="status"
+        >
+          <span className={styles.statusDot} aria-hidden="true" />
+          <span>{error ? t('queryError') : recent ? t('samplesRecent') : t('incomplete')}</span>
+        </div>
+      </header>
+
+      <dl className={styles.metricGrid}>
+        {profile.signals.map((spec) => {
+          const item = readings.find(({ spec: candidate }) => candidate.oid === spec.oid);
+          const reading = item?.reading;
+          const state = error ? 'UNAVAILABLE' : reading?.state ?? 'UNAVAILABLE';
+          const visible = !error && reading?.state === 'RECENT';
+          const timestamp = reading?.receivedAt
+            ? formattedTimestamp(reading.receivedAt, locale)
+            : null;
+          const isValid = visible && reading?.quality === 'VALID';
+          return (
+            <div className={styles.metric} key={spec.oid} data-state={state}>
+              <div className={styles.metricHeader}>
+                <dt className={styles.metricLabel} title={spec.label}>{spec.label}</dt>
+                <span
+                  className={styles.quality}
+                  data-quality={isValid ? 'valid' : visible ? 'unknown' : 'inactive'}
+                  title={t('qualityLabel')}
+                >
+                  <span className={styles.qualityDot} aria-hidden="true" />
+                  {visible ? reading?.quality : freshnessLabels[state]}
+                </span>
+              </div>
+              <dd className={styles.metricValue}>
+                {visible ? reading.text : '—'}
+              </dd>
+              <div className={styles.metricMeta}>
+                <span className={styles.rawPill}>
+                  {t('raw')}: {reading?.raw ?? '—'}
+                </span>
+                <span className={styles.metricTime}>
+                  {timestamp && reading?.receivedAt ? (
+                    <time dateTime={reading.receivedAt} title={new Date(reading.receivedAt).toLocaleString(locale)}>
+                      {timestamp}
+                    </time>
+                  ) : (
+                    t('noTimestamp')
+                  )}
+                </span>
+              </div>
+            </div>
+          );
+        })}
       </dl>
-      <div className="front01-snmp-footer">
-        <small>
-          {t('source')}: {profile.sourceIdentity} · {t('polling')}
-        </small>
-        {error && (
-          <small role="alert">
-            {t('failed')}: {error}
-          </small>
-        )}
+
+      <footer className={styles.footer}>
+        <div className={styles.sourceDetail}>
+          <span className={styles.sourceCaption}>{t('source')}</span>
+          <code className={styles.sourceName} title={profile.sourceIdentity}>{profile.sourceIdentity}</code>
+        </div>
+        <span className={styles.polling}>{t('polling')}</span>
+      </footer>
+      <div className={styles.notice}>
+        <span aria-hidden="true" className={styles.noticeSymbol}>i</span>
+        <p>{t('disclaimer')}</p>
       </div>
-      <p style={{ margin: '8px 0 0', fontSize: 12, opacity: 0.8 }}>{t('disclaimer')}</p>
+      {error && (
+        <p className={styles.error} role="alert">
+          {t('failed')}: {error}
+        </p>
+      )}
     </section>
   );
 }

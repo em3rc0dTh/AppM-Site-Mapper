@@ -63,3 +63,7 @@ No container, database, broker or field device changes are performed by this PR.
 ## Unresolved field item
 
 The real ELTEK agent returned CurrentMonitor=0, FlexiMonitor=0 and unavailable monitor tables. Data Log contains two currents, but individual SNMP OIDs have not yet been demonstrated. A/B are not commissioned.
+
+## Release gate
+
+No merge or field deploy until the controller profile migration is prepared.

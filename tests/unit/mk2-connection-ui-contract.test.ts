@@ -23,7 +23,6 @@ describe('MK2 operator-approved connection UI', () => {
     expect(diagram).not.toContain('sm-powered-feed-totals');
   });
 
-
   it('shows accumulated energy and removes the duplicate declared telemetry block', () => {
     const declared = source('src/components/workbench/declared-power-trace-workbench.tsx');
     const es = JSON.parse(source('src/messages/es.json')) as {

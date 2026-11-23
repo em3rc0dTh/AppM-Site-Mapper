@@ -272,9 +272,7 @@ describe('powered equipment projection', () => {
     ]);
     const projections = await new PoweredEquipmentProjectionService(repository).list();
     const connections = projections[0]?.connections ?? [];
-    expect(connections.find((item) => item.breakerId === 'breaker-a')?.nominalCurrentA).toBe(
-      80,
-    );
+    expect(connections.find((item) => item.breakerId === 'breaker-a')?.nominalCurrentA).toBe(80);
     expect(
       connections.find((item) => item.breakerId === 'breaker-b')?.nominalCurrentA,
     ).toBeUndefined();

@@ -45,11 +45,12 @@ export async function GET(request: Request) {
     // transports of one source: there is no second commissioning action.
     const bindings = await (await createTelemetryBindingRepository()).listActiveByProtocol('SNMP');
     const linkedSources = bindings
-      .filter((binding) =>
-        binding.lifecycle === 'ACTIVE' &&
-        ((binding.targetType === 'DEVICE' && binding.targetId === deviceId) ||
-          (binding.targetType === 'EQUIPMENT' && equipmentIds.has(binding.targetId)) ||
-          (binding.targetType === 'ACCESS_PORT' && portIds.has(binding.targetId))),
+      .filter(
+        (binding) =>
+          binding.lifecycle === 'ACTIVE' &&
+          ((binding.targetType === 'DEVICE' && binding.targetId === deviceId) ||
+            (binding.targetType === 'EQUIPMENT' && equipmentIds.has(binding.targetId)) ||
+            (binding.targetType === 'ACCESS_PORT' && portIds.has(binding.targetId))),
       )
       .map((binding) => binding.sourceIdentity);
 
@@ -74,7 +75,9 @@ export async function GET(request: Request) {
         ...configuredTrapSources(device.attributes),
         ...linkedSources,
         ...profiles
-          .filter((profile) => profile.targetId === deviceId || equipmentIds.has(profile.targetId ?? ''))
+          .filter(
+            (profile) => profile.targetId === deviceId || equipmentIds.has(profile.targetId ?? ''),
+          )
           .map((profile) => profile.sourceIdentity),
         ...verifiedSerialSources,
         ...(controller ? [controller.sourceIdentity] : []),
@@ -92,8 +95,7 @@ export async function GET(request: Request) {
           if (binding.targetId !== deviceId) belongsElsewhere = true;
         } else if (binding.targetType === 'EQUIPMENT') {
           const owner = await repository.getById(binding.targetId);
-          if (owner?.kind !== 'EQUIPMENT' || owner.deviceId !== deviceId)
-            belongsElsewhere = true;
+          if (owner?.kind !== 'EQUIPMENT' || owner.deviceId !== deviceId) belongsElsewhere = true;
         } else if (binding.targetType === 'ACCESS_PORT') {
           const owner = await repository.getEquipmentByAccessPortId(binding.targetId);
           if (!owner || owner.deviceId !== deviceId) belongsElsewhere = true;

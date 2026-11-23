@@ -2748,24 +2748,27 @@ async function ensureControlledIntegrationTrapSources(
       continue;
     }
     const timestamp = new Date().toISOString();
-    await bindings.insertOne({
-      id: `integration:seed01:snmp:trap:${key}:source`,
-      protocol: 'SNMP',
-      sourceIdentity: identity,
-      metric: 'SOURCE',
-      targetType: 'DEVICE',
-      targetId: deviceId,
-      lifecycle: 'ACTIVE',
-      createdAt: timestamp,
-      updatedAt: timestamp,
-      attributes: {
-        commissioning: 'CONTROLLED_INTEGRATION',
-        integrationProfile: INTEGRATION_PROFILE,
-        synthetic: true,
-        qdf: key,
-      },
-      revision: 1,
-    } as TelemetryBinding & Document, { session });
+    await bindings.insertOne(
+      {
+        id: `integration:seed01:snmp:trap:${key}:source`,
+        protocol: 'SNMP',
+        sourceIdentity: identity,
+        metric: 'SOURCE',
+        targetType: 'DEVICE',
+        targetId: deviceId,
+        lifecycle: 'ACTIVE',
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        attributes: {
+          commissioning: 'CONTROLLED_INTEGRATION',
+          integrationProfile: INTEGRATION_PROFILE,
+          synthetic: true,
+          qdf: key,
+        },
+        revision: 1,
+      } as TelemetryBinding & Document,
+      { session },
+    );
   }
 }
 

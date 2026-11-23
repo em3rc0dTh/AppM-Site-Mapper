@@ -5,7 +5,6 @@ import { SnmpFeedLoadPanel } from '@/components/power/snmp-feed-load-panel';
 import { SnmpControllerLive } from '@/components/power/snmp-controller-live';
 import { SnmpControllerEditor } from '@/components/power/snmp-controller-editor';
 import { SnmpTrapPanel } from '@/components/power/snmp-trap-panel';
-import { SnmpTrapSourceEditor } from '@/components/power/snmp-trap-source-editor';
 import { SnmpFeedHistory } from '@/components/power/snmp-feed-history';
 import { SnmpFeedCommissioning } from '@/components/power/snmp-feed-commissioning';
 import { AlarmOccurrenceList, AlarmScopeSummary } from '@/components/alarm/alarm-scope-summary';
@@ -496,7 +495,6 @@ export function BdfbTelemetryInspector({
           <>
             <SnmpFeedCommissioning deviceId={node.id} chassisId={presentation.chassisId} />
             <SnmpControllerEditor deviceId={node.id} />
-            <SnmpTrapSourceEditor deviceId={node.id} />
             <section className="sm-bdfb-device-info" aria-label={ti('properties')}>
               <h3>{ti('diagnostics')}</h3>
               <dl>

@@ -54,6 +54,8 @@ No container, database, broker or field device changes are performed by this PR.
 
 ## Acceptance
 
+- Controller card uses independent responsive instrumentation tiles (no fixed four-column layout or empty fourth tile); quality, freshness and raw values remain visible but visually distinct.
+
 - BDFB without profile shows no controller card; configured BDFB shows only its own source.
 - Invalid/duplicate OIDs and malformed profile mutations are rejected.
 - Stale, absent or invalid signals do not appear live.

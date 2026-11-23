@@ -23,6 +23,20 @@ describe('MK2 operator-approved connection UI', () => {
     expect(diagram).not.toContain('sm-powered-feed-totals');
   });
 
+
+  it('shows accumulated energy and removes the duplicate declared telemetry block', () => {
+    const declared = source('src/components/workbench/declared-power-trace-workbench.tsx');
+    const es = JSON.parse(source('src/messages/es.json')) as {
+      pages: { power: { summaryEnergy: string } };
+    };
+
+    expect(declared).toContain('sm-trace-breaker-live');
+    expect(declared).not.toContain('sm-trace-declared-telemetry');
+    expect(declared).toContain('sm-trace-updated-at');
+    expect(declared).toContain("t('updatedAt'");
+    expect(es.pages.power.summaryEnergy).toBe('Energía acumulada (kWh)');
+  });
+
   it('reserves red and green for alarm semantics, not feed identity in Power Trace', () => {
     const css = source('src/app/workbench/power-trace.css');
     expect(css).toContain('--trace-a: #168fe4');

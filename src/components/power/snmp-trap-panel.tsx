@@ -237,9 +237,7 @@ export function SnmpTrapPanel({
         <section className={styles.detail} aria-label={t('detail')}>
           <header className={styles.detailHeader}>
             <div className={styles.detailIdentity}>
-              <span className={styles.bell} aria-hidden="true">
-                ♧
-              </span>
+              <span className={styles.bell} aria-hidden="true" />
               <div>
                 <h4>{t('detail')}</h4>
                 <small>

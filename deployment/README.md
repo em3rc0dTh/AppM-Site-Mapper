@@ -40,3 +40,23 @@ Preflight and static contract checks are not a restore drill. Open items: actual
 ## Runtime baseline review — 2026-11-24
 
 The privileged sanitized inventory verified that two legacy Config2 collectors were running, alongside the industrial trap receiver. Preserve their configured identities only if the corresponding sources are still authorized. Do not enable a legacy collector for the same source as the industrial polling receiver. The field receiver is active; this does not certify the external emulators or Metasys connectivity. The current Modbus endpoint is loopback, not a LAN listener. The resource overlay is an intended limit, not proof that every live container uses it. Anonymous Mongo config and Mosquitto data/log volumes are mapped to stable named volumes for restore. Other anonymous scratch volumes are retained as evidence but are not attached automatically. External gateway, tunnel and VM recovery are separate, mandatory checks when used. Never publish site-specific addresses, source IDs or private profiles in a public repository.
+
+## One-kick contract
+
+The clean-machine software path has one public entrypoint:
+
+```bash
+sudo ./deployment/one-kick.sh lab
+```
+
+That command installs host dependencies on Ubuntu 24.04 when necessary, builds the complete synthetic stack from an empty Compose project, validates MQTT, SNMP polling, SNMP traps into MongoDB and TimescaleDB, Modbus, restarts Site Mapper, performs an isolated logical backup/restore rehearsal, and leaves the validated stack running.
+
+A real TFARM replacement uses the same entrypoint with an encrypted Recovery Bundle:
+
+```bash
+sudo ./deployment/one-kick.sh recover --bundle /path/to/site-mapper-recovery.tar.gpg
+```
+
+Internet/WAN must already work. If the industrial bridge is absent, the recovery command performs the only required hardware-specific interaction inside the same execution: selection of physical LAN interfaces. No source edits, ad-hoc patches, or follow-up diagnostic commands are part of the contract.
+
+The GitHub workflow `.github/workflows/tfarm-one-kick-certification.yml` runs the exact `lab` entrypoint on a fresh Ubuntu 24.04 Actions runner and uploads evidence. Hardware field commissioning remains physically external to software certification.

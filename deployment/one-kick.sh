@@ -62,8 +62,8 @@ mkdir -p "$TMP/unpacked"
 
 log "Decrypting recovery bundle"
 if [ -n "$PASSPHRASE_FILE" ]; then
-  [ -f "$PASSPHRASE_FILE" ] || die "passphrase file missing"
-  [ $(( 8#$(stat -c '%a' "$PASSPHRASE_FILE") & 077 )) -eq 0 ] || die "passphrase file must be mode 0600"
+  [ -f "$PASSHRASE_FILE" ] || die "passphrase file missing"
+  [ $(( 8#$(stat -c '%a' "$PASSHRASE_FILE") & 077 )) -eq 0 ] || die "passphrase file must be mode 0600"
   gpg --batch --yes --pinentry-mode loopback --passphrase-file "$PASSPHRASE_FILE" --decrypt "$RECOVERY" |
     tar -xpf - -C "$TMP/unpacked"
 else
@@ -73,10 +73,14 @@ fi
 python3 "$ROOT/deployment/tfarmctl" --root "$ROOT" verify --directory "$TMP/unpacked"
 
 log "Discovering network roles"
-WAN="$(ip -j route show default | python3 -c 'import json,sys; r=json.load(sys.stdin); d=sorted({x.get("dev") for x in r if x.get("dev")}); print(d[0] if len(d)==1 else "")')"
-[ -n "$WAN" ] || die "exactly one IPv4 default-route interface is required"
+if [ "$SKIP_NETWORK" -eq 1 ]; then
+  WAN="$(python3 -c 'import json; p=json.load(open("'"$TMP'/unpacked/profile.json")); print(p["network"]["wan"])')"
+  LAN_JSON="$(python3 -c 'import json; p=json.load(open("'"$TMP'/unpacked/profile.json")); print(json.dumps(p["network"]["lan"]))')"
+else
+  WAN="$(ip -j route show default | python3 -c 'import json,sys; r=json.load(sys.stdin); d=sorted({x.get("dev") for x in r if x.get("dev")}); print(d[0] if len(d)==1 else "")')"
+  [ -n "$WAN" ] || die "exactly one IPv4 default-route interface is required"
 
-LAN_JSON="$(python3 - "$WAN" <<'PY'
+  LAN_JSON="$(python3 - "$WAN" <<'PY'
 import json, pathlib, subprocess, sys, collections
 wan=sys.argv[1]
 links=json.loads(subprocess.check_output(["ip","-j","link","show"],text=True))
@@ -108,7 +112,8 @@ if sum(1 for v in groups.values() if len(v)==len(best))>1:
 print(json.dumps(best))
 PY
 )" || die "cannot unambiguously select industrial Ethernet group"
-[ "$LAN_JSON" != "[]" ] || die "no industrial LAN interfaces detected"
+  [ "$LAN_JSON" != "[]" ] || die "no industrial LAN interfaces detected"
+fi
 
 install -d -m 0700 /etc/tfarm
 python3 - "$TMP/unpacked/profile.json" "$PROFILE_OUT" "$WAN" "$LAN_JSON" <<'PY'

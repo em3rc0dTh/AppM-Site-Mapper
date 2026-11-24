@@ -334,7 +334,7 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
                     item.rawValue;
 
                   const age =
-                    (now ?? Date.now()) - Date.parse(observed);
+                    (now ?? 0) - Date.parse(observed);
 
                   const fresh =
                     Number.isFinite(age) &&

@@ -12,8 +12,8 @@ For each commissioned circuit and channel:
 
 - `voltageV`: SOURCE from `U1/U2`.
 - `currentA`: SOURCE from `I1/I2`.
-- `powerW`: DERIVED by Site Mapper as `V * I`.
-- `energyKwh`: DERIVED by Site Mapper by trapezoidal integration of derived power over real receive intervals.
+- `powerW`: DERIVED by Site Mapper as the positive magnitude `abs(V * I)`.
+- `energyKwh`: DERIVED by Site Mapper by trapezoidal integration of positive derived power over real receive intervals and exposed as a non-negative accumulated value.
 
 Power is derived only when voltage and current belong to the same observed frame.
 
@@ -38,17 +38,17 @@ The accumulator is restored after application restart from the latest historian-
 
 When historian recovery is unavailable, LIVE power remains available and a new derived energy baseline starts locally.
 
-## Signed current
+## Signed voltage/current and positive consumption metrics
 
-Site Mapper preserves the sign of authoritative current:
+Site Mapper preserves the sign of authoritative voltage and current measurements, but derived consumption metrics are normalized to positive magnitude:
 
 ```
-powerW = voltageV * currentA
+powerW = abs(voltageV * currentA)
 ```
 
-No implicit `abs(currentA)` correction is applied. Reverse flow or reversed instrumentation therefore remains visible instead of being silently rewritten.
+No implicit correction is applied to the SOURCE voltage or current values themselves. Their sign remains visible for diagnostics and wiring validation.
 
-Because a Site Mapper-derived signed-energy accumulator can legitimately decrease, the external `ENERGY_COUNTER_RESET` alarm rule does not apply to derived energy. Energy increment and consumption-anomaly rules remain eligible.
+Derived energy integrates the positive power magnitude and is always exposed as a non-negative accumulated value. When historian recovery encounters an older negative Site Mapper-derived accumulator, its absolute value becomes the restored baseline.
 
 ## Propagation
 

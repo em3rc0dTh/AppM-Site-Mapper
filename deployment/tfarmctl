@@ -328,8 +328,14 @@ def backup(p, output, staging):
         # Staging files themselves are sensitive; use encrypted staging storage.
         tar=subprocess.Popen(["tar","-C",str(d),"-cf","-","."],stdout=subprocess.PIPE)
         try:
-            subprocess.run(["gpg","--symmetric","--cipher-algo","AES256","--output",str(output)],
-                stdin=tar.stdout,check=True)
+            gpg=["gpg","--symmetric","--cipher-algo","AES256","--output",str(output)]
+            passfile=os.environ.get("TFARM_GPG_PASSPHRASE_FILE")
+            if passfile:
+                p=Path(passfile)
+                if not p.is_file() or p.stat().st_mode & 0o077:
+                    fail("GPG passphrase file missing or not mode 0600")
+                gpg[1:1]=["--batch","--yes","--pinentry-mode","loopback","--passphrase-file",str(p)]
+            subprocess.run(gpg,stdin=tar.stdout,check=True)
         finally:
             tar.stdout.close()
             if tar.wait()!=0: fail("Archive creation failed")

@@ -364,35 +364,8 @@ def main():
         print(json.dumps({"interfaces":[{"name":i["ifname"],"type":i.get("link_type"),"state":i.get("operstate"),"physical":Path("/sys/class/net",i["ifname"],"device").exists()} for i in interfaces()],"defaultRoute":sorted(default_devices())},indent=2)); return
     if args.cmd=="packages":
         require_root()
-        if not Path("/etc/os-release").is_file() or not re.search(r'(?m)^VERSION_ID="?24\.04"?
-        # Docker CE must come from an already approved and configured APT repository.
-        run("apt-get","update")
-        run("apt-get","install","--yes","ca-certificates","curl","git","python3","gnupg","network-manager","kea-dhcp4-server","snmp","docker-ce","docker-ce-cli","containerd.io","docker-buildx-plugin","docker-compose-plugin")
-        return
-    p=load_profile(args.profile)
-    if args.cmd=="plan": configure_network(p,False)
-    elif args.cmd=="network":
-        if args.apply and not args.local_console: fail("Network apply requires --local-console and direct local access")
-        configure_network(p,args.apply)
-    elif args.cmd=="preflight":
-        for exe in ("docker","nmcli","ip","gpg","tar"):
-            if not shutil.which(exe): fail("Missing "+exe)
-        model(p); print("PROFILE_AND_COMPOSE_OK")
-    elif args.cmd=="status":
-        run(*compose(p),"ps","-a")
-    elif args.cmd=="build":
-        require_root(); model(p); run(*compose(p),"build",*p["services"])
-    elif args.cmd=="start": start(p)
-    elif args.cmd=="backup": backup(p,args.output,args.staging)
-    elif args.cmd=="restore": restore(p,args.directory,args.apply)
-
-if __name__=="__main__":
-    try: main()
-    except (ValueError,KeyError,TypeError,OSError,subprocess.CalledProcessError) as exc:
-        # subprocess exceptions can include credential arguments; never print the command.
-        print("TFARM_ERROR:",str(exc) if isinstance(exc,ValueError) and not isinstance(exc,json.JSONDecodeError) else type(exc).__name__,file=sys.stderr)
-        sys.exit(1)
-,Path("/etc/os-release").read_text()):
+        os_release=Path("/etc/os-release")
+        if not os_release.is_file() or 'VERSION_ID="24.04"' not in os_release.read_text().splitlines():
             fail("Ubuntu 24.04 required")
         # Docker CE must come from an already approved and configured APT repository.
         run("apt-get","update")

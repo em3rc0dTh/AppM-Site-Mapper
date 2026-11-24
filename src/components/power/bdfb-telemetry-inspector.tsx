@@ -7,21 +7,14 @@ import { SnmpTrapPanel } from '@/components/power/snmp-trap-panel';
 import { SnmpFeedHistory } from '@/components/power/snmp-feed-history';
 import { SnmpFeedCommissioning } from '@/components/power/snmp-feed-commissioning';
 import { useAlarmSnapshot } from '@/components/alarm/use-alarm-snapshot';
-import { DetachedWorkbenchButton } from '@/components/workbench/detached-workbench-button';
 import { ThradexAttribution } from '@/shared/ui/thradex-attribution';
 import { formatOperationalTimestamp } from '@/shared/time/operational-time';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 import type { BdfbPresentation } from '@/modules/power/domain/bdfb-model';
 import { aggregateBdfbDescendantTelemetry } from '@/modules/telemetry/application/bdfb-descendant-telemetry';
-import type {
-  TelemetryHistoryPoint,
-  TelemetryHistoryResponse,
-  TelemetryHistoryWindow,
-} from '@/modules/telemetry/domain/history';
-import { TELEMETRY_HISTORY_WINDOWS } from '@/modules/telemetry/domain/history';
 import type { DeviceNode } from '@/modules/topology/domain/entities';
 import { useTranslations } from 'next-intl';
 
@@ -48,139 +41,6 @@ function OperationalTime({ value }: Readonly<{ value: string | null | undefined 
     <>—</>
   );
 }
-
-function HistoryMetric({
-  label,
-  unit,
-  decimals = 2,
-  scale = 1,
-  metricKey,
-  points,
-}: Readonly<{
-  label: string;
-  unit: string;
-  decimals?: number;
-  scale?: number;
-  metricKey: HistoryMetricKey;
-  points: readonly TelemetryHistoryPoint[];
-}>) {
-  const ti = useTranslations('bdfb.inspector.info');
-  const values = points.flatMap((point, index) => {
-    const value = point[metricKey];
-    return value === null ? [] : [{ index, value: value * scale }];
-  });
-  const latest = values.at(-1)?.value;
-
-  if (values.length < 2) {
-    return (
-      <div className="zip-bdfb-history-metric">
-        <span>{label}</span>
-        <strong>{metric(latest, unit, decimals)}</strong>
-        <small>{ti('smallTrend')}</small>
-      </div>
-    );
-  }
-
-  const min = Math.min(...values.map((entry) => entry.value));
-  const max = Math.max(...values.map((entry) => entry.value));
-  const range = max - min || 1;
-  const width = 180;
-  const height = 48;
-  const path = values
-    .map((entry, position) => {
-      const x = values.length === 1 ? width / 2 : (position / (values.length - 1)) * width;
-      const y = height - ((entry.value - min) / range) * (height - 8) - 4;
-      return `${position === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`;
-    })
-    .join(' ');
-
-  return (
-    <div className="zip-bdfb-history-metric">
-      <span>{label}</span>
-      <strong>{metric(latest, unit, decimals)}</strong>
-      <svg
-        viewBox={`0 0 ${width} ${height}`}
-        role="img"
-        aria-label={ti('historicalTrend', { label })}
-      >
-        <path d={path} />
-      </svg>
-      <small>
-        {metric(min, unit, decimals)} – {metric(max, unit, decimals)}
-      </small>
-    </div>
-  );
-}
-
-function HistoricalTelemetry({
-  history,
-  loading,
-  error,
-}: Readonly<{
-  history: TelemetryHistoryResponse | null;
-  loading: boolean;
-  error: string | null;
-}>) {
-  const ti = useTranslations('bdfb.inspector.info');
-  if (loading) return <div className="zip-bdfb-history-state">{ti('loading')}</div>;
-  if (error) return <div className="zip-bdfb-history-state is-error">{error}</div>;
-  if (!history?.points.length) {
-    return <div className="zip-bdfb-history-state">{ti('noSamples')}</div>;
-  }
-
-  const latest = history.points.at(-1);
-
-  return (
-    <>
-      <div className="zip-bdfb-history-grid">
-        <HistoryMetric
-          label={ti('voltage')}
-          unit="V"
-          metricKey="voltageV"
-          points={history.points}
-        />
-        <HistoryMetric
-          label={ti('current')}
-          unit="A"
-          metricKey="currentA"
-          points={history.points}
-        />
-        <HistoryMetric
-          label={ti('power')}
-          unit="kW"
-          decimals={3}
-          scale={0.001}
-          metricKey="powerW"
-          points={history.points}
-        />
-        <HistoryMetric
-          label={ti('energy')}
-          unit="kWh"
-          decimals={4}
-          metricKey="energyKwh"
-          points={history.points}
-        />
-      </div>
-      <dl className="zip-bdfb-live-average-counts">
-        <dt>{ti('historyScope')}</dt>
-        <dd>{history.scope.label}</dd>
-        <dt>{ti('breakersScope')}</dt>
-        <dd>{history.scope.breakerCount}</dd>
-        <dt>{ti('emptyPositions')}</dt>
-        <dd>{history.scope.emptyPositionCount}</dd>
-        <dt>{ti('buckets')}</dt>
-        <dd>{history.points.length}</dd>
-        <dt>{ti('activeBucket')}</dt>
-        <dd>{latest?.activeBreakers ?? 0}</dd>
-        <dt>{ti('latestBucket')}</dt>
-        <dd>
-          <OperationalTime value={latest?.observedAt} />
-        </dd>
-      </dl>
-    </>
-  );
-}
-
 
 function BdfbAlarmStrip({ entityId }: Readonly<{ entityId: string }>) {
   const t = useTranslations('alarmUi.scope');
@@ -317,16 +177,11 @@ export function BdfbTelemetryInspector({
 }>) {
   const ti = useTranslations('bdfb.inspector.info');
   const t = useTranslations('bdfb.inspector');
-  const tw = useTranslations('workbench');
   const tf = useTranslations('front01Ui');
   const { samples, now } = useBdfbTelemetrySnapshot(node.id);
   const inspectorRef = useRef<HTMLElement>(null);
   const [tab, setTab] = useState<InspectorTab>(mode === 'maintenance' ? 'settings' : 'overview');
   const tabs = mode === 'maintenance' ? MAINTENANCE_TABS : OPERATION_TABS;
-  const [window, setWindow] = useState<TelemetryHistoryWindow>('24h');
-  const [history, setHistory] = useState<TelemetryHistoryResponse | null>(null);
-  const [historyLoading, setHistoryLoading] = useState(false);
-  const [historyError, setHistoryError] = useState<string | null>(null);
   const frames = presentation.shelves.flatMap((shelf) => shelf.frames);
   const panels = frames.flatMap((frame) => frame.panels);
   const physicalShelves = presentation.shelves.filter((shelf) => shelf.physical !== false).length;
@@ -342,53 +197,12 @@ export function BdfbTelemetryInspector({
 
   const hasA = feeds?.includes('A') ?? false;
   const hasB = feeds?.includes('B') ?? false;
-  const scopeLabel = selectedPanel?.label ?? ti('entire');
   const positions = panels.flatMap((panel) => panel.positions);
   const breakers = positions.filter((item) => item !== null);
   const occupiedPanels = panels.filter((panel) => panel.positions.some(Boolean)).length;
 
-  useEffect(() => {
-    if (tab !== 'history') return;
-
-    const controller = new AbortController();
-    const params = new URLSearchParams({
-      deviceId: node.id,
-      window,
-    });
-    if (activePanelId) params.set('panelId', activePanelId);
-
-    void fetch(`/api/telemetry/history?${params.toString()}`, {
-      cache: 'no-store',
-      signal: controller.signal,
-    })
-      .then(async (response) => {
-        if (!response.ok) {
-          const body = (await response.json().catch(() => null)) as { error?: string } | null;
-          throw new Error(body?.error ?? `HTTP_${response.status}`);
-        }
-        return response.json() as Promise<TelemetryHistoryResponse>;
-      })
-      .then((payload) => {
-        setHistory(payload);
-        setHistoryLoading(false);
-      })
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) return;
-        setHistory(null);
-        setHistoryLoading(false);
-        setHistoryError(error instanceof Error ? error.message : 'HISTORY_LOAD_FAILED');
-      });
-
-    return () => controller.abort();
-  }, [activePanelId, node.id, tab, window]);
-
   function changeTab(next: InspectorTab) {
     if (next === tab) return;
-    if (next === 'history') {
-      setHistory(null);
-      setHistoryLoading(true);
-      setHistoryError(null);
-    }
     setTab(next);
     inspectorRef.current?.scrollTo({ top: 0, behavior: 'auto' });
   }
@@ -546,71 +360,15 @@ export function BdfbTelemetryInspector({
         )}
 
         {tab === 'feeds' && (
-          <>
-            <div className="sm-detached-workbench-actions">
-              <DetachedWorkbenchButton
-                href={`/workbench/telemetry?deviceId=${encodeURIComponent(node.id)}&view=inputs`}
-                windowName={`site-mapper-telemetry-${node.id}`}
-                label={tw('openInputs')}
-              />
-            </div>
-            <SnmpFeedLoadPanel
-              key={node.id}
-              deviceId={node.id}
-              chassisId={presentation.chassisId}
-              view="feeds"
-            />
-          </>
+          <SnmpFeedLoadPanel
+            key={node.id}
+            deviceId={node.id}
+            chassisId={presentation.chassisId}
+            view="feeds"
+          />
         )}
 
-        {tab === 'history' && (
-          <>
-            <div className="sm-detached-workbench-actions sm-detached-workbench-actions--split">
-              <DetachedWorkbenchButton
-                href={`/workbench/telemetry?deviceId=${encodeURIComponent(node.id)}&view=snmp`}
-                windowName={`site-mapper-telemetry-${node.id}`}
-                label={tw('openSnmpCharts')}
-              />
-              <DetachedWorkbenchButton
-                href={`/workbench/telemetry?deviceId=${encodeURIComponent(node.id)}&view=mqtt`}
-                windowName={`site-mapper-telemetry-${node.id}`}
-                label={tw('openMqttCharts')}
-              />
-            </div>
-            <SnmpFeedHistory deviceId={node.id} />
-            <section className="zip-bdfb-live-average" aria-label={ti('historyChart')}>
-              <header>
-                <div>
-                  <strong>{ti('mqttHistory')}</strong>
-                </div>
-                <span>{scopeLabel}</span>
-              </header>
-              <div className="zip-bdfb-window-tabs" role="tablist" aria-label={ti('historyWindow')}>
-                {TELEMETRY_HISTORY_WINDOWS.map((historyWindow) => (
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={window === historyWindow}
-                    key={historyWindow}
-                    onClick={() => {
-                      setHistory(null);
-                      setHistoryLoading(true);
-                      setHistoryError(null);
-                      setWindow(historyWindow);
-                    }}
-                  >
-                    {historyWindow.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-              <HistoricalTelemetry
-                history={history}
-                loading={historyLoading}
-                error={historyError}
-              />
-            </section>
-          </>
-        )}
+        {tab === 'history' && <SnmpFeedHistory deviceId={node.id} />}
 
         {tab === 'settings' && (
           <>

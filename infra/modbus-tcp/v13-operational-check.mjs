@@ -35,6 +35,56 @@ async function read(unit, offset, count = 3) {
   });
 }
 
+const projectionUrl = process.env.INDUSTRIAL_PROJECTION_URL;
+const projectionToken = process.env.INDUSTRIAL_PROJECTION_TOKEN;
+const registryPath = process.env.MODBUS_POINTS_FILE;
+
+async function projectionProbe() {
+  assert.ok(projectionUrl, 'INDUSTRIAL_PROJECTION_URL is required');
+  assert.ok(projectionToken, 'INDUSTRIAL_PROJECTION_TOKEN is required');
+  assert.ok(registryPath, 'MODBUS_POINTS_FILE is required');
+  const { readFile } = await import('node:fs/promises');
+  const registry = JSON.parse(await readFile(registryPath, 'utf8'));
+  const signalIds = registry.points.map((point) => point.signalId);
+  let last = 'not_attempted';
+
+  for (let attempt = 1; attempt <= 12; attempt++) {
+    try {
+      const response = await fetch(projectionUrl, {
+        method: 'POST',
+        headers: {
+          authorization: 'Bearer ' + projectionToken,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ signalIds }),
+        signal: AbortSignal.timeout(10000),
+      });
+      const body = await response.text();
+      last = 'HTTP_' + response.status;
+      if (response.ok) {
+        const parsed = JSON.parse(body);
+        assert.ok(Array.isArray(parsed.signals), 'Projection response must contain signals');
+        console.log(
+          'MODBUS_V13_PROJECTION_PROBE_OK status=' +
+            response.status +
+            ' signals=' +
+            parsed.signals.length,
+        );
+        return;
+      }
+      console.log('MODBUS_V13_PROJECTION_PROBE_RETRY status=' + response.status);
+    } catch (error) {
+      const code = error?.cause?.code ?? error?.name ?? 'unknown';
+      last = String(code).slice(0, 80);
+      console.log('MODBUS_V13_PROJECTION_PROBE_RETRY error=' + last);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+  assert.fail('Projection probe failed: ' + last);
+}
+
+await projectionProbe();
+
 const close = (actual, expected, tolerance = 0.0005) =>
   Number.isFinite(actual) && Math.abs(actual - expected) <= tolerance;
 

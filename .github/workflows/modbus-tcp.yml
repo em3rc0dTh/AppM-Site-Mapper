@@ -2,22 +2,38 @@ name: Site Mapper Modbus TCP certification
 on:
   push:
     branches:
-      - 'feat/modbus-tcp-site-mapper-sidecar'
+      - 'feat/**'
       - main
     paths:
       - 'infra/modbus-tcp/**'
+      - 'infra/telemetry-store/**'
       - 'scripts/operations/generate-metasys-register-map.mjs'
+      - 'scripts/operations/verify-modbus-v1-3-contract.mjs'
       - 'docs/telemetry/metasys-register-map.csv'
-      - 'src/modules/telemetry/infrastructure/telemetry-runtime.ts'
-      - '.github/workflows/modbus-tcp.yml'
+      - 'docs/telemetry/modbus-tcp-output.md'
+      - 'config/industrial/modbus-points.metasys-eltek-v1.3.json'
+      - 'config/industrial/modbus-tcp-v1.3-contract.json'
+      - 'src/modules/telemetry/application/metasys-eltek-modbus-projection.ts'
+      - 'src/modules/telemetry/infrastructure/http-telemetry-store.ts'
+      - 'src/modules/telemetry/infrastructure/industrial/publication.ts'
+      - 'src/app/api/telemetry/industrial/projection/route.ts'
       - 'docker-compose.telemetry.yml'
+      - '.github/workflows/modbus-tcp.yml'
   pull_request:
     paths:
-      - '.github/uat-verification.json'
       - 'infra/modbus-tcp/**'
+      - 'infra/telemetry-store/**'
       - 'scripts/operations/generate-metasys-register-map.mjs'
+      - 'scripts/operations/verify-modbus-v1-3-contract.mjs'
       - 'docs/telemetry/metasys-register-map.csv'
-      - 'src/modules/telemetry/infrastructure/telemetry-runtime.ts'
+      - 'docs/telemetry/modbus-tcp-output.md'
+      - 'config/industrial/modbus-points.metasys-eltek-v1.3.json'
+      - 'config/industrial/modbus-tcp-v1.3-contract.json'
+      - 'src/modules/telemetry/application/metasys-eltek-modbus-projection.ts'
+      - 'src/modules/telemetry/infrastructure/http-telemetry-store.ts'
+      - 'src/modules/telemetry/infrastructure/industrial/publication.ts'
+      - 'src/app/api/telemetry/industrial/projection/route.ts'
+      - 'docker-compose.telemetry.yml'
       - '.github/workflows/modbus-tcp.yml'
 
 permissions:
@@ -25,14 +41,25 @@ permissions:
 
 jobs:
   modbus:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - name: Test 96 circuits, FLOAT32, 3 Unit IDs and real TCP reader
-        run: node --test infra/modbus-tcp/server.test.mjs
-      - name: Check committed Metasys register table against runtime map
+          cache: npm
+      - name: Install exact dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Verify exact customer Modbus TCP v1.3 workbook contract
+        run: node scripts/operations/verify-modbus-v1-3-contract.mjs
+      - name: Test Modbus bridge and extension registry
+        run: node --test infra/modbus-tcp/server.test.mjs infra/modbus-tcp/point-registry.test.mjs
+      - name: Test Metasys ELTEK 17-point projection
+        run: npx vitest run tests/unit/metasys-eltek-modbus-projection.test.ts
+      - name: Test durable SNMP energy projection
+        run: |
+          python3 -m py_compile infra/telemetry-store/app.py
+          python3 -m unittest discover -s infra/telemetry-store -p 'test_entity_history.py'
+      - name: Check committed base register table against runtime map
         run: node scripts/operations/generate-metasys-register-map.mjs --check

@@ -9,6 +9,7 @@ COPY app.py industrial.py .
 COPY init/002-entity-telemetry.sql .
 COPY init/003-snmp-atomic-batches.sql .
 COPY init/004-industrial-observations.sql .
+COPY init/005-snmp-feed-energy.sql .
 
 EXPOSE 8080
 

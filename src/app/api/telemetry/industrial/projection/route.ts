@@ -11,6 +11,10 @@ import {
   projectQdfTotalPowerSignals,
   projectQdfVoltageSignals,
 } from '@/modules/telemetry/application/qdf-modbus-projection';
+import {
+  parseMetasysEltekLogicalPoint,
+  projectMetasysEltekSignals,
+} from '@/modules/telemetry/application/metasys-eltek-modbus-projection';
 import { collectorTokenEquals } from '@/modules/telemetry/application/snmp-ingest-credentials';
 import { logicalRegistry } from '@/modules/telemetry/infrastructure/industrial/logical-points';
 import { publicationManifest } from '@/modules/telemetry/infrastructure/industrial/publication';
@@ -49,6 +53,14 @@ export async function POST(request: Request) {
     const signalIds = ids as string[];
     const [registry, manifest] = await Promise.all([logicalRegistry(), publicationManifest()]);
 
+    const metasysEltekRequests = signalIds.flatMap((id) => {
+      const point = manifest?.points.find((item) => item.signalId === id);
+      return point?.logicalPointId && parseMetasysEltekLogicalPoint(point.logicalPointId)
+        ? [{ signalId: id, logicalPointId: point.logicalPointId }]
+        : [];
+    });
+    const metasysEltekIds = new Set(metasysEltekRequests.map((request) => request.signalId));
+
     const alarmRequests = signalIds.flatMap((id) => {
       const point = manifest?.points.find((item) => item.signalId === id);
       return point?.logicalPointId && parseAlarmPublicationLogicalPoint(point.logicalPointId)
@@ -56,29 +68,50 @@ export async function POST(request: Request) {
         : [];
     });
     const topology = await createTopologyRepository();
-    const alarmSignals = alarmRequests.length
-      ? await projectAlarmPublicationSignals(alarmRequests, await createAlarmRepository(), topology)
-      : [];
+    const alarmRepository =
+      alarmRequests.length || metasysEltekRequests.length ? await createAlarmRepository() : null;
+    const alarmSignals =
+      alarmRequests.length && alarmRepository
+        ? await projectAlarmPublicationSignals(alarmRequests, alarmRepository, topology)
+        : [];
     const alarmById = new Map(alarmSignals.map((signal) => [signal.id, signal]));
 
-    const qdfCurrentRequests = signalIds.flatMap((id) => {
-      const point = manifest?.points.find((item) => item.signalId === id);
-      return point?.logicalPointId && parseQdfTotalCurrentLogicalPoint(point.logicalPointId)
-        ? [{ signalId: id, logicalPointId: point.logicalPointId }]
+    const metasysEltekSignals =
+      metasysEltekRequests.length && alarmRepository
+        ? await projectMetasysEltekSignals(
+            metasysEltekRequests,
+            topology,
+            await createTelemetryBindingRepository(),
+            createTelemetryStoreClient(),
+            alarmRepository,
+          )
         : [];
-    });
-    const qdfVoltageRequests = signalIds.flatMap((id) => {
-      const point = manifest?.points.find((item) => item.signalId === id);
-      return point?.logicalPointId && parseQdfVoltageLogicalPoint(point.logicalPointId)
-        ? [{ signalId: id, logicalPointId: point.logicalPointId }]
-        : [];
-    });
-    const qdfPowerRequests = signalIds.flatMap((id) => {
-      const point = manifest?.points.find((item) => item.signalId === id);
-      return point?.logicalPointId && parseQdfTotalPowerLogicalPoint(point.logicalPointId)
-        ? [{ signalId: id, logicalPointId: point.logicalPointId }]
-        : [];
-    });
+    const metasysEltekById = new Map(metasysEltekSignals.map((signal) => [signal.id, signal]));
+
+    const qdfCurrentRequests = signalIds
+      .filter((id) => !metasysEltekIds.has(id))
+      .flatMap((id) => {
+        const point = manifest?.points.find((item) => item.signalId === id);
+        return point?.logicalPointId && parseQdfTotalCurrentLogicalPoint(point.logicalPointId)
+          ? [{ signalId: id, logicalPointId: point.logicalPointId }]
+          : [];
+      });
+    const qdfVoltageRequests = signalIds
+      .filter((id) => !metasysEltekIds.has(id))
+      .flatMap((id) => {
+        const point = manifest?.points.find((item) => item.signalId === id);
+        return point?.logicalPointId && parseQdfVoltageLogicalPoint(point.logicalPointId)
+          ? [{ signalId: id, logicalPointId: point.logicalPointId }]
+          : [];
+      });
+    const qdfPowerRequests = signalIds
+      .filter((id) => !metasysEltekIds.has(id))
+      .flatMap((id) => {
+        const point = manifest?.points.find((item) => item.signalId === id);
+        return point?.logicalPointId && parseQdfTotalPowerLogicalPoint(point.logicalPointId)
+          ? [{ signalId: id, logicalPointId: point.logicalPointId }]
+          : [];
+      });
     const qdfDependencies =
       qdfCurrentRequests.length || qdfPowerRequests.length || qdfVoltageRequests.length
         ? {
@@ -120,7 +153,7 @@ export async function POST(request: Request) {
     );
 
     const industrialPoints = signalIds
-      .filter((id) => !alarmById.has(id) && !qdfById.has(id))
+      .filter((id) => !metasysEltekById.has(id) && !alarmById.has(id) && !qdfById.has(id))
       .map((id) => ({
         id,
         point: registry?.points.find((point) => point.publicationSignalId === id),
@@ -178,6 +211,8 @@ export async function POST(request: Request) {
     }
 
     const signals = signalIds.flatMap<Record<string, unknown>>((id) => {
+      const metasysEltek = metasysEltekById.get(id);
+      if (metasysEltek) return [{ ...metasysEltek }];
       const alarm = alarmById.get(id);
       if (alarm) return [{ ...alarm }];
       const qdf = qdfById.get(id);

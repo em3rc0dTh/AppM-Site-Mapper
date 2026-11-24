@@ -95,8 +95,16 @@
   height: 9px;
 }
 
+.sm-powered-diagram-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 3.25fr) minmax(300px, 0.9fr);
+  gap: 14px;
+  align-items: start;
+}
+
 .sm-powered-diagram {
   display: grid;
+  min-width: 0;
   gap: 12px;
 }
 
@@ -110,8 +118,8 @@
 .sm-powered-diagram-head,
 .sm-powered-feed-layout {
   display: grid;
-  grid-template-columns: minmax(580px, 1.45fr) minmax(76px, 0.22fr) minmax(340px, 0.85fr);
-  gap: 12px;
+  grid-template-columns: minmax(470px, 1.55fr) minmax(48px, 0.16fr) minmax(270px, 0.84fr);
+  gap: 8px;
 }
 
 .sm-powered-diagram-head {
@@ -455,7 +463,9 @@
 }
 
 .sm-powered-electrical-summary {
-  margin-top: 12px;
+  position: sticky;
+  top: 12px;
+  min-width: 0;
   padding: 12px;
   border: 1px solid #cad8e5;
   border-radius: 9px;
@@ -463,123 +473,115 @@
 }
 
 .sm-powered-electrical-summary > header {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 12px;
-  margin-bottom: 6px;
+  margin-bottom: 10px;
 }
 
 .sm-powered-electrical-summary h2 {
   margin: 0;
-  font-size: 16px;
   color: #163a61;
+  font-size: 16px;
 }
 
-.sm-powered-electrical-summary > header span {
-  color: #59728a;
+.sm-powered-summary-stack {
+  display: grid;
+  gap: 10px;
+}
+
+.sm-powered-summary-block {
+  overflow: hidden;
+  border: 1px solid #d5e0e9;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.sm-powered-summary-block h3 {
+  margin: 0;
+  padding: 7px 10px;
+  border-bottom: 1px solid #dce6ee;
+  background: #f1f6fa;
+  color: #163a61;
+  font-size: 15px;
+}
+
+.sm-powered-summary-block[data-feed='A'] {
+  border-color: #65b6ee;
+}
+
+.sm-powered-summary-block[data-feed='A'] h3 {
+  background: #eaf6ff;
+  color: #176cc2;
+}
+
+.sm-powered-summary-block[data-feed='B'] {
+  border-color: #efbb4c;
+}
+
+.sm-powered-summary-block[data-feed='B'] h3 {
+  background: #fff6dc;
+  color: #8a5900;
+}
+
+.sm-powered-summary-block.is-total h3 {
+  background: #eaf1f7;
+}
+
+.sm-powered-summary-block dl {
+  margin: 0;
+  padding: 4px 10px 7px;
   font-size: 11px;
+  font-variant-numeric: tabular-nums;
 }
 
-.sm-powered-electrical-summary > p {
-  margin: 10px 0 0;
+.sm-powered-summary-block dl > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  min-height: 30px;
+  border-bottom: 1px solid #e7edf2;
+}
+
+.sm-powered-summary-block dl > div:last-child {
+  border-bottom: 0;
+}
+
+.sm-powered-summary-block dt {
+  color: #496781;
+  font-weight: 750;
+}
+
+.sm-powered-summary-block dd {
+  margin: 0;
+  color: #102b48;
+  font-weight: 800;
+  text-align: right;
+}
+
+.sm-powered-diagram-footer {
+  display: grid;
+  grid-template-columns: minmax(280px, auto) minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid #cad8e5;
+  border-radius: 9px;
+  background: #fff;
+}
+
+.sm-powered-diagram-footer > p {
+  margin: 0;
   color: #647a8e;
   font-size: 10px;
   line-height: 1.45;
 }
 
-.sm-powered-summary-table {
-  display: grid;
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
+.sm-powered-diagram-footer .sm-powered-selection {
+  margin-top: 0;
 }
 
-.sm-powered-summary-table > div {
-  display: grid;
-  grid-template-columns: minmax(80px, 0.6fr) repeat(4, minmax(140px, 1fr));
-  gap: 12px;
-  align-items: center;
-  min-height: 35px;
-  padding: 4px 10px;
-  border-bottom: 1px solid #e5ebf0;
-}
-
-.sm-powered-summary-table > div.is-header {
-  color: #496781;
-  font-size: 11px;
-  font-weight: 800;
-}
-
-.sm-powered-summary-table > div.is-total {
-  border-bottom: 0;
-  border-radius: 6px;
-  background: #eef6fd;
-  color: #102b48;
-}
-
-.sm-powered-summary-table [data-feed='A'] {
-  color: #176cc2;
-}
-
-.sm-powered-summary-table [data-feed='B'] {
-  color: #96640b;
-}
-
-.sm-powered-selection {
-  display: grid;
-  gap: 5px;
-  margin-top: 12px;
-  padding: 9px 10px;
-  border: 1px solid #d8e4ee;
-  border-radius: 6px;
-  background: #f8fbfe;
-}
-
-.sm-powered-selection small {
-  color: #60778d;
-  font-size: 9px;
-  font-weight: 800;
-}
-
-.sm-powered-selection code {
-  overflow-wrap: anywhere;
-  color: #174f7d;
-  font-size: 10px;
-}
-
-@media (max-width: 1280px) {
-  .sm-powered-summary-card {
-    grid-template-columns: auto minmax(180px, 1fr);
-  }
-
-  .sm-powered-summary-card dl {
-    grid-column: 1 / -1;
-  }
-
-  .sm-powered-diagram-head,
-  .sm-powered-feed-layout {
-    grid-template-columns: minmax(540px, 1.35fr) 70px minmax(320px, 0.8fr);
-  }
-}
-
-@media print {
-  .sm-powered-equipment-workbench {
-    min-width: 0;
-    padding: 0;
-  }
-
-  .sm-powered-equipment-workbench .sm-workbench-header {
-    margin: 0 0 12px;
-    padding: 0 0 12px;
-  }
-
-  .sm-powered-wire span {
-    print-color-adjust: exact;
-  }
-
-  .sm-powered-electrical-summary {
-    break-inside: avoid;
-  }
+.sm-powered-diagram-footer .sm-powered-documentary-remarks {
+  grid-column: 1 / -1;
 }
 
 .sm-powered-documentary-remarks {

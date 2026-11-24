@@ -25,9 +25,76 @@ The Modbus server does not query TimescaleDB or MongoDB when answering a Modbus 
 - The breaker block remains exactly 0–767. Client circuit **00** occupies 768–775: Voltage 768, Current 770, Power 772 and Energy 774 (each FLOAT32/two registers). Governed industrial extensions still begin at address **1024** and remain opt-in.
 - Function codes other than FC04 return illegal-function exception. Malformed/out-of-range FC04 requests return exception, not out-of-bounds data.
 
+## Metasys Eltek v1.3 customer extension
+
+The customer source of truth is `Modbus_TCP_v1.3.xlsx`. The runtime manifest is
+[`config/industrial/modbus-points.metasys-eltek-v1.3.json`](../../config/industrial/modbus-points.metasys-eltek-v1.3.json).
+It is additive: the breaker/QDF base map at offsets 0–775 is unchanged, offsets 776–1023 remain
+reserved, and the ELTEK/SNMP extension begins at 1024. The customer manifest uses the dedicated
+pinned registry path `/data/modbus-registry-metasys-eltek-v1.3.json`.
+
+Customer-facing transport contract:
+
+- Modbus TCP, production/client port **502**; the local development host may map the internal bridge to another loopback port.
+- Read-only **FC04 — Read Input Registers**.
+- 0-based PDU/start-address convention with 4xxxx references shown for operator handoff.
+- IEEE-754 **FLOAT32**, two value registers per point, ABCD / high-word-first.
+- QDF-2 → Unit ID 1; QDF-4 → Unit ID 2; QDF-5 → Unit ID 3.
+- Base schedule: 388 values per QDF, 1,164 values total.
+- Base units: Voltage V, Current A, Power kW, Energy kWh.
+
+The extension schedule is identical for all three Unit IDs:
+
+| Start | 4xxxx reference | Point                  | Type    | Unit     |
+| ----: | --------------- | ---------------------- | ------- | -------- |
+|  1024 | 41025-41026     | Input A Rated Current  | FLOAT32 | A        |
+|  1027 | 41028-41029     | Input A Voltage        | FLOAT32 | V        |
+|  1030 | 41031-41032     | Input A Current        | FLOAT32 | A        |
+|  1033 | 41034-41035     | Input A Power          | FLOAT32 | kW       |
+|  1039 | 41040-41041     | Input B Rated Current  | FLOAT32 | A        |
+|  1042 | 41043-41044     | Input B Voltage        | FLOAT32 | V        |
+|  1045 | 41046-41047     | Input B Current        | FLOAT32 | A        |
+|  1048 | 41049-41050     | Input B Power          | FLOAT32 | kW       |
+|  1054 | 41055-41056     | Total Current          | FLOAT32 | A        |
+|  1057 | 41058-41059     | Bus A Voltage          | FLOAT32 | V        |
+|  1060 | 41061-41062     | Bus B Voltage          | FLOAT32 | V        |
+|  1063 | 41064-41065     | Total Voltage          | FLOAT32 | V        |
+|  1066 | 41067-41068     | Total Power            | FLOAT32 | kW       |
+|  1069 | 41070-41071     | Total Energy           | FLOAT32 | kWh      |
+|  1072 | 41073-41074     | Communication Status   | FLOAT32 | no-units |
+|  1075 | 41076-41077     | Controller Alarm State | FLOAT32 | no-units |
+|  1078 | 41079-41080     | Alarm Severity         | FLOAT32 | no-units |
+
+Every governed extension point still reserves the bridge-internal quality slot at `start + 2`; this
+is why the next customer value starts three registers later. The quality register is not one of the
+two value registers listed in the workbook.
+
+Status codes are numerically encoded as FLOAT32 values:
+
+```text
+Communication Status:   0 OFFLINE, 1 LIVE, 2 STALE, 3 ERROR
+Controller Alarm State: 0 RESOLVED/CLEAR, 1 ACTIVE
+Alarm Severity:         0 NONE, 1 INFO, 2 WARNING, 3 CRITICAL
+```
+
+The projection source is Site Mapper, not raw SNMP-to-Modbus passthrough:
+
+- Rated Current comes from commissioned AccessPort configuration.
+- Input A/B Voltage and Current come from accepted SNMP poll observations.
+- Input A/B Power is derived as `I × abs(V)` and published in kW.
+- Total Current, Bus A/B Voltage, Total Voltage and Total Power use the operational QDF projection
+  and require complete, coherent expected inputs.
+- Total Energy is derived durably by Site Mapper from accepted SNMP V/I history.
+- Communication Status is derived from commissioned SNMP source/feed health.
+- Controller Alarm State and Alarm Severity come from canonical Alarm Engine occurrences on the
+  controller Equipment. Raw trap payloads and OIDs are not exported to Metasys.
+
+The four `TOTAL_*` extension points set `legacyTotalMirror=false`, so the v1.3 extension cannot
+overwrite the base client circuit 00 registers at 768–775.
+
 ## Local deployment
 
-Set an **independent, private** random `MODBUS_BRIDGE_TOKEN` of at least 24 characters and the approved source map.
+Set an **independent, private** random `MODBUS_BRIDGE_TOKEN` of at least 24 characters, a private `INDUSTRIAL_PROJECTION_TOKEN`, and the approved source map. The projection token is shared only between the Modbus sidecar and the Site Mapper internal projection endpoint.
 
 For Docker Compose `docker-compose.telemetry.yml`, start the sidecar along with TimescaleDB. This compose profile publishes the TCP Modbus and internal HTTP ingestion ports on **127.0.0.1 only**. Do not expose HTTP ingestion publicly.
 
@@ -69,9 +136,10 @@ CONFIDENCE  0 none, 1 suspected, 2 confirmed
 QUALITY     1 governed projection valid
 ```
 
-For compatibility with the existing extension registry, each logical alarm value currently uses the
-same FLOAT32 + adjacent quality-register slot already supported by the bridge. A future UINT16
-transport is not silently substituted because published Modbus addresses and datatypes are immutable.
+Generic pre-existing alarm publication registries remain backward-compatible: points that omit
+`dataType` still default to FLOAT32 + adjacent quality. The Metasys Eltek v1.3 customer registry is a
+new registry identity and explicitly declares its three customer status fields as UINT16; it does not
+silently mutate any previously published alarm address or datatype.
 
 These points remain **unassigned until commissioning explicitly adds them to the publication
 registry**. No alarm address is guessed from topology, panel position, MQTT point, or SNMP OID.

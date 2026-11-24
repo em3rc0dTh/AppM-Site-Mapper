@@ -3,6 +3,7 @@ WORKDIR /opt/site-mapper
 COPY infra/modbus-tcp/server.mjs ./server.mjs
 COPY infra/modbus-tcp/register-map.mjs ./register-map.mjs
 COPY infra/modbus-tcp/point-registry.mjs ./point-registry.mjs
+COPY config/industrial/modbus-points.metasys-eltek-v1.3.json ./modbus-points.metasys-eltek-v1.3.json
 RUN mkdir -p /data && chown node:node /data
 USER node
 CMD ["node", "server.mjs"]

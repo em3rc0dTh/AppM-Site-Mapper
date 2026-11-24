@@ -127,13 +127,13 @@ jobs:
           }
           dc --profile trap-test run --rm --no-deps snmp-trap-test
           for i in $(seq 1 45); do
-            count="$(dc exec -T mongodb mongosh --quet seed-01 --eval \
+            count="$(dc exec -T mongodb mongosh --quiet seed-01 --eval \
               'print(db.industrial_events.countDocuments({protocol:"SNMP"}))' | tail -1)"
             if [ "${count:-0}" -gt 0 ]; then break; fi
             test "$i" -lt 45
             sleep 2
           done
-          dc exec -T mongodb mongosh --quet seed-01 --eval \
+          dc exec -T mongodb mongosh --quiet seed-01 --eval \
             'db.recovery_cert.replaceOne({_id:"one-kick"},{_id:"one-kick",value:"PERSIST_ME"},{upsert:true})'
 
       - name: Cold encrypted recovery bundle
@@ -165,10 +165,10 @@ jobs:
       - name: Verify persistence after disaster restore
         run: |
           set -eu
-          value="$(docker exec appm-site-mapper-mongodb-1 mongosh --quet seed-01 --eval \
+          value="$(docker exec appm-site-mapper-mongodb-1 mongosh --quiet seed-01 --eval \
              'print(db.recovery_cert.findOne({_id:"one-kick"})?.value || "")' | tail -1)"
           test "$value" = PERSIST_ME
-          test "$(docker exec appm-site-mapper-mongodb-1 mongosh --quet seed-01 --eval \
+          test "$(docker exec appm-site-mapper-mongodb-1 mongosh --quiet seed-01 --eval \
              'print(db.industrial_events.countDocuments({protocol:"SNMP"}))' | tail -1)" -gt 0
           curl -fsSL http://127.0.0.1:3000/login >/dev/null
           sudo ss -H -lun | grep -F '192.168.10.1:162'

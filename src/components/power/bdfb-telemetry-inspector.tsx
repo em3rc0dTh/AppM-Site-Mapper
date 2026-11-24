@@ -21,8 +21,6 @@ import { useTranslations } from 'next-intl';
 type InspectorTab = 'overview' | 'alarms' | 'feeds' | 'history' | 'traps' | 'settings';
 const OPERATION_TABS: readonly InspectorTab[] = ['overview', 'feeds', 'history', 'alarms', 'traps'];
 const MAINTENANCE_TABS: readonly InspectorTab[] = ['settings'];
-type HistoryMetricKey = 'voltageV' | 'currentA' | 'powerW' | 'energyKwh';
-
 function metric(value: number | null | undefined, unit: string, decimals = 2): string {
   return value === undefined || value === null ? '—' : `${value.toFixed(decimals)} ${unit}`;
 }

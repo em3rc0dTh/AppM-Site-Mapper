@@ -166,5 +166,3 @@ export function controllerProfileFromAttributes(
 ): SnmpControllerProfile | null {
   return parseSnmpControllerProfile(attributes?.snmpControllerProfile);
 }
-
-[executed on device: TFARM04 (41aaa2a2-45b1-4e70-8348-0c4d0abdd30e)]

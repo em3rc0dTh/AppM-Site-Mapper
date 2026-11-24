@@ -223,7 +223,25 @@ export function AppShell({ children }: { children: ReactNode }) {
             aria-label={t('signOut')}
             title={t('signOut')}
           >
-            {busy ? '…' : '⋮'}
+            {busy ? (
+              '…'
+            ) : (
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                width="18"
+                height="18"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <path d="M16 17l5-5-5-5" />
+                <path d="M21 12H9" />
+              </svg>
+            )}
           </button>
         </div>
       </header>

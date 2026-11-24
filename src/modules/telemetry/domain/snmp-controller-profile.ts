@@ -12,8 +12,22 @@ export interface SnmpControllerSignal {
   readonly metric?: 'CURRENT' | 'VOLTAGE' | undefined;
 }
 
+export interface ControllerBalanceConfig {
+  readonly method: 'TOTAL_MINUS_BRANCH';
+  readonly totalOid: string;
+  readonly branchOid: string;
+  readonly voltageOid: string;
+  readonly branchStatusOid: string;
+  readonly normalization?: {
+    readonly totalCurrentScale: number;
+    readonly branchCurrentScale: number;
+    readonly voltageScale: number;
+  };
+}
+
 export interface SnmpControllerProfile {
   readonly schemaVersion: 1;
+  readonly balance?: ControllerBalanceConfig;
   readonly title: string;
   readonly sourceIdentity: string;
   readonly signals: readonly SnmpControllerSignal[];
@@ -31,7 +45,7 @@ function hasKeys(value: Record<string, unknown>, allowed: readonly string[]): bo
 export function parseSnmpControllerProfile(value: unknown): SnmpControllerProfile | null {
   if (
     !isRecord(value) ||
-    !hasKeys(value, ['schemaVersion', 'title', 'sourceIdentity', 'signals']) ||
+    !hasKeys(value, ['schemaVersion', 'title', 'sourceIdentity', 'signals', 'balance']) ||
     value.schemaVersion !== 1 ||
     typeof value.title !== 'string' ||
     !value.title.trim() ||
@@ -76,7 +90,70 @@ export function parseSnmpControllerProfile(value: unknown): SnmpControllerProfil
     }
   }
 
+  let balance: ControllerBalanceConfig | undefined;
+
+  if (value.balance !== undefined) {
+    const b = value.balance;
+    if (
+      !isRecord(b) ||
+      !hasKeys(b, [
+        'method',
+        'totalOid',
+        'branchOid',
+        'voltageOid',
+        'branchStatusOid',
+        'normalization',
+      ]) ||
+      b.method !== 'TOTAL_MINUS_BRANCH'
+    )
+      return null;
+
+    const oids = [b.totalOid, b.branchOid, b.voltageOid, b.branchStatusOid];
+
+    if (
+      oids.some((oid) => typeof oid !== 'string' || !signals.some((spec) => spec.oid === oid)) ||
+      new Set(oids).size !== oids.length
+    )
+      return null;
+
+    let normalization: ControllerBalanceConfig['normalization'];
+
+    if (b.normalization !== undefined) {
+      const n = b.normalization;
+      if (
+        !isRecord(n) ||
+        !hasKeys(n, ['totalCurrentScale', 'branchCurrentScale', 'voltageScale']) ||
+        typeof n.totalCurrentScale !== 'number' ||
+        typeof n.branchCurrentScale !== 'number' ||
+        typeof n.voltageScale !== 'number' ||
+        !Number.isFinite(n.totalCurrentScale) ||
+        !Number.isFinite(n.branchCurrentScale) ||
+        !Number.isFinite(n.voltageScale) ||
+        n.totalCurrentScale <= 0 ||
+        n.branchCurrentScale <= 0 ||
+        n.voltageScale === 0
+      )
+        return null;
+
+      normalization = {
+        totalCurrentScale: n.totalCurrentScale,
+        branchCurrentScale: n.branchCurrentScale,
+        voltageScale: n.voltageScale,
+      };
+    }
+
+    balance = {
+      ...(normalization ? { normalization } : {}),
+      method: 'TOTAL_MINUS_BRANCH',
+      totalOid: b.totalOid as string,
+      branchOid: b.branchOid as string,
+      voltageOid: b.voltageOid as string,
+      branchStatusOid: b.branchStatusOid as string,
+    };
+  }
+
   return {
+    ...(balance ? { balance } : {}),
     schemaVersion: 1,
     title: value.title.trim(),
     sourceIdentity: value.sourceIdentity,

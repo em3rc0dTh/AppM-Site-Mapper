@@ -16,6 +16,32 @@ import {
 import type { SnmpBdfbLoadView } from '@/modules/telemetry/application/snmp-feed-service';
 import styles from './snmp-controller-live.module.css';
 
+function formatSnmpRaw(value: unknown): string {
+  if (value === null || value === undefined) return '—';
+
+  if (typeof value === 'object') {
+    const encoded = value as {
+      encoding?: string;
+      bytes?: string;
+    };
+
+    if (encoded.encoding === 'base64' && typeof encoded.bytes === 'string') {
+      try {
+        const bytes = Uint8Array.from(atob(encoded.bytes), (c) => c.charCodeAt(0));
+        const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+
+        if (!/[\\x00-\\x1f\\x7f]/.test(text)) return text.trim() || '—';
+      } catch {
+        // Preserve binary values without inventing text.
+      }
+    }
+
+    return JSON.stringify(value);
+  }
+
+  return String(value);
+}
+
 function formattedTimestamp(value: string | null, locale: string): string | null {
   if (!value) return null;
   const time = Date.parse(value);
@@ -256,6 +282,80 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
           );
         })}
       </dl>
+
+      <details style={{ margin: '16px 0' }}>
+        <summary style={{ cursor: 'pointer', fontWeight: 600 }}>
+          {t('fullCatalog', { count: signals.length })}
+        </summary>
+
+        <div style={{ overflowX: 'auto', marginTop: 12 }}>
+          <table className="front01-snmp-table">
+            <thead>
+              <tr>
+                <th>{t('mibVariable')}</th>
+                <th>{t('oid')}</th>
+                <th>{t('raw')}</th>
+                <th>{t('interpretedValue')}</th>
+                <th>{t('qualityLabel')}</th>
+                <th>{t('lastReading')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[...signals]
+                .sort((a, b) =>
+                  a.key.localeCompare(b.key, undefined, {
+                    numeric: true,
+                  }),
+                )
+                .map((signal) => {
+                  const item = signal as SnmpControllerObservation & {
+                    mibName?: string | null;
+                    communicationQuality?: string;
+                  };
+
+                  const observed =
+                    item.lastObservation?.observedAt ?? item.observedAt ?? item.receivedAt;
+
+                  const raw = item.lastObservation?.rawValue ?? item.rawValue;
+
+                  const age = now === null ? Number.NaN : now - Date.parse(observed);
+
+                  const fresh =
+                    Number.isFinite(age) &&
+                    age >= -10000 &&
+                    age <= (item.staleMs ?? 90000) &&
+                    item.communicationQuality !== 'STALE';
+
+                  const interpreted =
+                    item.enumLabel ?? (item.quality === 'VALID' ? item.value : null);
+
+                  return (
+                    <tr key={item.key}>
+                      <td>{item.mibName ?? '—'}</td>
+                      <td>
+                        <code>{item.key}</code>
+                      </td>
+                      <td>{formatSnmpRaw(raw)}</td>
+                      <td>
+                        {interpreted === null || interpreted === undefined
+                          ? '—'
+                          : String(interpreted)}
+                      </td>
+                      <td>
+                        {!fresh
+                          ? 'STALE'
+                          : item.quality === 'UNKNOWN'
+                            ? 'RAW / Sin normalizar'
+                            : item.quality}
+                      </td>
+                      <td>{formattedTimestamp(observed, locale) ?? '—'}</td>
+                    </tr>
+                  );
+                })}
+            </tbody>
+          </table>
+        </div>
+      </details>
 
       <footer className={styles.footer}>
         <div className={styles.sourceDetail}>

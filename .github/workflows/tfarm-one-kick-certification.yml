@@ -1,0 +1,190 @@
+name: TFARM one-kick certification
+
+on:
+  pull_request:
+    paths:
+      - 'deployment/**'
+      - 'docker-compose.telemetry.yml'
+      - 'docker-compose.office-test.yml'
+      - 'docker-compose.snmp-field.yml'
+      - 'infra/site-mapper/**'
+      - 'infra/snmp-collector/**'
+      - 'infra/telemetry-store/**'
+      - 'infra/modbus-tcp/**'
+      - 'src/modules/telemetry/**'
+      - '.github/workflows/tfarm-one-kick-certification.yml'
+  push:
+    branches:
+      - 'feat/tfarm-one-kick-certified-*'
+      - 'release/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  clean-recovery:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Deployment contract tests
+        run: python3 deployment/tests/test_contract.py
+
+      - name: Validate deployment shell entrypoints
+        run: bash -n deployment/one-kick.sh deployment/capture-live-recovery.sh
+
+      - name: Install clean-host network prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y network-manager
+
+      - name: Create isolated bridge
+        run: |
+          sudo ip link add br-lab type bridge
+          sudo ip address add 192.168.10.1/24 dev br-lab
+          sudo ip link set br-lab up
+
+      - name: Create CI runtime and profile
+        run: |
+          set -eu
+          mkdir -p .runtime /tmp/tfarm-ci
+          cat > .runtime/office-test.env <<'ENVEOF'
+          APP_ENV=development
+          APP_PERSISTENCE=mongodb
+          MONGODB_DB_NAME=seed-01
+          SITE_MAPPER_SEED_PROFILE=seed-01
+          SITE_MAPPER_INTEGRATION_PROFILE=office-field
+          TELEMETRY_ENABLED=true
+          TELEMETRY_HISTORY_ENABLED=true
+          TELEMETRY_WATCH_MODE=shadow
+          TIMESCALE_DB_PASSWORD=ci-timescale-password
+          BOOTSTRAP_ADMIN_TOKEN=ci-bootstrap-token-1234567890
+          TELEMETRY_STORE_TOKEN=ci-store-token-1234567890
+          MODBUS_BRIDGE_TOKEN=ci-modbus-token-1234567890
+          SNMP_INGEST_TOKEN=ci-snmp-token-1234567890
+          SITE_MAPPER_CREDENTIAL_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          MQTT_CLIENT_ID=site-mapper-ci
+          MQTT_BROKER_URL=mqtt://mosquitto:1883
+          MQTT_USERNAME=site-mapper-ci
+          MQTT_PASSWORD=ci-mqtt-password
+          MQTT_TOPIC_PREFIX=data/dev/
+          MQTT_TOPIC_FILTER=data/dev/#
+          MQTT_LAN_BIND_HOST=192.168.10.1
+          MQTT_LAN_PORT=1883
+          MODBUS_SOURCE_UNITS_JSON={"CI-BFDB-01":1}
+          MODBUS_POINT_LAYOUT=blocks-2x48
+          MODBUS_MISSING_POLICY=zero
+          MODBUS_STALE_MS=360000
+          MODBUS_CLIENT_BIND_HOST=192.168.10.1
+          MODBUS_CLIENT_PORT=502
+          SNMP_POLL_INTERVAL_MS=5000
+          INDUSTRIAL_INGEST_SOURCES_JSON={"CI-TRAP":"ci-source-token-12345678901234567890"}
+          INDUSTRIAL_PROFILES_JSON=[{"sourceIdentity":"CI-TRAP","protocol":"SNMP","version":"ci-raw-v1","staleMs":30000,"rules":[]}]
+          SNMP_TRAP_SOURCES_JSON=[{"sourceIdentity":"CI-TRAP","address":"127.0.0.1","version":"2c","community":"ci-trap-community","token":"ci-source-token-12345678901234567890"}]
+          SNMP_TRAP_TEST_COMMUNITY=ci-trap-community
+          SNMP_TRAP_HOST_BIND=192.168.10.1
+          SNMP_TRAP_HOST_PORT=162
+          ENVEOF
+          chmod 600 .runtime/office-test.env
+          python3 - <<'PY'
+          import json
+          p=json.load(open("deployment/profiles/tfarm.example.json"))
+          p["network"]["wan"]="eth-ci-wan"
+          p["network"]["lan"]=["eth-ci-lan0","eth-ci-lan1"]
+          json.dump(p,open("/tmp/tfarm-ci/profile.json","w"),indent=2)
+          PY
+
+      - name: Compose preflight and application build
+        run: |
+          python3 deployment/tfarmctl --root "$PWD" --profile /tmp/tfarm-ci/profile.json preflight
+          docker compose --project-name appm-site-mapper --env-file .runtime/office-test.env \
+            -f docker-compose.telemetry.yml -f docker-compose.office-test.yml \
+            -f docker-compose.snmp-field.yml -f deployment/compose.tfarm.yml \
+            pull mongodb timescaledb mosquitto
+          sudo -H python3 deployment/tfarmctl --root "$PWD" --profile /tmp/tfarm-ci/profile.json build
+
+      - name: Start full field stack from empty runner
+        run: |
+          sudo -H python3 deployment/tfarmctl --root "$PWD" --profile /tmp/tfarm-ci/profile.json start
+          for i in $(seq 1 90); do
+            if curl -fsS http://127.0.0.1:3000/login >/dev/null 2>&1; then break; fi
+            test "$i" -lt 90
+            sleep 2
+          done
+          python3 deployment/tfarmctl --root "$PWD" --profile /tmp/tfarm-ci/profile.json validate
+
+      - name: Prove trap ingestion and persisted application state
+        run: |
+          set -eu
+          dc() {
+            docker compose --project-name appm-site-mapper --env-file .runtime/office-test.env \
+              -f docker-compose.telemetry.yml -f docker-compose.office-test.yml \
+              -f docker-compose.snmp-field.yml -f deployment/compose.tfarm.yml "$@"
+          }
+          dc --profile trap-test run --rm --no-deps snmp-trap-test
+          for i in $(seq 1 45); do
+            count="$(dc exec -T mongodb mongosh --quiet seed-01 --eval \
+              'print(db.industrial_events.countDocuments({protocol:"SNMP"}))' | tail -1)"
+            if [ "${count:-0}" -gt 0 ]; then break; fi
+            test "$i" -lt 45
+            sleep 2
+          done
+          dc exec -T mongodb mongosh --quiet seed-01 --eval \
+            'db.recovery_cert.replaceOne({_id:"one-kick"},{_id:"one-kick",value:"PERSIST_ME"},{upsert:true})'
+
+      - name: Cold encrypted recovery bundle
+        run: |
+          set -eu
+          printf '%s\n' 'ci-recovery-passphrase' >/tmp/tfarm-ci/pass
+          chmod 600 /tmp/tfarm-ci/pass
+          dc() {
+            docker compose --project-name appm-site-mapper --env-file .runtime/office-test.env \
+              -f docker-compose.telemetry.yml -f docker-compose.office-test.yml \
+              -f docker-compose.snmp-field.yml -f deployment/compose.tfarm.yml "$@"
+          }
+          dc exec -T site-mapper mkdir -p /app/.runtime/industrial-mqtt
+          dc stop
+          TFARM_GPG_PASSPHRASE_FILE=/tmp/tfarm-ci/pass \
+            sudo -E python3 deployment/tfarmctl --root "$PWD" --profile /tmp/tfarm-ci/profile.json \
+              backup --staging /tmp/tfarm-ci --output /tmp/tfarm-ci/recovery.gpg
+          test -s /tmp/tfarm-ci/recovery.gpg
+          docker ps -a --filter label=com.docker.compose.project=appm-site-mapper             --format '{{.Image}}' | sort -u >/tmp/tfarm-ci/project-images.txt
+          dc down -v --remove-orphans
+          while IFS= read -r image; do
+            test -z "$image" || docker image rm -f "$image" >/dev/null 2>&1 || true
+          done </tmp/tfarm-ci/project-images.txt
+          for image in             appm-site-mapper-site-mapper             appm-site-mapper-snmp-traps             appm-site-mapper-telemetry-store             appm-site-mapper-modbus-tcp; do
+            if docker image inspect "$image" >/dev/null 2>&1; then
+              echo "Image survived disaster reset: $image" >&2
+              exit 1
+            fi
+          done
+          rm -rf .runtime
+          mkdir -p .runtime
+
+      - name: One-kick restore into empty Docker project
+        run: |
+          sudo deployment/one-kick.sh --recovery /tmp/tfarm-ci/recovery.gpg \
+            --passphrase-file /tmp/tfarm-ci/pass --skip-host-provision --skip-network
+          sudo python3 deployment/tfarmctl --root "$PWD" --profile /etc/tfarm/profile.json validate
+
+      - name: Verify persistence after disaster restore
+        run: |
+          set -eu
+          value="$(docker exec appm-site-mapper-mongodb-1 mongosh --quiet seed-01 --eval \
+             'print(db.recovery_cert.findOne({_id:"one-kick"})?.value || "")' | tail -1)"
+          test "$value" = PERSIST_ME
+          test "$(docker exec appm-site-mapper-mongodb-1 mongosh --quiet seed-01 --eval \
+             'print(db.industrial_events.countDocuments({protocol:"SNMP"}))' | tail -1)" -gt 0
+          curl -fsSL http://127.0.0.1:3000/login >/dev/null
+          sudo ss -H -lun | grep -F '192.168.10.1:162'
+          sudo ss -H -lnt | grep -F '192.168.10.1:1883'
+          sudo ss -H -lnt | grep -F '192.168.10.1:502'
+          echo TFARM_ONE_KICK_CERTIFIED

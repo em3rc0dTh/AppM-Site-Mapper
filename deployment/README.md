@@ -1,0 +1,47 @@
+# TFARM Deployment & Recovery Kit — candidate V1
+
+Status: implementation candidate, no production or clean-machine restore certification. Start with the current runtime capture. Do not run deployment commands on the active host merely to test the kit.
+
+## Design
+
+- One explicit profile per site; interface names are selected from discovery, not hard-coded.
+- The example is deliberately invalid until SELECT_WAN and SELECT_LAN are replaced with actual interface names.
+- The existing three Compose files are the source of truth; the fourth overlay adds resource limits and ephemeral Mosquitto password files. Broker persistence is disabled in the existing config; messages missed during downtime cannot be reconstructed.
+- Do not enable the old QDF5 four-point collector for the industrial ELTEK polling identity.
+- Credentials remain in the private runtime file and encrypted recovery bundle. Use the original credential/MFA encryption keys, not newly generated keys for an existing database.
+
+## New host
+
+1. Install Ubuntu 24.04 x86_64, security updates, Python 3 and Git; set up a trusted Docker CE APT repository following the vendor's official instructions. Configure the WAN and remote access manually, with an independent local console. Install dependencies with `sudo python3 deployment/tfarmctl packages`. Kea packages may start a default service; inspect and stop that default service on a clean host before configuring DHCP. Do not enable DHCP on a shared production network without authorization.
+2. Run `python3 deployment/tfarmctl discover`. Copy the profile outside Git, select WAN and LAN roles, and review `python3 deployment/tfarmctl --profile /private/profile.json plan`. From local console only, on a fresh host, run `sudo python3 deployment/tfarmctl --profile /private/profile.json network --apply --local-console`. No default-route interface is assigned to the bridge. Review and manually resolve any existing connection, routing or address conflicts. No forwarding/NAT or firewall changes are automatic; authorize industrial clients and protect MQTT/Modbus/SNMP using local firewall policy before connecting field devices.
+3. Restore the encrypted bundle below (or provision a private runtime env for a genuinely new installation). Preserve site identity, source tokens, MQTT/Modbus maps and encryption keys. Do not paste full env or Compose config in chat. For a new installation, build using the kit and pull pinned images as approved. For a recovered installation, the bundle supplies exact images; do not rebuild until the source release is certified.
+4. Run preflight, then start with the same profile. Verify new observations, history and Modbus through the existing runbooks. Do not mark acceptance based only on container status.
+5. Before automatic startup, review actual host boot order and confirm bridge address exists before starting the stack. The existing restart policies are retained; the supplied systemd template requires review and activation; firewall automation, external tunnels and any libvirt guests require separate commissioning.
+
+## Boot integration (template)
+
+Use deployment/systemd/tfarm.service.example only after an isolated validation. Replace the absolute checkout/profile paths, review network ordering, install as a system service, then enable it. It retries if the industrial bridge is unavailable. Existing service restart policies are not replaced. No automatic service installation occurs.
+
+## Cold backup
+
+- First execute capture-tfarm04-runtime.py with authorized Docker privileges. Audit actual services, volumes, bind mounts, extra overlays and queues. To use the kit independently of the active checkout, pass --root /absolute/application/checkout before the subcommand. The kit overlay is read from its own directory. Do not switch branches on the active installation. Reconcile local code and config before relying on source-based rebuilds. The kit intentionally refuses writable bind mounts, nonlocal volumes and inconsistent image tags.
+- Schedule an explicit maintenance window. Stop external writers and all project containers in a controlled order, preserve spool/outbox and record last accepted identifiers. Do not remove containers or volumes. Stop only approved project services; never run `down -v`.
+- Use an encrypted staging filesystem with ample space (raw volumes and image archives can be large). Use an offline/independent destination. Set GPG_TTY from an interactive terminal if necessary. Run `sudo python3 deployment/tfarmctl --profile /private/profile.json backup --staging /encrypted-staging --output /external/tfarm-recovery.tar.gpg`. The encrypted bundle contains physical volumes, exact container images, private env, profile, selected host config/history and source diff. If the existing MQTT spool is in the writable container layer, the backup explicitly copies it from the stopped container into a dedicated recovery volume. A missing spool fails closed; inspect it before any further action. Raw staging is mode 0700 and removed on exit, but ordinary deletion is not secure erasure. Do not use an unencrypted staging disk.
+- Confirm GPG decryption and run `python3 deployment/tfarmctl verify --directory /private/unpacked` in a private isolated directory before marking the backup valid. Retain the passphrase separately. Restart only previously approved services, then verify fresh telemetry. Keep multiple off-host generations. Existing logical Mongo/Timescale dump scripts remain useful as a second, portable recovery format.
+- This cold backup preserves only project-local named volumes. External databases, writable bind mounts, external broker/emulator, Cloudflare/AnyDesk identity, VM disks, OS credential stores and in-memory data are not recovered automatically. Source diff and selected untracked source/Compose files are preserved as evidence, not applied automatically. Exact images are authoritative for runtime recovery.
+
+## Restore
+
+- Use a clean compatible x86_64 host with an authorized local console, isolated from live industrial devices until cutover. Never bring up two instances with the same IP/MQTT client identity on the same network.
+- Use a private encrypted filesystem. Decrypt your own trusted backup with GPG and extract into an empty private directory, checking archive members before extraction. Do not extract untrusted archives. The manifest checks every payload but is not an independent signature; GPG integrity and trusted custody are required.
+- Select the same address and service contract but new physical interfaces in the profile. Match exact Compose files, including the kit overlay. Run `sudo python3 deployment/tfarmctl --profile /private/profile.json restore --directory /private/unpacked` for preflight; append `--apply` only after review. It refuses existing project containers, volumes or runtime env. It imports images and restores physical volumes before starting services. On partial failure preserve evidence and resolve manually; never retry over partially restored volumes.
+- Run preflight and start, then `sudo python3 deployment/tfarmctl --profile /private/profile.json validate`. This checks running services and declared health checks, not physical commissioning. Compare restored topology, users, bindings, profiles, history bounds, pending spool/outbox, new SNMP and MQTT timestamps, trap commit evidence and authorized Metasys register reads. Restore to isolated target first; physical database compatibility depends on exact images and host architecture.
+- Use docs/operations/backup-restore.md and scripts/operations/verify-isolated-backup-restore.sh for logical dump verification. No real RPO/RTO is certified.
+
+## Acceptance
+
+Preflight and static contract checks are not a restore drill. Open items: actual privileged capture, reconciled runtime secrets and service list, encrypted off-host backup, clean target rehearsal, reboot ordering, firewall, external services and field commissioning. No percentage of recovery success is claimed.
+
+## Runtime baseline review — 2026-11-24
+
+The privileged sanitized inventory verified that two legacy Config2 collectors were running, alongside the industrial trap receiver. Preserve their configured identities only if the corresponding sources are still authorized. Do not enable a legacy collector for the same source as the industrial polling receiver. The field receiver is active; this does not certify the external emulators or Metasys connectivity. The current Modbus endpoint is loopback, not a LAN listener. The resource overlay is an intended limit, not proof that every live container uses it. Anonymous Mongo config and Mosquitto data/log volumes are mapped to stable named volumes for restore. Other anonymous scratch volumes are retained as evidence but are not attached automatically. External gateway, tunnel and VM recovery are separate, mandatory checks when used. Never publish site-specific addresses, source IDs or private profiles in a public repository.

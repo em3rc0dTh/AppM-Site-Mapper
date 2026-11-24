@@ -1707,7 +1707,13 @@
     "busAVoltage": "BUS A VOLTAGE",
     "busBVoltage": "BUS B VOLTAGE",
     "voltageTolerance": "Voltage coherence tolerance: {value} V",
-    "protocolSnmp": "SNMP"
+    "protocolSnmp": "SNMP",
+    "diagnosticBalance": "Diagnostic balance · A = Total − B · B: {status} · {normalization} {disclaimer}",
+    "scalesVerified": "Scales verified against ELTEK.",
+    "normalizationPending": "Normalization pending.",
+    "diagnosticNotIndependent": "Does not certify independent shunts.",
+    "diagnosticStatus": "SNMP · DIAGNOSTIC",
+    "rawStatus": "SNMP · RAW"
   },
   "snmpHistoryUi": {
     "title": "SNMP · TIMESCALEDB HISTORY",
@@ -3011,7 +3017,11 @@
     "generalSummary": "General controller summary",
     "addSmartpack": "ADD SMARTPACK2 OIDS",
     "tooManySignals": "The profile supports up to 16 signals.",
-    "templateAdded": "OIDs added without changing existing signals. Select normalized magnitude for general current and voltage; verify the source before saving."
+    "templateAdded": "OIDs added without changing existing signals. Select normalized magnitude for general current and voltage; verify the source before saving.",
+    "fullCatalog": "Full SNMP catalog · {count} signals",
+    "mibVariable": "MIB variable",
+    "interpretedValue": "Interpreted value",
+    "lastReading": "Last reading"
   },
   "snmpTraps": {
     "title": "TRAPS",

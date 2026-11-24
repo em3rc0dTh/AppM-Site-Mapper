@@ -2,16 +2,16 @@
 
 import { useBdfbTelemetrySnapshot } from '@/components/telemetry/use-bdfb-telemetry';
 import { SnmpFeedLoadPanel } from '@/components/power/snmp-feed-load-panel';
-import { SnmpControllerLive } from '@/components/power/snmp-controller-live';
 import { SnmpControllerEditor } from '@/components/power/snmp-controller-editor';
 import { SnmpTrapPanel } from '@/components/power/snmp-trap-panel';
 import { SnmpFeedHistory } from '@/components/power/snmp-feed-history';
 import { SnmpFeedCommissioning } from '@/components/power/snmp-feed-commissioning';
-import { AlarmOccurrenceList, AlarmScopeSummary } from '@/components/alarm/alarm-scope-summary';
+import { useAlarmSnapshot } from '@/components/alarm/use-alarm-snapshot';
 import { DetachedWorkbenchButton } from '@/components/workbench/detached-workbench-button';
 import { ThradexAttribution } from '@/shared/ui/thradex-attribution';
 import { formatOperationalTimestamp } from '@/shared/time/operational-time';
 
+import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 
 import type { BdfbPresentation } from '@/modules/power/domain/bdfb-model';
@@ -181,6 +181,121 @@ function HistoricalTelemetry({
   );
 }
 
+
+function BdfbAlarmStrip({ entityId }: Readonly<{ entityId: string }>) {
+  const t = useTranslations('alarmUi.scope');
+  const { snapshot, error } = useAlarmSnapshot();
+  const rollup = snapshot.rollups[entityId];
+
+  if (error) {
+    return <div className="front01-alarm-strip is-unavailable">{t('unavailable')}</div>;
+  }
+
+  const count = rollup?.activeAlarmCount ?? 0;
+  return (
+    <div className="front01-alarm-strip" data-severity={rollup?.highestSeverity ?? 'INFO'}>
+      <strong>{t('activeCount', { count })}</strong>
+      <span>
+        {t('severityCounts', {
+          critical: rollup?.critical ?? 0,
+          warning: rollup?.warning ?? 0,
+          info: rollup?.info ?? 0,
+        })}
+      </span>
+    </div>
+  );
+}
+
+function BdfbAlarmTable({ entityId }: Readonly<{ entityId: string }>) {
+  const tc = useTranslations('alarmUi.center');
+  const ts = useTranslations('alarmUi.scope');
+  const { snapshot, error } = useAlarmSnapshot(true);
+  const rollup = snapshot.rollups[entityId];
+
+  if (error) {
+    return <p className="front01-alarm-table-state">{tc('unavailable')}</p>;
+  }
+
+  const scopedIds = new Set([
+    ...(rollup?.directAlarmIds ?? []),
+    ...(rollup?.descendantAlarmIds ?? []),
+  ]);
+  const alarms = snapshot.occurrences
+    .filter((item) => item.lifecycle === 'ACTIVE' && scopedIds.has(item.id))
+    .sort((a, b) => Date.parse(b.openedAt) - Date.parse(a.openedAt));
+
+  const severityLabel = (severity: string) =>
+    severity === 'CRITICAL'
+      ? tc('critical')
+      : severity === 'WARNING'
+        ? tc('warning')
+        : tc('info');
+
+  return (
+    <section className="front01-alarm-table" aria-label={tc('viewLabel')}>
+      <header>
+        <div>
+          <strong>{ts('activeCount', { count: rollup?.activeAlarmCount ?? 0 })}</strong>
+          <span>
+            {ts('severityCounts', {
+              critical: rollup?.critical ?? 0,
+              warning: rollup?.warning ?? 0,
+              info: rollup?.info ?? 0,
+            })}
+          </span>
+        </div>
+      </header>
+
+      {alarms.length === 0 ? (
+        <p className="front01-alarm-table-state">{tc('empty')}</p>
+      ) : (
+        <div className="front01-alarm-table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>{tc('severityLabel')}</th>
+                <th>{tc('alarm')}</th>
+                <th>{tc('targetPath')}</th>
+                <th>{tc('since')}</th>
+                <th>{tc('status')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {alarms.map((alarm) => (
+                <tr key={alarm.id}>
+                  <td>
+                    <span className="front01-alarm-severity" data-severity={alarm.severity}>
+                      {severityLabel(alarm.severity)}
+                    </span>
+                  </td>
+                  <td>
+                    <Link href={'/alarms/' + encodeURIComponent(alarm.id)}>
+                      <strong>{alarm.name}</strong>
+                      <small>{alarm.sourceContext}</small>
+                    </Link>
+                  </td>
+                  <td>
+                    {alarm.path
+                      .map((item) => item.name)
+                      .slice(-3)
+                      .join(' › ')}
+                  </td>
+                  <td>
+                    <OperationalTime value={alarm.openedAt} />
+                  </td>
+                  <td>
+                    <span className="front01-alarm-state">{tc('active')}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export function BdfbTelemetryInspector({
   node,
   presentation,
@@ -203,6 +318,7 @@ export function BdfbTelemetryInspector({
   const ti = useTranslations('bdfb.inspector.info');
   const t = useTranslations('bdfb.inspector');
   const tw = useTranslations('workbench');
+  const tf = useTranslations('front01Ui');
   const { samples, now } = useBdfbTelemetrySnapshot(node.id);
   const inspectorRef = useRef<HTMLElement>(null);
   const [tab, setTab] = useState<InspectorTab>(mode === 'maintenance' ? 'settings' : 'overview');
@@ -229,6 +345,7 @@ export function BdfbTelemetryInspector({
   const scopeLabel = selectedPanel?.label ?? ti('entire');
   const positions = panels.flatMap((panel) => panel.positions);
   const breakers = positions.filter((item) => item !== null);
+  const occupiedPanels = panels.filter((panel) => panel.positions.some(Boolean)).length;
 
   useEffect(() => {
     if (tab !== 'history') return;
@@ -348,77 +465,81 @@ export function BdfbTelemetryInspector({
       >
         {tab === 'overview' && (
           <>
+            <BdfbAlarmStrip entityId={node.id} />
             <SnmpFeedLoadPanel
               key={node.id}
               deviceId={node.id}
               chassisId={presentation.chassisId}
               view="summary"
             />
-            <SnmpControllerLive key={node.id} deviceId={node.id} />
 
-            <section className="front01-mqtt-summary" aria-label={ti('descendantMqttLive')}>
-              <header className="front01-summary-header">
-                <div>
-                  <i aria-hidden="true" data-live={reportingEquipment > 0 ? 'true' : 'false'} />
-                  <strong>{ti('descendantMqttLive')}</strong>
+            <div className="front01-operation-sections">
+              <section aria-label={tf('occupancy')}>
+                <h3>{tf('occupancy')}</h3>
+                <dl>
+                  <dt>{tf('occupiedPanels')}</dt>
+                  <dd>
+                    {occupiedPanels} / {panels.length}
+                  </dd>
+                  <dt>{tf('installedCircuits')}</dt>
+                  <dd>
+                    {breakers.length} / {positions.length}
+                  </dd>
+                </dl>
+                <div className="front01-occupancy-meter-row">
+                  <span>{tf('installedCircuits')}</span>
+                  <div
+                    className="front01-utilization-meter"
+                    role="meter"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={
+                      positions.length > 0 ? Math.round((breakers.length / positions.length) * 100) : 0
+                    }
+                  >
+                    <span
+                      style={{
+                        width: `${
+                          positions.length > 0
+                            ? Math.max(0, Math.min(100, (breakers.length / positions.length) * 100))
+                            : 0
+                        }%`,
+                      }}
+                    />
+                  </div>
+                  <b>
+                    {positions.length > 0
+                      ? `${((breakers.length / positions.length) * 100).toFixed(2)} %`
+                      : '—'}
+                  </b>
                 </div>
-                <span>{ti('entire')}</span>
-              </header>
+              </section>
 
-              <div className="front01-mqtt-kpis">
-                <div>
-                  <span>{ti('avgVoltage')}</span>
-                  <strong>{metric(live.averageVoltageV, 'V')}</strong>
-                </div>
-                <div>
-                  <span>{ti('avgCurrent')}</span>
-                  <strong>{metric(live.averageCurrentA, 'A')}</strong>
-                </div>
-                <div>
-                  <span>{ti('avgPower')}</span>
-                  <strong>{metric(kilowatts(live.averagePowerW), 'kW', 3)}</strong>
-                </div>
-                <div>
-                  <span>{ti('avgEnergy')}</span>
-                  <strong>{metric(live.averageEnergyKwh, 'kWh', 4)}</strong>
-                </div>
-              </div>
-
-              <dl className="front01-mqtt-facts">
-                <dt>{ti('totalPower')}</dt>
-                <dd>{metric(kilowatts(live.totalPowerW), 'kW', 3)}</dd>
-                <dt>{ti('reportingShort')}</dt>
-                <dd>{reportingEquipment}</dd>
-                <dt>{ti('descendants')}</dt>
-                <dd>{live.descendantEquipment}</dd>
-                <dt>{ti('withoutCurrent')}</dt>
-                <dd>{live.withoutCurrentReading}</dd>
-                <dt>{ti('latestPacket')}</dt>
-                <dd>
-                  <OperationalTime value={latestReceived} />
-                </dd>
-              </dl>
-
-              <footer className="front01-mqtt-footer">
-                <div>
-                  <i aria-hidden="true" data-live={reportingEquipment > 0 ? 'true' : 'false'} />
-                  <span>
-                    {reportingEquipment > 0
-                      ? ti('liveContributors', { count: reportingEquipment })
-                      : ti('noActiveDescendantTelemetry')}
-                  </span>
-                </div>
-              </footer>
-            </section>
+              <section aria-label={ti('descendantMqttLive')}>
+                <h3>{ti('descendantMqttLive')}</h3>
+                <dl>
+                  <dt>{ti('reportingShort')}</dt>
+                  <dd>
+                    {reportingEquipment} / {live.descendantEquipment}
+                  </dd>
+                  <dt>{ti('latestPacket')}</dt>
+                  <dd>
+                    <OperationalTime value={latestReceived} />
+                  </dd>
+                  <dt>{ti('totalPower')}</dt>
+                  <dd>{metric(kilowatts(live.totalPowerW), 'kW', 3)}</dd>
+                </dl>
+                <p className="front01-operation-monitor-note">
+                  {reportingEquipment > 0
+                    ? ti('liveContributors', { count: reportingEquipment })
+                    : ti('noActiveDescendantTelemetry')}
+                </p>
+              </section>
+            </div>
           </>
         )}
 
-        {tab === 'alarms' && (
-          <>
-            <AlarmScopeSummary entityId={node.id} scopeLabel={node.name} showAffectedChildren />
-            <AlarmOccurrenceList entityId={node.id} />
-          </>
-        )}
+        {tab === 'alarms' && <BdfbAlarmTable entityId={node.id} />}
 
         {tab === 'traps' && (
           <SnmpTrapPanel key={node.id} deviceId={node.id} deviceName={node.name} />

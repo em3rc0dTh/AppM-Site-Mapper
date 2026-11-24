@@ -1,0 +1,457 @@
+#!/usr/bin/env python3
+"""TFARM deployment/recovery entrypoint. No destructive operation is implicit."""
+import argparse
+import hashlib
+import ipaddress
+import json
+import os
+from pathlib import Path
+import re
+import shutil
+import subprocess
+import sys
+import tarfile
+import tempfile
+import datetime
+
+KIT_ROOT = Path(__file__).resolve().parents[1]
+ROOT = KIT_ROOT
+MQTT_SPOOL = "/app/.runtime/industrial-mqtt"
+MQTT_VOLUME = "appm-site-mapper_tfarm_mqtt_spool"
+VOLUME_ROLES = {("mongodb","/data/configdb"):"tfarm_mongo_config", ("mosquitto","/mosquitto/data"):"tfarm_mosquitto_data", ("mosquitto","/mosquitto/log"):"tfarm_mosquitto_log"}
+BASE_SERVICES = {"mongodb","mongo-init","timescaledb","telemetry-store","mosquitto","site-mapper","modbus-tcp","snmp-traps"}
+OPTIONAL_SERVICES = {"snmp-collector","office-snmp-collector-qdf4-real","office-snmp-collector-qdf5-real"}
+COMPOSE_FILES = ["docker-compose.telemetry.yml","docker-compose.office-test.yml","docker-compose.snmp-field.yml","deployment/compose.tfarm.yml"]
+IDENT = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,62}$")
+
+def fail(message):
+    raise ValueError(message)
+
+def run(*cmd, capture=False, quiet=False, cwd=None):
+    return subprocess.run(list(map(str,cmd)), cwd=cwd or ROOT, check=True, text=True,
+        stdout=subprocess.PIPE if capture else (subprocess.DEVNULL if quiet else None),
+        stderr=subprocess.DEVNULL if quiet else None).stdout
+
+def data(*cmd):
+    return json.loads(run(*cmd,capture=True))
+
+def require_root():
+    if os.geteuid()!=0:
+        fail("Run this operation from an authorized root console.")
+
+def digest(path):
+    with path.open("rb") as stream:
+        return hashlib.file_digest(stream,"sha256").hexdigest()
+
+def load_profile(path):
+    p=json.loads(Path(path).read_text())
+    if set(p)!={"schemaVersion","project","network","services","compose","runtimeEnv"} or p["schemaVersion"]!=1:
+        fail("Unsupported profile contract")
+    if p["project"]!="appm-site-mapper" or p["compose"]!=COMPOSE_FILES or p["runtimeEnv"]!=".runtime/office-test.env":
+        fail("Unsupported project/compose/runtime contract")
+    services=p["services"]
+    if not isinstance(services,list) or len(set(services))!=len(services) or not BASE_SERVICES.issubset(services) or set(services)-BASE_SERVICES-OPTIONAL_SERVICES:
+        fail("Invalid service allowlist")
+    n=p["network"]
+    if set(n)!={"bridge","address","wan","lan","dhcp"}:
+        fail("Invalid network contract")
+    names=[n["bridge"],n["wan"],*n["lan"]]
+    if not n["lan"] or len(set(names))!=len(names) or any(not isinstance(x,str) or x.startswith("SELECT_") or not IDENT.fullmatch(x) or len(x)>15 for x in names):
+        fail("Select unique WAN, LAN and bridge interface names")
+    a=ipaddress.IPv4Interface(n["address"])
+    if a.ip in (a.network.network_address,a.network.broadcast_address):
+        fail("Invalid bridge address")
+    d=n["dhcp"]
+    if set(d)!={"enabled","poolStart","poolEnd","leaseSeconds","advertiseRouter"} or type(d["enabled"]) is not bool or type(d["advertiseRouter"]) is not bool:
+        fail("Invalid DHCP contract")
+    lo,hi=map(ipaddress.IPv4Address,(d["poolStart"],d["poolEnd"]))
+    if lo not in a.network or hi not in a.network or lo>hi or lo<=a.ip<=hi or lo==a.network.network_address or hi==a.network.broadcast_address:
+        fail("DHCP pool overlaps bridge or is out of subnet")
+    if type(d["leaseSeconds"]) is not int or not 60<=d["leaseSeconds"]<=31536000:
+        fail("Invalid lease lifetime")
+    return p
+
+def dhcp_config(p):
+    n=p["network"]; a=ipaddress.IPv4Interface(n["address"]); d=n["dhcp"]
+    return {"Dhcp4":{"interfaces-config":{"interfaces":[n["bridge"]],"service-sockets-require-all":True,
+        "service-sockets-max-retries":12,"service-sockets-retry-wait-time":5000},
+        "lease-database":{"type":"memfile","persist":True,"name":"/var/lib/kea/kea-leases4.csv"},
+        "valid-lifetime":d["leaseSeconds"],"subnet4":[{"id":10,"subnet":str(a.network),
+        "pools":[{"pool":d["poolStart"]+" - "+d["poolEnd"]}],
+        "option-data":[{"name":"routers","data":str(a.ip)}] if d["advertiseRouter"] else []}]}}
+
+def interfaces():
+    return data("ip","-j","link","show")
+
+def default_devices():
+    return {r.get("dev") for r in data("ip","-j","route","show","default")}
+
+def network_plan(p):
+    n=p["network"]; b=n["bridge"]
+    cmds=[["nmcli","connection","add","type","bridge","ifname",b,"con-name",b,
+          "ipv4.method","manual","ipv4.addresses",n["address"],"ipv4.never-default","yes",
+          "ipv6.method","disabled","connection.autoconnect","yes","connection.autoconnect-ports","1"]]
+    for port in n["lan"]:
+        cmds.append(["nmcli","connection","add","type","ethernet","ifname",port,
+             "con-name","tfarm-"+port,"master",b,"slave-type","bridge","connection.autoconnect","yes"])
+    cmds += [["nmcli","connection","up",b]]
+    return cmds
+
+def configure_network(p, apply):
+    cmds=network_plan(p)
+    if not apply:
+        print(json.dumps({"commands":cmds,"kea":dhcp_config(p),"dhcp_enabled":p["network"]["dhcp"]["enabled"]},indent=2))
+        return
+    require_root()
+    n=p["network"]; links={x["ifname"]:x for x in interfaces()}
+    if n["wan"] not in links or any(x not in links for x in n["lan"]):
+        fail("Selected interface missing")
+    if default_devices()!={n["wan"]}:
+        fail("Expected WAN must be the sole active IPv4 default route")
+    if n["bridge"] in links:
+        fail("Bridge already exists: inspect existing configuration; no overwrite")
+    for port in n["lan"]:
+        if not Path("/sys/class/net",port,"device").exists() or links[port].get("master") or links[port].get("link_type")!="ether":
+            fail("LAN must be an unassigned physical Ethernet interface")
+        if Path("/sys/class/net",port,"wireless").exists() or Path("/sys/class/net",port,"phy80211").exists():
+            fail("Wireless interface cannot be a bridge port")
+        addresses=data("ip","-j","address","show","dev",port)[0].get("addr_info",[])
+        if any(x.get("family")=="inet" or (x.get("family")=="inet6" and x.get("scope")=="global") for x in addresses):
+            fail("LAN already has an address: disconnect/decommission its old profile explicitly")
+    target=Path("/etc/kea/kea-dhcp4.conf")
+    if n["dhcp"]["enabled"] and not target.is_file():
+        fail("Install Kea before configuring network")
+    # Refuse existing active DHCP; prevent unexpected service interruption.
+    if n["dhcp"]["enabled"] and subprocess.run(["systemctl","is-active","--quiet","kea-dhcp4-server"]).returncode==0:
+        fail("Existing DHCP is active; network apply is for a clean host")
+    for cmd in cmds:
+        run(*cmd)
+    if n["dhcp"]["enabled"]:
+        # Keep vendor configuration and validate before replacement.
+        fd,tmp=tempfile.mkstemp(prefix="tfarm-kea-",suffix=".json")
+        with os.fdopen(fd,"w") as f: json.dump(dhcp_config(p),f,indent=2)
+        try:
+            run("kea-dhcp4","-t",tmp)
+            backup=target.with_name(target.name+".tfarm-original")
+            if backup.exists(): fail("Existing Kea backup requires operator review")
+            shutil.copy2(target,backup)
+            target.write_text(Path(tmp).read_text())
+            run("systemctl","enable","--now","kea-dhcp4-server")
+        finally: Path(tmp).unlink(missing_ok=True)
+
+def compose_path(f):
+    return KIT_ROOT/f if f=="deployment/compose.tfarm.yml" else ROOT/f
+
+def compose(p):
+    env=ROOT/p["runtimeEnv"]
+    if not env.is_file() or env.stat().st_mode & 0o077:
+        fail("Private runtime env missing or not mode 0600")
+    cmd=["docker","compose","--project-name",p["project"],"--env-file",str(env)]
+    for f in p["compose"]: cmd+=["-f",str(compose_path(f))]
+    if set(p["services"]) & OPTIONAL_SERVICES: cmd+=["--profile","snmp"]
+    return cmd
+
+def project_ids(p):
+    return run("docker","ps","-aq","--filter","label=com.docker.compose.project="+p["project"],capture=True).split()
+
+def inspect_ids(ids):
+    return data("docker","inspect",*ids) if ids else []
+
+def model(p):
+    # Never print effective Compose JSON: it includes secrets.
+    m=json.loads(run(*compose(p),"config","--format","json",capture=True,quiet=True))
+    for s in p["services"]:
+        if s not in m["services"]: fail("Service absent from Compose model: "+s)
+    env=m["services"]["snmp-traps"]["environment"]
+    trap=json.loads(env["SNMP_TRAP_SOURCES_JSON"])
+    app=m["services"]["site-mapper"]["environment"]
+    tokens=json.loads(app["INDUSTRIAL_INGEST_SOURCES_JSON"])
+    if not isinstance(trap,list) or not trap or not isinstance(tokens,dict): fail("No SNMP source/token mapping")
+    seen=set()
+    for s in trap:
+        ident=s["sourceIdentity"]
+        if ident in seen: fail("Duplicate source identity")
+        seen.add(ident)
+        if not isinstance(s.get("token"),str) or not s["token"] or tokens.get(ident)!=s["token"]:
+            fail("SNMP source token differs from ingest mapping")
+        poll=s.get("poll")
+        if poll and (not isinstance(poll.get("oids"),list) or not poll["oids"] or len(set(poll["oids"]))!=len(poll["oids"]) or poll.get("intervalMs",0)<=0):
+            fail("Invalid SNMP polling declaration")
+    # Existing field four-point collectors must not reuse the same polling source.
+    for s in set(p["services"]) & OPTIONAL_SERVICES:
+        source=m["services"][s]["environment"].get("SNMP_CONTROLLER_ID")
+        if source in seen: fail("Duplicate legacy collector and industrial SNMP identity: "+s)
+    bind=m["services"]["snmp-traps"].get("ports",[])
+    addr=str(ipaddress.IPv4Interface(p["network"]["address"]).ip)
+    if not any(str(port.get("host_ip"))==addr and port.get("protocol")=="udp" and str(port.get("published"))=="162" for port in bind):
+        fail("Trap bind must match industrial bridge address on UDP 162")
+    return m
+
+def start(p):
+    require_root()
+    model(p)
+    addr=str(ipaddress.IPv4Interface(p["network"]["address"]).ip)
+    n=p["network"]["bridge"]
+    rows=data("ip","-j","-4","address","show","dev",n)
+    if not any(x.get("local")==addr for row in rows for x in row.get("addr_info",[])):
+        fail("Industrial bridge is not ready")
+    run(*compose(p),"up","-d","--no-build","--pull","never",*p["services"])
+
+def verify_directory(directory):
+    manifest=json.loads((directory/"manifest.json").read_text())
+    if manifest.get("schemaVersion")!=1 or not isinstance(manifest.get("files"),dict): fail("Unsupported bundle format")
+    for name,sha in manifest["files"].items():
+        if not re.fullmatch(r"[A-Za-z0-9_.-]+",name) or name in (".",".."):
+            fail("Unsafe bundle filename")
+        path=directory/name
+        if not path.is_file() or path.is_symlink() or digest(path)!=sha: fail("Bundle integrity failed: "+name)
+    if set(f.name for f in directory.iterdir())!=set(manifest["files"])|{"manifest.json"}:
+        fail("Unexpected or missing bundle members")
+    return manifest
+
+def verify_bundle(directory):
+    manifest=verify_directory(directory)
+    required={"runtime.env","profile.json","images.tar","host-evidence.tar","packages.txt","source.diff","untracked-source.tar",*[f"compose-{i:02d}.yml" for i in range(len(COMPOSE_FILES))]}
+    if not required.issubset(manifest["files"]):
+        fail("Recovery bundle is incomplete")
+    volumes=manifest.get("volumes")
+    if not isinstance(volumes,list) or not volumes or not isinstance(manifest.get("images"),dict) or not manifest["images"]:
+        fail("Missing volume/image inventory")
+    names=set()
+    for v in volumes:
+        if not isinstance(v,dict) or not isinstance(v.get("name"),str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}",v["name"]) or v["name"] in names or v.get("file") not in manifest["files"] or not v["file"].endswith(".tar"):
+            fail("Invalid or duplicate recovery volume")
+        names.add(v["name"])
+    required_volumes={"appm-site-mapper_site_mapper_mongo_data","appm-site-mapper_site_mapper_timescale_data","appm-site-mapper_snmp_field_trap_spool",MQTT_VOLUME} | {"appm-site-mapper_"+role for role in VOLUME_ROLES.values()}
+    if not required_volumes.issubset(names):
+        fail("Required database/spool volume absent")
+    return manifest
+
+def backup(p, output, staging):
+    require_root(); model(p)
+    output=Path(output).resolve(); staging=Path(staging).resolve()
+    if output.exists(): fail("Backup output already exists")
+    if not output.parent.is_dir() or not staging.is_dir(): fail("Output/staging directory missing")
+    records=inspect_ids(project_ids(p))
+    if not records or any(x["State"]["Running"] for x in records):
+        fail("Cold backup requires ALL project containers stopped in an approved maintenance window")
+    if not BASE_SERVICES-{"mongo-init"} <= {x["Config"]["Labels"]["com.docker.compose.service"] for x in records}:
+        fail("Incomplete source service inventory")
+    for x in records:
+        if x["Config"]["Labels"]["com.docker.compose.service"] in {"mongodb","timescaledb"} and (x["State"]["ExitCode"]!=0 or x["State"].get("OOMKilled")):
+            fail("Database did not stop cleanly; physical backup not accepted")
+    mounted={m["Name"] for x in records for m in x.get("Mounts",[]) if m["Type"]=="volume"}
+    app=next(x for x in records if x["Config"]["Labels"]["com.docker.compose.service"]=="site-mapper")
+    env=dict(v.split("=",1) for v in app["Config"].get("Env",[]) if "=" in v)
+    spool=env.get("INDUSTRIAL_MQTT_SPOOL",MQTT_SPOOL)
+    if spool!=MQTT_SPOOL: fail("Nonstandard MQTT spool path requires explicit migration")
+    covering=[m for m in app.get("Mounts",[]) if spool==m["Destination"] or spool.startswith(m["Destination"].rstrip("/")+"/")]
+    if covering and not any(m["Type"]=="volume" and m["Name"]==MQTT_VOLUME and m["Destination"]==spool for m in covering):
+        fail("Existing MQTT spool mount requires explicit migration")
+    listed=set(run("docker","volume","ls","-q","--filter","label=com.docker.compose.project="+p["project"],capture=True).split())
+    names=mounted|listed
+    # Anonymous Docker image volumes must be restored under deterministic names
+    # that the destination Compose actually mounts, not orphaned original IDs.
+    aliases={}
+    for x in records:
+        service=x["Config"]["Labels"]["com.docker.compose.service"]
+        for m in x.get("Mounts",[]):
+            role=VOLUME_ROLES.get((service,m["Destination"]))
+            if role:
+                if m["Type"]!="volume": fail("Unsupported mount for "+role)
+                target=p["project"]+"_"+role
+                if m["Name"] in aliases or (target in names and target!=m["Name"]): fail("Ambiguous volume role: "+role)
+                aliases[m["Name"]]=(target,role)
+    if set(role for _,role in aliases.values())!=set(VOLUME_ROLES.values()): fail("Missing Docker image volume role")
+    if not covering and MQTT_VOLUME in names: fail("Ambiguous MQTT recovery volume already exists")
+    active=inspect_ids(run("docker","ps","-q",capture=True).split())
+    if any(m.get("Name") in names for x in active for m in x.get("Mounts",[])):
+        fail("A running container still mounts a recovery volume")
+    images={}
+    for x in records:
+        ref=x["Config"]["Image"]
+        if data("docker","image","inspect",ref)[0]["Id"]!=x["Image"]:
+            fail("Container/image tag mismatch; preserve exact image before backup")
+        images[ref]=x["Image"]
+    with tempfile.TemporaryDirectory(prefix="tfarm-private-",dir=staging) as tmp:
+        d=Path(tmp); manifest={"schemaVersion":1,"project":p["project"],"createdAt":datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            "gitSha":run("git","-c","safe.directory="+str(ROOT),"rev-parse","HEAD",capture=True).strip(),
+            "architecture":run("uname","-m",capture=True).strip(),
+            "volumes":[],"images":images,"services":p["services"],"bindMounts":[]}
+        shutil.copyfile(ROOT/p["runtimeEnv"],d/"runtime.env")
+        (d/"profile.json").write_text(json.dumps(p,indent=2))
+        run("docker","image","save","-o",d/"images.tar",*images)
+        for i,name in enumerate(sorted(names)):
+            v=data("docker","volume","inspect",name)[0]
+            if v["Driver"]!="local" or v.get("Options"): fail("Unsupported nonstandard volume")
+            f="volume-%03d.tar"%i
+            run("tar","--numeric-owner","--acls","--xattrs","-cpf",d/f,"-C",v["Mountpoint"],".")
+            target,role=aliases.get(name,(name,None))
+            labels={"com.docker.compose.project":p["project"],"com.docker.compose.volume":role} if role else v.get("Labels") or {}
+            manifest["volumes"].append({"name":target,"sourceName":name,"labels":labels,"file":f})
+        # Store bind mounts as evidence; never assume external mutable paths are backed up.
+        if not covering:
+            # Existing deployments may keep the spool in the writable layer.
+            # Docker cp supports stopped containers. Never silently omit it.
+            spooldir=d/"mqtt-spool-stage"; spooldir.mkdir(mode=0o700)
+            run("docker","cp","-a",app["Id"]+":"+spool+"/.",spooldir,quiet=True)
+            f="mqtt-spool.tar"
+            run("tar","--numeric-owner","--acls","--xattrs","-cpf",d/f,"-C",spooldir,".")
+            shutil.rmtree(spooldir)
+            manifest["volumes"].append({"name":MQTT_VOLUME,"labels":{"com.docker.compose.project":p["project"],"com.docker.compose.volume":"tfarm_mqtt_spool"},"file":f})
+        manifest["bindMounts"]=[{"source":m["Source"],"destination":m["Destination"],"rw":m["RW"]}
+            for x in records for m in x.get("Mounts",[]) if m["Type"]=="bind"]
+        if any(m["rw"] for m in manifest["bindMounts"]): fail("Writable bind mount requires explicit backup policy")
+        for i,f in enumerate(p["compose"]):
+            shutil.copyfile(compose_path(f),d/("compose-%02d.yml"%i))
+        git=["git","-c","safe.directory="+str(ROOT)]
+        (d/"source.diff").write_text(run(*git,"diff","HEAD","--",capture=True))
+        # Explicitly preserve untracked source/Compose changes, not arbitrary private files.
+        extras=run(*git,"ls-files","--others","--exclude-standard",capture=True).splitlines()
+        with tarfile.open(d/"untracked-source.tar","w") as archive:
+            for name in extras:
+                path=ROOT/name
+                if (name.startswith("src/") or re.fullmatch(r"docker-compose[\w.-]*\.yml",name)) and path.is_file() and not path.is_symlink() and path.resolve().is_relative_to(ROOT):
+                    archive.add(path,arcname=name,recursive=False)
+        # Preserve accessible host config/history privately, for reference, not blind replay.
+        paths=[Path("/etc/kea"),Path("/etc/netplan"),Path("/etc/NetworkManager/system-connections"),
+            Path("/etc/apt/sources.list.d"),Path("/var/lib/kea"),Path("/home/developer/.bash_history"),
+            Path("/home/developer/appm-private-backup-20261106/bash_history.secret")]
+        with tarfile.open(d/"host-evidence.tar","w") as archive:
+            for path in paths:
+                if path.exists(): archive.add(path,arcname=str(path).lstrip("/"),recursive=True)
+        (d/"packages.txt").write_text(run("dpkg-query","-W",capture=True))
+        manifest["files"]={f.name:digest(f) for f in d.iterdir() if f.is_file()}
+        (d/"manifest.json").write_text(json.dumps(manifest,indent=2))
+        verify_bundle(d)
+        # Pipe directly into encryption: no unencrypted outer archive.
+        # Staging files themselves are sensitive; use encrypted staging storage.
+        tar=subprocess.Popen(["tar","-C",str(d),"-cf","-","."],stdout=subprocess.PIPE)
+        try:
+            subprocess.run(["gpg","--symmetric","--cipher-algo","AES256","--output",str(output)],
+                stdin=tar.stdout,check=True)
+        finally:
+            tar.stdout.close()
+            if tar.wait()!=0: fail("Archive creation failed")
+        os.chmod(output,0o600)
+        print("BACKUP_WRITTEN_NOT_YET_RESTORE_VERIFIED",output)
+
+def restore(p, directory, apply):
+    require_root()
+    directory=Path(directory).resolve()
+    m=verify_bundle(directory)
+    if not isinstance(m.get("volumes"),list) or not isinstance(m.get("images"),dict) or not m["images"]:
+        fail("Missing volume/image inventory")
+    for v in m["volumes"]:
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]+",v["name"]) or v["file"] not in m["files"] or not v["file"].endswith(".tar"):
+            fail("Invalid recovery volume manifest")
+        if v["labels"].get("com.docker.compose.project") not in (None,p["project"]): fail("Foreign recovery volume")
+    if len({v["name"] for v in m["volumes"]})!=len(m["volumes"]): fail("Duplicate recovery volume")
+    if m["project"]!=p["project"] or m["architecture"]!=run("uname","-m",capture=True).strip() or m["services"]!=p["services"]:
+        fail("Bundle project, architecture or service allowlist mismatch")
+    # Require identical network addressing but allow different physical NIC names.
+    old=load_profile(directory/"profile.json")
+    if any(old["network"][k]!=p["network"][k] for k in ("address","bridge","dhcp")):
+        fail("Network change requires separate commissioning plan")
+    for i,f in enumerate(p["compose"]):
+        if digest(compose_path(f))!=digest(directory/("compose-%02d.yml"%i)): fail("Compose version mismatch: "+f)
+    if project_ids(p): fail("Target project already has containers; no overwrite")
+    existing=set(run("docker","volume","ls","-q",capture=True).split())
+    names={v["name"] for v in m["volumes"]}
+    if existing & names: fail("Target recovery volume already exists; no overwrite")
+    env=ROOT/p["runtimeEnv"]
+    if env.exists(): fail("Target runtime env exists; no overwrite")
+    # Loading an image must not replace a different existing image tag.
+    for ref,id_ in m["images"].items():
+        result=subprocess.run(["docker","image","inspect",ref],stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,text=True)
+        if result.returncode==0 and json.loads(result.stdout)[0]["Id"]!=id_:
+            fail("Existing image tag conflicts with recovery image")
+    print("RESTORE_PREFLIGHT_OK",len(names),"volumes",len(m["images"]),"images")
+    if not apply: return
+    run("docker","image","load","-i",directory/"images.tar",quiet=True)
+    for ref,id_ in m["images"].items():
+        if data("docker","image","inspect",ref)[0]["Id"]!=id_: fail("Restored image ID mismatch")
+    for v in m["volumes"]:
+        cmd=["docker","volume","create"]
+        for k,val in v["labels"].items(): cmd+=["--label",k+"="+val]
+        run(*cmd,v["name"],quiet=True)
+        dest=Path(data("docker","volume","inspect",v["name"])[0]["Mountpoint"])
+        if any(dest.iterdir()): fail("Unexpected nonempty destination volume")
+        run("tar","--numeric-owner","--acls","--xattrs","-xpf",directory/v["file"],"-C",dest)
+    env.parent.mkdir(mode=0o700,exist_ok=True)
+    fd=os.open(env,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
+    with os.fdopen(fd,"wb") as f: f.write((directory/"runtime.env").read_bytes())
+    model(p)
+    print("RESTORE_FILES_COMPLETE_SERVICES_NOT_STARTED")
+
+def validate_runtime(p):
+    model(p)
+    records=inspect_ids(project_ids(p))
+    expected=set(p["services"])
+    by_service={x["Config"]["Labels"]["com.docker.compose.service"]:x for x in records}
+    failed=[]
+    for name in sorted(expected):
+        rec=by_service.get(name)
+        state=rec.get("State",{}) if rec else {}
+        healthy=(state.get("Health") or {}).get("Status")
+        ok=(state.get("Status")=="exited" and state.get("ExitCode")==0) if name=="mongo-init" else (state.get("Running") and healthy not in ("unhealthy","starting"))
+        print(("PASS" if ok else "FAIL"),name,healthy or state.get("Status","missing"))
+        if not ok: failed.append(name)
+    for name,rec in by_service.items():
+        if name not in expected and rec["State"]["Running"]:
+            failed.append("unexpected "+name)
+            print("FAIL unexpected running service",name)
+    if failed: fail("Runtime service acceptance incomplete")
+    print("SERVICE_HEALTH_OK — FIELD COMMISSIONING AND DATA_RECOVERY STILL REQUIRED")
+
+def main():
+    global ROOT
+    ap=argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--root",default=str(KIT_ROOT),help="Existing application checkout; kit may be stored separately")
+    ap.add_argument("--profile",default=str(KIT_ROOT/"deployment/profiles/tfarm.example.json"))
+    sub=ap.add_subparsers(dest="cmd",required=True)
+    for command in ("discover","plan","preflight","status","start","build","packages","validate"): sub.add_parser(command)
+    n=sub.add_parser("network"); n.add_argument("--apply",action="store_true"); n.add_argument("--local-console",action="store_true")
+    v=sub.add_parser("verify"); v.add_argument("--directory",required=True)
+    b=sub.add_parser("backup"); b.add_argument("--output",required=True); b.add_argument("--staging",required=True)
+    r=sub.add_parser("restore"); r.add_argument("--directory",required=True); r.add_argument("--apply",action="store_true")
+    args=ap.parse_args()
+    ROOT=Path(args.root).resolve()
+    if not ROOT.is_dir(): fail("Application checkout missing")
+    if args.cmd=="discover":
+        print(json.dumps({"interfaces":[{"name":i["ifname"],"type":i.get("link_type"),"state":i.get("operstate"),"physical":Path("/sys/class/net",i["ifname"],"device").exists()} for i in interfaces()],"defaultRoute":sorted(default_devices())},indent=2)); return
+    if args.cmd=="packages":
+        require_root()
+        os_release=Path("/etc/os-release")
+        if not os_release.is_file() or 'VERSION_ID="24.04"' not in os_release.read_text().splitlines():
+            fail("Ubuntu 24.04 required")
+        # Docker CE must come from an already approved and configured APT repository.
+        run("apt-get","update")
+        run("apt-get","install","--yes","ca-certificates","curl","git","python3","gnupg","network-manager","kea-dhcp4-server","snmp","docker-ce","docker-ce-cli","containerd.io","docker-buildx-plugin","docker-compose-plugin")
+        return
+    if args.cmd=="verify":
+        verify_bundle(Path(args.directory).resolve()); print("BUNDLE_INTEGRITY_OK_NOT_RESTORE_CERTIFIED"); return
+    p=load_profile(args.profile)
+    if args.cmd=="plan": configure_network(p,False)
+    elif args.cmd=="network":
+        if args.apply and not args.local_console: fail("Network apply requires --local-console and direct local access")
+        configure_network(p,args.apply)
+    elif args.cmd=="preflight":
+        for exe in ("docker","nmcli","ip","gpg","tar"):
+            if not shutil.which(exe): fail("Missing "+exe)
+        model(p); print("PROFILE_AND_COMPOSE_OK")
+    elif args.cmd=="status":
+        run(*compose(p),"ps","-a")
+    elif args.cmd=="build":
+        require_root(); model(p); run(*compose(p),"build",*p["services"])
+    elif args.cmd=="start": start(p)
+    elif args.cmd=="validate": validate_runtime(p)
+    elif args.cmd=="backup": backup(p,args.output,args.staging)
+    elif args.cmd=="restore": restore(p,args.directory,args.apply)
+
+if __name__=="__main__":
+    try: main()
+    except (ValueError,KeyError,TypeError,OSError,subprocess.CalledProcessError) as exc:
+        # subprocess exceptions can include credential arguments; never print the command.
+        print("TFARM_ERROR:",str(exc) if isinstance(exc,ValueError) and not isinstance(exc,json.JSONDecodeError) else type(exc).__name__,file=sys.stderr)
+        sys.exit(1)

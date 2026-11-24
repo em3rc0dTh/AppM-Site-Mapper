@@ -4,6 +4,7 @@ export const SNMP_CONTROLLER_MAX_AGE_MS = 130_000;
 
 export interface SnmpControllerObservation {
   readonly key: string;
+  readonly eventId?: string;
   readonly sourceIdentity?: string;
   readonly protocol?: string;
   readonly unit?: string | null;
@@ -17,6 +18,8 @@ export interface SnmpControllerObservation {
   readonly observedAt?: string;
   readonly enumLabel?: string | null;
   readonly lastObservation?: {
+    readonly eventId?: string;
+    readonly receivedAt?: string;
     readonly rawValue: unknown;
     readonly observedAt: string;
   };

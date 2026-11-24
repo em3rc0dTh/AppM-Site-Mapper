@@ -98,13 +98,15 @@ export function SnmpTrapPanel({
   }
 
   const selected = events.find((event) => event.id === selectedId) ?? events[0] ?? null;
-  const stateLabel = (state: TrapView['alarmState']) =>
-    state === 'ACTIVE' ? t('active') : state === 'RESOLVED' ? t('resolved') : t('unclassified');
+  const transitionLabel = (state: TrapView['alarmState']) =>
+    state === 'ACTIVE' ? 'ON' : state === 'RESOLVED' ? 'OFF' : t('unclassified');
   const severityLabel = (severity: string | null) => {
     if (!severity) return t('unclassified');
     const value = severity.toLowerCase();
-    if (value.includes('critical') || value === 'major') return t('critical');
-    if (value.includes('warning') || value === 'minor') return t('warning');
+    if (value === 'major' || value === 'majoralarm') return t('majorAlarm');
+    if (value === 'minor' || value === 'minoralarm') return t('minorAlarm');
+    if (value.includes('critical')) return t('critical');
+    if (value.includes('warning')) return t('warning');
     return severity;
   };
 
@@ -204,9 +206,12 @@ export function SnmpTrapPanel({
                       <small>{deviceName}</small>
                     </td>
                     <td>
-                      <span title={event.notificationName ?? event.notificationOid ?? ''}>
-                        {event.notificationName ?? event.notificationOid ?? '—'}
-                      </span>
+                      <div>
+                        <strong>{event.description ?? event.notificationName ?? event.notificationOid ?? '—'}</strong>
+                        {event.description && (
+                          <div><small>{event.notificationName ?? event.notificationOid}</small></div>
+                        )}
+                      </div>
                     </td>
                     <td className={styles.oidCell} title={event.notificationOid ?? undefined}>
                       {event.notificationOid ?? '—'}
@@ -218,7 +223,7 @@ export function SnmpTrapPanel({
                     </td>
                     <td>
                       <span className={styles.chip} data-state={event.alarmState ?? 'none'}>
-                        {stateLabel(event.alarmState)}
+                        {transitionLabel(event.alarmState)}
                       </span>
                     </td>
                   </tr>
@@ -242,7 +247,7 @@ export function SnmpTrapPanel({
             <div className={styles.detailIdentity}>
               <span className={styles.bell} aria-hidden="true" />
               <div>
-                <h4>{t('detail')}</h4>
+                <h4>{selected.description ?? t('detail')}</h4>
                 <small>
                   {selected.notificationName ?? selected.notificationOid ?? '—'} ·{' '}
                   {selected.sourceIdentity}
@@ -255,7 +260,7 @@ export function SnmpTrapPanel({
                 {severityLabel(selected.severity)}
               </span>
               <span className={styles.chip} data-state={selected.alarmState ?? 'none'}>
-                {stateLabel(selected.alarmState)}
+                {transitionLabel(selected.alarmState)}
               </span>
             </div>
           </header>
@@ -270,7 +275,7 @@ export function SnmpTrapPanel({
                     {selected.varbinds.map((item, index) => (
                       <div key={item.oid + ':' + index}>
                         <dt title={item.oid}>{item.name ?? item.oid}</dt>
-                        <dd title={item.type}>{plainValue(item.value)}</dd>
+                        <dd title={item.displayValue ? item.value : item.type}>{plainValue(item.displayValue ?? item.value)}</dd>
                       </div>
                     ))}
                   </dl>
@@ -282,7 +287,7 @@ export function SnmpTrapPanel({
             </div>
             <div className={styles.detailColumn}>
               <h5>{t('context')}</h5>
-              <div className={styles.contextIntro}>{t('contextHelp')}</div>
+              <div className={styles.contextIntro}>{t('contextHelp')} {t('historicalTransitionNote')}</div>
               <dl className={styles.contextList}>
                 <div>
                   <dt>{t('origin')}</dt>
@@ -306,6 +311,24 @@ export function SnmpTrapPanel({
                   <dt>{t('alarmCorrelation')}</dt>
                   <dd>{selected.alarmCode ?? t('unverified')}</dd>
                 </div>
+                {selected.conditionKey && (
+                  <>
+                    <div>
+                      <dt>{t('conditionIdentity')}</dt>
+                      <dd><code>{selected.conditionKey}</code></dd>
+                    </div>
+                    <div>
+                      <dt>{t('lastConditionState')}</dt>
+                      <dd>{selected.lastConditionState
+                        ? transitionLabel(selected.lastConditionState)
+                        : t('unclassified')}
+                        {selected.lastConditionObservedAt && (
+                          <small> · {new Date(selected.lastConditionObservedAt).toLocaleString(locale)}</small>
+                        )}
+                      </dd>
+                    </div>
+                  </>
+                )}
               </dl>
               <div className={styles.actions}>
                 <Link href="/alarms">{t('seeAlarms')}</Link>

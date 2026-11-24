@@ -1,4 +1,4 @@
-import { projectControllerBalance } from '@/modules/telemetry/application/controller-balance';
+import { listControllerEvidence, projectSnmpController } from '@/modules/telemetry/application/snmp-controller-projection';
 import { controllerProfileFromAttributes } from '@/modules/telemetry/domain/snmp-controller-profile';
 import { getObservationStore } from '@/modules/telemetry/infrastructure/industrial/runtime';
 import { requirePermission } from '@/modules/identity/application/current-session';
@@ -73,18 +73,14 @@ export async function GET(request: Request) {
       ? controllerProfileFromAttributes(device.attributes)
       : null;
 
-  let controllerBalance = null;
+  let controllerProjection = null;
 
-  if (controllerProfile?.balance) {
+  if (controllerProfile) {
     try {
-      const observations = await (
-        await getObservationStore()
-      ).list(controllerProfile.sourceIdentity, 1000);
-
-      controllerBalance = projectControllerBalance(
-        controllerProfile,
-        observations,
+      const observations = await listControllerEvidence(
+        await getObservationStore(), controllerProfile.sourceIdentity,
       );
+      controllerProjection = projectSnmpController(controllerProfile, observations, result);
     } catch {
       // Diagnostic availability must not affect certified feeds.
     }
@@ -206,7 +202,8 @@ export async function GET(request: Request) {
     {
       ...result,
       historyAvailable,
-      controllerBalance,
+      controllerBalance: controllerProjection?.balance ?? null,
+      controllerProjection,
       voltageContract: {
         toleranceV,
         semantics: 'COHERENT_REPRESENTATIVE_A_B_BUS_VOLTAGE',

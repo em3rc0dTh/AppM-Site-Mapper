@@ -107,8 +107,32 @@ export async function GET(request: Request) {
 
     const store = await getObservationStore();
     const page = await store.listTraps(validatedSources, 30, cursor ?? undefined);
+    // Keep historical ON/OFF separate from the last recorded condition.
+    const conditionIds = [...new Set(page.events.flatMap((event) =>
+      event.conditionSignalId ? [event.conditionSignalId] : []))];
+    let events = page.events;
+    if (conditionIds.length) {
+      try {
+        const conditions = new Map((await store.byIds(conditionIds)).map((s) => [s.id, s]));
+        events = page.events.map((event) => {
+          const condition = event.conditionSignalId ? conditions.get(event.conditionSignalId) : undefined;
+          const matched = condition && condition.sourceIdentity === event.sourceIdentity &&
+            condition.protocol === 'SNMP' && condition.kind === 'alarm' &&
+            condition.key === event.conditionKey &&
+            (condition.alarmState === 'ACTIVE' || condition.alarmState === 'RESOLVED') &&
+            condition.quality === 'VALID';
+          return {
+            ...event,
+            lastConditionState: matched ? condition!.alarmState as 'ACTIVE' | 'RESOLVED' : null,
+            lastConditionObservedAt: matched ? condition!.alarmObservedAt ?? condition!.observedAt : null,
+          };
+        });
+      } catch {
+        // The original event remains available if the condition lookup fails.
+      }
+    }
     return Response.json(
-      { ...page, sourceConfigured: validatedSources.length > 0 },
+      { ...page, events, sourceConfigured: validatedSources.length > 0 },
       { headers: { 'Cache-Control': 'private, no-store' } },
     );
   } catch {

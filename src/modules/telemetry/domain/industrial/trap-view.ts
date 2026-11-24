@@ -1,5 +1,6 @@
 import type { Envelope, Signal } from './observations';
 import { eltekDefinition } from './eltek';
+import { decodeSnmpText } from './snmp-value';
 
 export interface TrapView {
   readonly id: string;
@@ -12,7 +13,12 @@ export interface TrapView {
   readonly severity: string | null;
   readonly alarmState: 'ACTIVE' | 'RESOLVED' | null;
   readonly alarmCode: string | null;
-  readonly varbinds: readonly { oid: string; name: string | null; type: string; value: string }[];
+  readonly description?: string | null;
+  readonly conditionKey?: string | null;
+  readonly conditionSignalId?: string | null;
+  readonly lastConditionState?: 'ACTIVE' | 'RESOLVED' | null;
+  readonly lastConditionObservedAt?: string | null;
+  readonly varbinds: readonly { oid: string; name: string | null; type: string; value: string; displayValue?: string | null }[];
   readonly varbindCount: number;
 }
 
@@ -60,6 +66,9 @@ export function presentTrap(
   const alarmCandidates = signals.filter(
     (signal) =>
       signal.kind === 'alarm' &&
+      signal.protocol === 'SNMP' &&
+      signal.sourceIdentity === envelope.sourceIdentity &&
+      signal.eventId === id &&
       signal.quality === 'VALID' &&
       (signal.alarmState === 'ACTIVE' || signal.alarmState === 'RESOLVED'),
   );
@@ -94,10 +103,16 @@ export function presentTrap(
         name: eltekDefinition(record.oid)?.name ?? null,
         type: String(record.type ?? ''),
         value: printable.slice(0, 512),
+        displayValue: typeof value === 'object' ? decodeSnmpText(value)?.slice(0, 512) ?? null : null,
       },
     ];
   });
   const oid = typeof envelope.notificationOid === 'string' ? envelope.notificationOid : null;
+  const descriptions = points.filter((point) => point.name === 'alarmSubsysSourceDescr');
+  const description = descriptions.length === 1
+    ? descriptions[0]!.displayValue ?? (
+      descriptions[0]!.value.startsWith('{') ? null : decodeSnmpText(descriptions[0]!.value)
+    ) : null;
   return {
     id,
     sourceIdentity: envelope.sourceIdentity,
@@ -110,6 +125,9 @@ export function presentTrap(
     alarmState:
       alarm?.alarmState === 'ACTIVE' || alarm?.alarmState === 'RESOLVED' ? alarm.alarmState : null,
     alarmCode: alarm?.alarmCode ?? null,
+    description,
+    conditionKey: alarm?.key ?? null,
+    conditionSignalId: alarm?.id ?? null,
     varbinds: points,
     varbindCount: varbinds.length,
   };

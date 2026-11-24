@@ -1,11 +1,11 @@
 import type {
   SnmpControllerProfile,
 } from '../domain/snmp-controller-profile';
-import type { Signal } from '../domain/industrial/observations';
+import { controllerEvidenceExpiry, type ControllerEvidence } from './controller-evidence';
 
 export function projectControllerBalance(
   profile: SnmpControllerProfile,
-  signals: readonly Signal[],
+  signals: readonly ControllerEvidence[],
   now = Date.now(),
 ) {
   const config = profile.balance;
@@ -21,18 +21,8 @@ export function projectControllerBalance(
     if (matches.length !== 1) return null;
 
     const s = matches[0]!;
-    const age = now - Date.parse(s.observedAt);
-    const receivedAge = now - Date.parse(s.receivedAt);
-
     if (
-      !Number.isFinite(age) ||
-      !Number.isFinite(receivedAge) ||
-      !Number.isFinite(s.staleMs) ||
-      age < -10000 ||
-      receivedAge < -10000 ||
-      age > s.staleMs ||
-      receivedAge > s.staleMs ||
-      !['VALID', 'UNKNOWN'].includes(s.quality) ||
+      controllerEvidenceExpiry(s, now) === null ||
       typeof s.rawValue !== 'number' ||
       !Number.isFinite(s.rawValue)
     ) return null;

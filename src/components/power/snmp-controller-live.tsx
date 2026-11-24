@@ -14,42 +14,10 @@ import {
   controllerSummary,
 } from '@/modules/telemetry/application/controller-summary';
 import type { SnmpBdfbLoadView } from '@/modules/telemetry/application/snmp-feed-service';
+import type { SnmpControllerProjection } from '@/modules/telemetry/application/snmp-controller-projection';
+import { decodeSnmpText, stringifySnmpRaw } from '@/modules/telemetry/domain/industrial/snmp-value';
+import { SnmpDigitalInputsTable } from './snmp-digital-inputs';
 import styles from './snmp-controller-live.module.css';
-
-function formatSnmpRaw(value: unknown): string {
-  if (value === null || value === undefined) return '—';
-
-  if (typeof value === 'object') {
-    const encoded = value as {
-      encoding?: string;
-      bytes?: string;
-    };
-
-    if (
-      encoded.encoding === 'base64' &&
-      typeof encoded.bytes === 'string'
-    ) {
-      try {
-        const bytes = Uint8Array.from(
-          atob(encoded.bytes),
-          c => c.charCodeAt(0)
-        );
-        const text = new TextDecoder(
-          'utf-8', { fatal: true }
-        ).decode(bytes);
-
-        if (!/[\\x00-\\x1f\\x7f]/.test(text))
-          return text.trim() || '—';
-      } catch {
-        // Preserve binary values without inventing text.
-      }
-    }
-
-    return JSON.stringify(value);
-  }
-
-  return String(value);
-}
 
 function formattedTimestamp(value: string | null, locale: string): string | null {
   if (!value) return null;
@@ -73,6 +41,7 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
   const t = useTranslations('snmpController');
   const locale = useLocale();
   const [ratedA, setRatedA] = useState<number | null>(null);
+  const [projection, setProjection] = useState<SnmpControllerProjection | null>(null);
   const [profile, setProfile] = useState<SnmpControllerProfile | null>(null);
   const [loadedDeviceId, setLoadedDeviceId] = useState<string | null>(null);
   const [signals, setSignals] = useState<SnmpControllerObservation[]>([]);
@@ -95,6 +64,7 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
           setProfile(parsed);
           setLoadedDeviceId(deviceId);
           setSignals([]);
+          setProjection(null);
           setNow(null);
           setError(null);
         }
@@ -121,21 +91,27 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
         const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(45_000)]);
         const observations = await fetchControllerSignals(profile.sourceIdentity, signal);
         let configuredRating: number | null = null;
+        let projected: SnmpControllerProjection | null = null;
         try {
           const response = await fetch(
             '/api/telemetry/snmp/feeds?' + new URLSearchParams({ deviceId }),
             { cache: 'no-store', signal },
           );
-          if (response.ok)
-            configuredRating = configuredControllerCapacity(
-              (await response.json()) as SnmpBdfbLoadView,
-            );
+          if (response.ok) {
+            const payload = (await response.json()) as SnmpBdfbLoadView & {
+              controllerProjection?: SnmpControllerProjection | null;
+            };
+            configuredRating = configuredControllerCapacity(payload);
+            if (payload.controllerProjection?.sourceIdentity === profile.sourceIdentity)
+              projected = payload.controllerProjection;
+          }
         } catch {
           /* Capacity remains unavailable independently of controller readings. */
         }
         if (mounted) {
           setSignals(observations);
           setRatedA(configuredRating);
+          setProjection(projected);
           setNow(Date.now());
           setError(null);
         }
@@ -143,6 +119,7 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
         if (mounted) {
           setSignals([]);
           setRatedA(null);
+          setProjection(null);
           setError(cause instanceof Error ? cause.message : t('unavailable'));
         }
       } finally {
@@ -172,19 +149,25 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
     ) : null;
   }
 
-  const readings =
-    now === null
-      ? []
-      : profile.signals.map((spec) => ({
-          spec,
-          reading: presentControllerReading(
-            signals.find((signal) => signal.key === spec.oid),
-            spec,
-            now,
-          ),
-        }));
-  const summary = now === null || error ? null : controllerSummary(profile, signals, now);
-  const hasSummary = profile.signals.some((spec) => spec.displayMode === 'NORMALIZED');
+  const projected = projection?.sourceIdentity === profile.sourceIdentity ? projection : null;
+  const readings = now === null ? [] : profile.signals.map((spec) => {
+    const item = projected?.readings.find((candidate) => candidate.oid === spec.oid);
+    const fallback = presentControllerReading(
+      signals.find((signal) => signal.key === spec.oid), spec, now,
+    );
+    const reading = item ? (
+      item.reading.state === 'RECENT' &&
+      (item.expiresAt === null || item.expiresAt < now)
+        ? { ...item.reading, state: 'STALE' as const, text: '—', numericValue: null }
+        : item.reading
+    ) : fallback;
+    return { spec, reading, role: item?.role };
+  });
+  const summary = now === null || error ? null :
+    projected && projected.expiresAt !== null && projected.expiresAt >= now
+      ? projected.electrical
+      : !profile.balance ? controllerSummary(profile, signals, now) : null;
+  const hasSummary = Boolean(profile.balance) || profile.signals.some((spec) => spec.displayMode === 'NORMALIZED');
   const number = (value: number | null | undefined, unit: string) =>
     value === null || value === undefined
       ? '—'
@@ -230,7 +213,7 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
           <div className={styles.metric}>
             <dt>{t('dcVoltage')}</dt>
             <dd className={styles.metricValue}>{number(summary?.voltageV, 'V')}</dd>
-            <small>{t('verifiedScaleRequired')}</small>
+            <small>{summary?.voltageV != null ? t('normalizedSource') : t('verifiedScaleRequired')}</small>
           </div>
           <div className={styles.metric}>
             <dt>{t('nominalCapacity')}</dt>
@@ -257,8 +240,9 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
           return (
             <div className={styles.metric} key={spec.oid} data-state={state}>
               <div className={styles.metricHeader}>
-                <dt className={styles.metricLabel} title={spec.label}>
-                  {spec.label}
+                <dt className={styles.metricLabel}>
+                  {item?.role === 'BRANCH_CURRENT' || spec.oid === profile.balance?.branchOid
+                    ? t('branchCurrent') : spec.label}
                 </dt>
                 <span
                   className={styles.quality}
@@ -266,7 +250,7 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
                   title={t('qualityLabel')}
                 >
                   <span className={styles.qualityDot} aria-hidden="true" />
-                  {visible ? reading?.quality : freshnessLabels[state]}
+                  {visible ? reading?.quality === 'DIAGNOSTIC' ? t('diagnosticQuality') : reading?.quality : freshnessLabels[state]}
                 </span>
               </div>
               <dd className={styles.metricValue}>{visible ? reading.text : '—'}</dd>
@@ -293,21 +277,22 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
       </dl>
 
 
+      <SnmpDigitalInputsTable rows={projected?.digitalInputs ?? []} now={now} />
       <details style={{ margin: '16px 0' }}>
         <summary style={{ cursor: 'pointer', fontWeight: 600 }}>
-          Catálogo SNMP completo · {signals.length} señales
+          {t('fullCatalog', { count: signals.length })}
         </summary>
 
         <div style={{ overflowX: 'auto', marginTop: 12 }}>
           <table className="front01-snmp-table">
             <thead>
               <tr>
-                <th>Variable MIB</th>
-                <th>OID</th>
-                <th>RAW</th>
-                <th>Valor interpretado</th>
-                <th>Calidad</th>
-                <th>Última lectura</th>
+                <th>{t('mibVariable')}</th>
+                <th>{t('oid')}</th>
+                <th>{t('raw')}</th>
+                <th>{t('interpretedValue')}</th>
+                <th>{t('qualityLabel')}</th>
+                <th>{t('lastReading')}</th>
               </tr>
             </thead>
             <tbody>
@@ -333,27 +318,33 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
                     item.lastObservation?.rawValue ??
                     item.rawValue;
 
-                  const age =
-                    (now ?? Date.now()) - Date.parse(observed);
-
+                  const clock = now ?? Date.now();
+                  const received = item.lastObservation?.receivedAt ?? item.receivedAt;
+                  const age = clock - Math.min(Date.parse(observed), Date.parse(received));
                   const fresh =
-                    Number.isFinite(age) &&
-                    age >= -10000 &&
+                    Number.isFinite(age) && age >= -10000 &&
+                    Date.parse(observed) <= clock + 10000 &&
+                    Date.parse(received) <= clock + 10000 &&
                     age <= (item.staleMs ?? 90000) &&
-                    item.communicationQuality !== 'STALE';
+                    !['STALE', 'OFFLINE', 'UNOBSERVED'].includes(item.communicationQuality ?? '');
 
-                  const interpreted =
-                    item.enumLabel ??
-                    (item.quality === 'VALID'
-                      ? item.value
-                      : null);
+                  const eventId = item.lastObservation?.eventId ?? item.eventId;
+                  const normalized = fresh && eventId
+                    ? projected?.readings.find((entry) =>
+                        entry.oid === item.key && entry.eventId === eventId &&
+                        entry.expiresAt !== null && entry.expiresAt >= clock &&
+                        entry.reading.quality === 'DIAGNOSTIC',
+                      )?.reading : undefined;
+                  const decoded = typeof raw === 'object' ? decodeSnmpText(raw) : null;
+                  const interpreted = normalized?.text ?? decoded ?? item.enumLabel ??
+                    (item.quality === 'VALID' ? item.value : null);
 
                   return (
                     <tr key={item.key}>
                       <td>{item.mibName ?? '—'}</td>
                       <td><code>{item.key}</code></td>
                       <td>
-                        {formatSnmpRaw(raw)}
+                        {stringifySnmpRaw(raw)}
                       </td>
                       <td>
                         {interpreted === null ||
@@ -362,11 +353,10 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
                           : String(interpreted)}
                       </td>
                       <td>
-                        {!fresh
-                          ? 'STALE'
-                          : item.quality === 'UNKNOWN'
-                            ? 'RAW / Sin normalizar'
-                            : item.quality}
+                        {!fresh ? 'STALE' :
+                          normalized ? t('diagnosticQuality') :
+                          decoded ? t('decodedText') :
+                          item.quality === 'UNKNOWN' ? t('rawUnnormalized') : item.quality}
                       </td>
                       <td>
                         {formattedTimestamp(observed, locale)

@@ -26,12 +26,13 @@ describe('Mk2 shared product header', () => {
     );
 
     expect(productHeader).toContain('<SiteMapperBrand variant="compact" tagline={tagline} />');
+    expect(productHeader).toContain('className="sm-product-header-link"');
     expect(productHeader).toContain('className="sm-product-header-home"');
     expect(productHeader).toContain('href="/workspace"');
     expect(productHeader).toContain('forwardRef<HTMLDivElement');
-    // Only the icon is linked; the identity follows it as a static sibling.
-    expect(productHeader.indexOf('href="/workspace"')).toBeLessThan(
-      productHeader.indexOf('<SiteMapperBrand variant="compact"'),
+    // The complete identity is inside the Home link, not only the house icon.
+    expect(productHeader).toContain(
+      '<SiteMapperBrand variant="compact" tagline={tagline} />\n        </Link>',
     );
   });
 

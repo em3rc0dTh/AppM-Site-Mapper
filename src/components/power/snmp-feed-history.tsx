@@ -297,7 +297,6 @@ function TrendChart({
 
 export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
   const tu = useTranslations('snmpHistoryUi');
-  const t = useTranslations('snmp.history');
   const [window, setWindow] = useState<TelemetryHistoryWindow>('24h');
   const [data, setData] = useState<TrendResult | null>(null);
   const [error, setError] = useState('');

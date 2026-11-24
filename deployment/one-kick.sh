@@ -49,6 +49,7 @@ EOT
   apt-get update
   apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
   systemctl enable --now docker NetworkManager
+  "$ROOT/scripts/release/client-vm-preflight.sh"
 fi
 
 for exe in python3 docker gpg tar nmcli ip; do command -v "$exe" >/dev/null || die "missing $exe"; done

@@ -90,10 +90,10 @@ def network_plan(p):
     n=p["network"]; b=n["bridge"]
     cmds=[["nmcli","connection","add","type","bridge","ifname",b,"con-name",b,
           "ipv4.method","manual","ipv4.addresses",n["address"],"ipv4.never-default","yes",
-          "ipv6.method","disabled","connection.autoconnect","yes","connection.autoconnect-ports","1"]]
+          "ipv6.method","disabled","connection.autoconnect","yes","connection.autoconnect-priority","100","connection.autoconnect-ports","1"]]
     for port in n["lan"]:
         cmds.append(["nmcli","connection","add","type","ethernet","ifname",port,
-             "con-name","tfarm-"+port,"master",b,"slave-type","bridge","connection.autoconnect","yes"])
+             "con-name","tfarm-"+port,"master",b,"slave-type","bridge","connection.autoconnect","yes","connection.autoconnect-priority","100"])
     cmds += [["nmcli","connection","up",b]]
     return cmds
 

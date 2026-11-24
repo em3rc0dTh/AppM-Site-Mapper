@@ -299,7 +299,6 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
   const tu = useTranslations('snmpHistoryUi');
   const t = useTranslations('snmp.history');
   const [window, setWindow] = useState<TelemetryHistoryWindow>('24h');
-  const [selectedMetric, setSelectedMetric] = useState<ChartMetric>('currentA');
   const [data, setData] = useState<TrendResult | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -353,25 +352,6 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
           </button>
         ))}
       </div>
-      <div className="sm-snmp-history-metric-tabs" role="tablist" aria-label={tu('metric')}>
-        {METRICS.map((item) => (
-          <button
-            key={item.key}
-            type="button"
-            role="tab"
-            aria-selected={selectedMetric === item.key}
-            onClick={() => setSelectedMetric(item.key)}
-          >
-            {item.key === 'currentA'
-              ? t('current')
-              : item.key === 'voltageV'
-                ? t('voltage')
-                : item.key === 'powerW'
-                  ? t('power')
-                  : t('energy')}
-          </button>
-        ))}
-      </div>
       {loading && <p role="status">{tu('loading')}</p>}
       {error && (
         <p role="alert" className="form-error">
@@ -385,8 +365,8 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
           <p className="sm-snmp-history-empty">{tu('empty')}</p>
         ) : (
           <>
-            <div className="sm-snmp-history-metrics">
-              {METRICS.filter((item) => item.key === selectedMetric).map((item) => (
+            <div className="sm-snmp-history-metrics sm-snmp-history-metrics--all">
+              {METRICS.map((item) => (
                 <TrendChart
                   key={item.key}
                   metric={item}

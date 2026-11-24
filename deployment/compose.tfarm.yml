@@ -1,0 +1,11 @@
+# Reuse existing field stack; keep the low-resource profile explicit.
+services:
+  mosquitto:
+    tmpfs:
+      - /tmp:mode=1777
+  site-mapper:
+    cpus: 1.0
+  timescaledb:
+    cpus: 1.0
+  mongodb:
+    cpus: 0.75

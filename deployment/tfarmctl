@@ -18,6 +18,7 @@ KIT_ROOT = Path(__file__).resolve().parents[1]
 ROOT = KIT_ROOT
 MQTT_SPOOL = "/app/.runtime/industrial-mqtt"
 MQTT_VOLUME = "appm-site-mapper_tfarm_mqtt_spool"
+VOLUME_ROLES = {("mongodb","/data/configdb"):"tfarm_mongo_config", ("mosquitto","/mosquitto/data"):"tfarm_mosquitto_data", ("mosquitto","/mosquitto/log"):"tfarm_mosquitto_log"}
 BASE_SERVICES = {"mongodb","mongo-init","timescaledb","telemetry-store","mosquitto","site-mapper","modbus-tcp","snmp-traps"}
 OPTIONAL_SERVICES = {"snmp-collector","office-snmp-collector-qdf4-real","office-snmp-collector-qdf5-real"}
 COMPOSE_FILES = ["docker-compose.telemetry.yml","docker-compose.office-test.yml","docker-compose.snmp-field.yml","deployment/compose.tfarm.yml"]
@@ -218,10 +219,10 @@ def verify_bundle(directory):
         fail("Missing volume/image inventory")
     names=set()
     for v in volumes:
-        if not isinstance(v,dict) or not isinstance(v.get("name"),str) or not IDENT.fullmatch(v["name"]) or v["name"] in names or v.get("file") not in manifest["files"] or not v["file"].endswith(".tar"):
+        if not isinstance(v,dict) or not isinstance(v.get("name"),str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}",v["name"]) or v["name"] in names or v.get("file") not in manifest["files"] or not v["file"].endswith(".tar"):
             fail("Invalid or duplicate recovery volume")
         names.add(v["name"])
-    required_volumes={"appm-site-mapper_site_mapper_mongo_data","appm-site-mapper_site_mapper_timescale_data","appm-site-mapper_snmp_field_trap_spool",MQTT_VOLUME}
+    required_volumes={"appm-site-mapper_site_mapper_mongo_data","appm-site-mapper_site_mapper_timescale_data","appm-site-mapper_snmp_field_trap_spool",MQTT_VOLUME} | {"appm-site-mapper_"+role for role in VOLUME_ROLES.values()}
     if not required_volumes.issubset(names):
         fail("Required database/spool volume absent")
     return manifest
@@ -249,6 +250,19 @@ def backup(p, output, staging):
         fail("Existing MQTT spool mount requires explicit migration")
     listed=set(run("docker","volume","ls","-q","--filter","label=com.docker.compose.project="+p["project"],capture=True).split())
     names=mounted|listed
+    # Anonymous Docker image volumes must be restored under deterministic names
+    # that the destination Compose actually mounts, not orphaned original IDs.
+    aliases={}
+    for x in records:
+        service=x["Config"]["Labels"]["com.docker.compose.service"]
+        for m in x.get("Mounts",[]):
+            role=VOLUME_ROLES.get((service,m["Destination"]))
+            if role:
+                if m["Type"]!="volume": fail("Unsupported mount for "+role)
+                target=p["project"]+"_"+role
+                if m["Name"] in aliases or (target in names and target!=m["Name"]): fail("Ambiguous volume role: "+role)
+                aliases[m["Name"]]=(target,role)
+    if set(role for _,role in aliases.values())!=set(VOLUME_ROLES.values()): fail("Missing Docker image volume role")
     if not covering and MQTT_VOLUME in names: fail("Ambiguous MQTT recovery volume already exists")
     active=inspect_ids(run("docker","ps","-q",capture=True).split())
     if any(m.get("Name") in names for x in active for m in x.get("Mounts",[])):
@@ -272,7 +286,9 @@ def backup(p, output, staging):
             if v["Driver"]!="local" or v.get("Options"): fail("Unsupported nonstandard volume")
             f="volume-%03d.tar"%i
             run("tar","--numeric-owner","--acls","--xattrs","-cpf",d/f,"-C",v["Mountpoint"],".")
-            manifest["volumes"].append({"name":name,"labels":v.get("Labels") or {},"file":f})
+            target,role=aliases.get(name,(name,None))
+            labels={"com.docker.compose.project":p["project"],"com.docker.compose.volume":role} if role else v.get("Labels") or {}
+            manifest["volumes"].append({"name":target,"sourceName":name,"labels":labels,"file":f})
         # Store bind mounts as evidence; never assume external mutable paths are backed up.
         if not covering:
             # Existing deployments may keep the spool in the writable layer.

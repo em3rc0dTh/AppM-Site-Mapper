@@ -36,3 +36,7 @@ Use deployment/systemd/tfarm.service.example only after an isolated validation. 
 
 ## Acceptance
 Preflight and static contract checks are not a restore drill. Open items: actual privileged capture, reconciled runtime secrets and service list, encrypted off-host backup, clean target rehearsal, reboot ordering, firewall, external services and field commissioning. No percentage of recovery success is claimed.
+
+## Runtime baseline review — 2026-11-24
+
+The privileged sanitized inventory verified that two legacy Config2 collectors were running, alongside the industrial trap receiver. Preserve their configured identities only if the corresponding sources are still authorized. Do not enable a legacy collector for the same source as the industrial polling receiver. The field receiver is active; this does not certify the external emulators or Metasys connectivity. The current Modbus endpoint is loopback, not a LAN listener. The resource overlay is an intended limit, not proof that every live container uses it. Anonymous Mongo config and Mosquitto data/log volumes are mapped to stable named volumes for restore. Other anonymous scratch volumes are retained as evidence but are not attached automatically. External gateway, tunnel and VM recovery are separate, mandatory checks when used. Never publish site-specific addresses, source IDs or private profiles in a public repository.

@@ -1,0 +1,26 @@
+# Reuse existing field stack; keep the low-resource profile explicit.
+services:
+  mosquitto:
+    tmpfs:
+      - /tmp:mode=1777
+    volumes:
+      - tfarm_mosquitto_data:/mosquitto/data
+      - tfarm_mosquitto_log:/mosquitto/log
+  site-mapper:
+    cpus: 1.0
+    environment:
+      INDUSTRIAL_MQTT_SPOOL: /app/.runtime/industrial-mqtt
+    volumes:
+      - tfarm_mqtt_spool:/app/.runtime/industrial-mqtt
+  timescaledb:
+    cpus: 1.0
+  mongodb:
+    cpus: 0.75
+    volumes:
+      - tfarm_mongo_config:/data/configdb
+
+volumes:
+  tfarm_mqtt_spool:
+  tfarm_mongo_config:
+  tfarm_mosquitto_data:
+  tfarm_mosquitto_log:

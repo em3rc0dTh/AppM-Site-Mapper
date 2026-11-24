@@ -1,0 +1,76 @@
+name: TFARM one-kick clean-machine certification
+
+on:
+  pull_request:
+    paths:
+      - 'deployment/**'
+      - 'docker-compose*.yml'
+      - 'infra/**'
+      - 'src/**'
+      - 'scripts/**'
+      - 'package*.json'
+      - '.github/workflows/tfarm-one-kick-certification.yml'
+  push:
+    branches:
+      - 'release/tfarm-onekick-*'
+    paths:
+      - 'deployment/**'
+      - 'docker-compose*.yml'
+      - 'infra/**'
+      - 'src/**'
+      - 'scripts/**'
+      - 'package*.json'
+      - '.github/workflows/tfarm-one-kick-certification.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  clean-machine-one-kick:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v7
+
+      - name: Static entrypoint checks
+        run: |
+          bash -n deployment/one-kick.sh
+          python3 -m py_compile deployment/tfarmctl
+          python3 deployment/tests/test_contract.py
+
+      - name: Certify host bootstrap from empty Ubuntu 24.04 userspace
+        run: |
+          docker run --rm \
+            --env TFARM_INSTALL_ONLY=1 \
+            --volume "$PWD:/src:ro" \
+            ubuntu:24.04 \
+            bash /src/deployment/bootstrap-host.sh
+
+      - name: Execute the same one-kick used on a fresh host
+        env:
+          TFARM_SKIP_PACKAGES: '1'
+        run: sudo -E bash deployment/one-kick.sh lab --ci
+
+      - name: Require certification receipt
+        run: |
+          grep -qx 'status=ONE_KICK_LAB_CERTIFIED' artifacts/one-kick/receipt.txt
+          grep -qx 'mqtt=PASS' artifacts/one-kick/receipt.txt
+          grep -qx 'snmpPolling=PASS' artifacts/one-kick/receipt.txt
+          grep -qx 'snmpTrapsMongo=PASS' artifacts/one-kick/receipt.txt
+          grep -qx 'snmpTrapsTimescale=PASS' artifacts/one-kick/receipt.txt
+          grep -qx 'modbus=PASS' artifacts/one-kick/receipt.txt
+          grep -qx 'applicationRestart=PASS' artifacts/one-kick/receipt.txt
+          grep -qx 'isolatedBackupRestore=PASS' artifacts/one-kick/receipt.txt
+
+      - name: Upload certification evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: tfarm-one-kick-certification-${{ github.sha }}
+          path: |
+            artifacts/one-kick/**
+            artifacts/uat-lab/**
+          if-no-files-found: error
+          retention-days: 30

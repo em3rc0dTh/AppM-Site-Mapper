@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "project": "appm-site-mapper",
+  "network": {
+    "bridge": "br-lab",
+    "address": "192.168.10.1/24",
+    "wan": "SELECT_WAN",
+    "lan": [
+      "SELECT_LAN"
+    ],
+    "dhcp": {
+      "enabled": true,
+      "poolStart": "192.168.10.150",
+      "poolEnd": "192.168.10.200",
+      "leaseSeconds": 2592000,
+      "advertiseRouter": true
+    }
+  },
+  "services": [
+    "mongodb",
+    "mongo-init",
+    "timescaledb",
+    "telemetry-store",
+    "mosquitto",
+    "site-mapper",
+    "modbus-tcp",
+    "snmp-traps"
+  ],
+  "compose": [
+    "docker-compose.telemetry.yml",
+    "docker-compose.office-test.yml",
+    "docker-compose.snmp-field.yml",
+    "deployment/compose.tfarm.yml"
+  ],
+  "runtimeEnv": ".runtime/office-test.env"
+}

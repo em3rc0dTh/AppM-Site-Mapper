@@ -285,19 +285,19 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
 
       <details style={{ margin: '16px 0' }}>
         <summary style={{ cursor: 'pointer', fontWeight: 600 }}>
-          Catálogo SNMP completo · {signals.length} señales
+          {t('catalogSummary', { count: signals.length })}
         </summary>
 
         <div style={{ overflowX: 'auto', marginTop: 12 }}>
           <table className="front01-snmp-table">
             <thead>
               <tr>
-                <th>Variable MIB</th>
-                <th>OID</th>
-                <th>RAW</th>
-                <th>Valor interpretado</th>
-                <th>Calidad</th>
-                <th>Última lectura</th>
+                <th>{t('catalogMibVariable')}</th>
+                <th>{t('oid')}</th>
+                <th>{t('raw')}</th>
+                <th>{t('catalogInterpretedValue')}</th>
+                <th>{t('catalogQuality')}</th>
+                <th>{t('catalogLastReading')}</th>
               </tr>
             </thead>
             <tbody>
@@ -345,7 +345,7 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
                         {!fresh
                           ? 'STALE'
                           : item.quality === 'UNKNOWN'
-                            ? 'RAW / Sin normalizar'
+                            ? t('catalogRawUnnormalized')
                             : item.quality}
                       </td>
                       <td>{formattedTimestamp(observed, locale) ?? '—'}</td>

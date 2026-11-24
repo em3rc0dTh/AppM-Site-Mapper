@@ -224,7 +224,7 @@ export function SnmpFeedLoadPanel({
                 ? t('statusLive')
                 : diagnostic
                   ? normalized?.totalA != null
-                    ? 'SNMP · DIAGNÓSTICO'
+                    ? t('diagnosticBadge')
                     : 'SNMP · RAW'
                   : t('statusPending')}
           </span>
@@ -357,11 +357,13 @@ export function SnmpFeedLoadPanel({
 
         {diagnostic && (
           <p role="status">
-            Balance diagnóstico · A = Total − B · B: {balance?.branchStatus ?? 'UNKNOWN'} ·{' '}
+            {t('diagnosticBalance', {
+              status: balance?.branchStatus ?? 'UNKNOWN',
+            })}{' '}
             {normalized?.totalA != null
-              ? 'Escalas contrastadas con ELTEK.'
-              : 'Normalización pendiente.'}
-            No certifica shunts independientes.
+              ? t('diagnosticScaleVerified')
+              : t('diagnosticNormalizationPending')}{' '}
+            {t('diagnosticShuntDisclaimer')}
           </p>
         )}
 

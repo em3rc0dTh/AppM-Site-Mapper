@@ -1,5 +1,7 @@
 'use client';
 
+import { configuredControllerCapacity } from '@/modules/telemetry/application/controller-summary';
+
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -22,6 +24,23 @@ interface QdfVoltageValue {
 }
 
 type SnmpBdfbLoadResponse = SnmpBdfbLoadView & {
+  controllerBalance?: {
+    authority: 'DIAGNOSTIC_ONLY';
+    normalized?: {
+      totalA: number | null;
+      branchA: number | null;
+      remainderA: number | null;
+      voltageV: number | null;
+      estimatedPowerKw: number | null;
+    };
+    totalRaw: number | null;
+    voltageRaw: number | null;
+    branchRaw: number | null;
+    remainderRaw: number | null;
+    branchStatus: string | null;
+    observedAt: string | null;
+    coherent: boolean;
+  } | null;
   voltageContract?: {
     toleranceV: number | null;
     semantics: string;
@@ -151,11 +170,65 @@ export function SnmpFeedLoadPanel({
   const operationalPowerKw = load?.qdfOperationalContract?.metrics.power.total?.powerKw ?? null;
   const operationalCurrentA = load?.qdfOperationalContract?.metrics.current.total?.currentA ?? null;
 
+  const balance = error ? null : load?.controllerBalance;
+  const diagnostic = Boolean(
+    balance && load?.freshFeedCount === 0 && load?.labFreshFeedCount === 0,
+  );
+  const raw = (value: number | null | undefined) =>
+    typeof value === 'number' && Number.isFinite(value) ? String(value) + ' RAW' : '—';
+  const normalized = diagnostic && balance?.coherent ? balance.normalized : undefined;
+  const diagnosticRating = diagnostic && load ? configuredControllerCapacity(load) : null;
+  const available = (rated: number | null | undefined, current: number | null | undefined) =>
+    typeof rated === 'number' &&
+    typeof current === 'number' &&
+    Number.isFinite(rated) &&
+    Number.isFinite(current) &&
+    rated > 0 &&
+    current >= 0
+      ? Math.max(0, rated - current)
+      : null;
+  const usage = (rated: number | null | undefined, current: number | null | undefined) =>
+    typeof rated === 'number' &&
+    typeof current === 'number' &&
+    Number.isFinite(rated) &&
+    Number.isFinite(current) &&
+    rated > 0 &&
+    current >= 0
+      ? (current / rated) * 100
+      : null;
+  const currentFor = (id: string) => {
+    const side = load?.feeds.find((feed) => feed.accessPortId === id)?.side;
+    return side === 'A' ? normalized?.remainderA : side === 'B' ? normalized?.branchA : null;
+  };
+  const rawCurrentFor = (id: string) => {
+    const side = load?.feeds.find((feed) => feed.accessPortId === id)?.side;
+    return side === 'A' ? balance?.remainderRaw : side === 'B' ? balance?.branchRaw : null;
+  };
+  const currentText = (
+    value: number | null | undefined,
+    rawValue: number | null | undefined,
+    unit: string,
+  ) => (typeof value === 'number' && Number.isFinite(value) ? numeric(value, unit) : raw(rawValue));
+
   if (view === 'summary') {
-    const totalVoltage =
-      operationalVoltage?.total?.voltageV ?? load?.voltageContract?.total?.voltageV ?? null;
-    const totalCurrent = error ? null : (operationalCurrentA ?? capacity?.measuredA ?? null);
-    const powerKw = operationalPowerKw ?? kilowatts(load?.totalEstimatedPowerW) ?? null;
+    const totalVoltage = diagnostic
+      ? normalized?.voltageV
+      : (operationalVoltage?.total?.voltageV ?? load?.voltageContract?.total?.voltageV ?? null);
+    const totalCurrent = diagnostic
+      ? normalized?.totalA
+      : error
+        ? null
+        : (operationalCurrentA ?? capacity?.measuredA ?? null);
+    const powerKw = diagnostic
+      ? normalized?.estimatedPowerKw
+      : (operationalPowerKw ?? kilowatts(load?.totalEstimatedPowerW) ?? null);
+    const ratedA = capacity?.ratedA ?? diagnosticRating;
+    const availableA = diagnostic
+      ? available(diagnosticRating, normalized?.totalA)
+      : capacity?.availableA;
+    const utilizationPct = diagnostic
+      ? usage(diagnosticRating, normalized?.totalA)
+      : capacity?.utilizationPct;
 
     return (
       <section
@@ -169,18 +242,30 @@ export function SnmpFeedLoadPanel({
               ? t('statusUnavailable')
               : reportingFeeds && load && reportingFeeds === load.expectedFeedCount
                 ? t('statusLive')
-                : t('statusPending')}
+                : diagnostic
+                  ? normalized?.totalA != null
+                    ? t('diagnosticBadge')
+                    : 'SNMP · RAW'
+                  : t('statusPending')}
           </span>
         </header>
 
         <dl className="front01-snmp-kpis front01-snmp-kpis--operator">
           <div>
             <dt>{t('totalCurrent')}</dt>
-            <dd>{numeric(totalCurrent, 'A')}</dd>
+            <dd>
+              {diagnostic
+                ? currentText(normalized?.totalA, balance?.totalRaw, 'A')
+                : numeric(totalCurrent, 'A')}
+            </dd>
           </div>
           <div>
             <dt>{t('qdfVoltage')}</dt>
-            <dd>{numeric(totalVoltage, 'V')}</dd>
+            <dd>
+              {diagnostic
+                ? currentText(normalized?.voltageV, balance?.voltageRaw, 'V')
+                : numeric(totalVoltage, 'V')}
+            </dd>
           </div>
           <div>
             <dt>{t('approxPower')}</dt>
@@ -188,15 +273,15 @@ export function SnmpFeedLoadPanel({
           </div>
           <div>
             <dt>{t('nominalCapacity')}</dt>
-            <dd>{numeric(capacity?.ratedA, 'A')}</dd>
+            <dd>{numeric(ratedA, 'A')}</dd>
           </div>
           <div>
             <dt>{t('available')}</dt>
-            <dd>{numeric(capacity?.availableA, 'A')}</dd>
+            <dd>{numeric(availableA, 'A')}</dd>
           </div>
           <div>
             <dt>{t('utilization')}</dt>
-            <dd>{numeric(capacity?.utilizationPct, '%')}</dd>
+            <dd>{numeric(utilizationPct, '%')}</dd>
           </div>
         </dl>
 
@@ -208,22 +293,31 @@ export function SnmpFeedLoadPanel({
             aria-label={t('utilization')}
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-valuenow={Math.max(0, Math.min(100, capacity?.utilizationPct ?? 0))}
+            aria-valuenow={Math.max(0, Math.min(100, utilizationPct ?? 0))}
           >
             <span
               style={{
-                width: `${Math.max(0, Math.min(100, capacity?.utilizationPct ?? 0))}%`,
+                width: `${Math.max(0, Math.min(100, utilizationPct ?? 0))}%`,
               }}
             />
           </div>
           <b>
-            {capacity?.utilizationPct === null || capacity?.utilizationPct === undefined
+            {utilizationPct === null || utilizationPct === undefined
               ? '—'
-              : `${capacity.utilizationPct.toFixed(2)} %`}
+              : `${utilizationPct.toFixed(2)} %`}
           </b>
         </div>
 
-        {(awaitingVerification || !inventoryRecorded) && (
+        {diagnostic && (
+          <p className="front01-data-warning" role="status">
+            {t('diagnosticBalance', { status: balance?.branchStatus ?? 'UNKNOWN' })}{' '}
+            {normalized?.totalA != null
+              ? t('diagnosticScaleVerified')
+              : t('diagnosticNormalizationPending')}{' '}
+            {t('diagnosticShuntDisclaimer')}
+          </p>
+        )}
+        {!diagnostic && (awaitingVerification || !inventoryRecorded) && (
           <p className="front01-data-warning" role="status">
             {awaitingVerification ? t('verifyPending') : t('commissionIncomplete')}
           </p>
@@ -247,7 +341,11 @@ export function SnmpFeedLoadPanel({
                 ? t('statusUnavailable')
                 : reportingFeeds && load && reportingFeeds === load.expectedFeedCount
                   ? t('statusLive')
-                  : t('statusPending')}
+                  : diagnostic
+                    ? normalized?.totalA != null
+                      ? t('diagnosticBadge')
+                      : 'SNMP · RAW'
+                    : t('statusPending')}
             </strong>
           </div>
         </header>
@@ -268,7 +366,13 @@ export function SnmpFeedLoadPanel({
                 : feed.servedPanelIds.length
                   ? t('assignedPanels', { count: feed.servedPanelIds.length })
                   : '—';
-            const utilizationPct = utilization?.utilizationPct ?? null;
+            const currentA = diagnostic ? currentFor(feed.accessPortId) : feed.currentA;
+            const utilizationPct = diagnostic
+              ? usage(utilization?.ratedA, currentA)
+              : (utilization?.utilizationPct ?? null);
+            const availableA = diagnostic
+              ? available(utilization?.ratedA, currentA)
+              : utilization?.availableA;
 
             return (
               <article
@@ -287,7 +391,11 @@ export function SnmpFeedLoadPanel({
                 <div className="front01-input-primary">
                   <div>
                     <span>{t('current')}</span>
-                    <strong>{numeric(feed.currentA, 'A')}</strong>
+                    <strong>
+                      {diagnostic
+                        ? currentText(currentA, rawCurrentFor(feed.accessPortId), 'A')
+                        : numeric(currentA, 'A')}
+                    </strong>
                   </div>
                   <div>
                     <span>{t('utilization')}</span>
@@ -316,7 +424,7 @@ export function SnmpFeedLoadPanel({
                   <dt>{t('ratedSmall')}</dt>
                   <dd>{numeric(utilization?.ratedA, 'A')}</dd>
                   <dt>{t('available')}</dt>
-                  <dd>{numeric(utilization?.availableA, 'A')}</dd>
+                  <dd>{numeric(availableA, 'A')}</dd>
                   <dt>{t('voltage')}</dt>
                   <dd>{numeric(feed.voltageV, 'V')}</dd>
                   <dt>{t('panel')}</dt>

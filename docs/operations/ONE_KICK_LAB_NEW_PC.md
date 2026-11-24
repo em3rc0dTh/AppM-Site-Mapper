@@ -323,16 +323,16 @@ No se aceptan como parte del procedimiento:
 
 El commit `a21586f61c01da3082b74ad74c335d032a973679` fue sometido a los gates de release y obtuvo SUCCESS en:
 
-| Gate | Estado |
-|---|---|
-| TFARM one-kick clean-machine certification | PASS |
-| CI | PASS |
-| Clean full-stack integration | PASS |
-| MK1 HTTP & MongoDB operational acceptance | PASS |
-| SNMP adversarial security certification | PASS |
-| SNMP Configuration 4 bounded chaos certification | PASS |
-| S05 commissioning observability | PASS |
-| Industrial integration operator safety | PASS |
+| Gate                                             | Estado |
+| ------------------------------------------------ | ------ |
+| TFARM one-kick clean-machine certification       | PASS   |
+| CI                                               | PASS   |
+| Clean full-stack integration                     | PASS   |
+| MK1 HTTP & MongoDB operational acceptance        | PASS   |
+| SNMP adversarial security certification          | PASS   |
+| SNMP Configuration 4 bounded chaos certification | PASS   |
+| S05 commissioning observability                  | PASS   |
+| Industrial integration operator safety           | PASS   |
 
 El workflow One Kick también ejecutó el bootstrap dentro de un userspace `ubuntu:24.04` vacío antes de ejecutar el stack completo.
 

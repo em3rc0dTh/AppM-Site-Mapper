@@ -357,11 +357,12 @@ export function SnmpFeedLoadPanel({
 
         {diagnostic && (
           <p role="status">
-            Balance diagnóstico · A = Total − B · B: {balance?.branchStatus ?? 'UNKNOWN'} ·{' '}
-            {normalized?.totalA != null
-              ? 'Escalas contrastadas con ELTEK.'
-              : 'Normalización pendiente.'}
-            No certifica shunts independientes.
+            {t('diagnosticBalance', {
+              status: balance?.branchStatus ?? 'UNKNOWN',
+              normalization:
+                normalized?.totalA != null ? t('scalesVerified') : t('normalizationPending'),
+              disclaimer: t('diagnosticNotIndependent'),
+            })}
           </p>
         )}
 

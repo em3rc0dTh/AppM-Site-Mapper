@@ -285,19 +285,19 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
 
       <details style={{ margin: '16px 0' }}>
         <summary style={{ cursor: 'pointer', fontWeight: 600 }}>
-          Catálogo SNMP completo · {signals.length} señales
+          {t('fullCatalog', { count: signals.length })}
         </summary>
 
         <div style={{ overflowX: 'auto', marginTop: 12 }}>
           <table className="front01-snmp-table">
             <thead>
               <tr>
-                <th>Variable MIB</th>
-                <th>OID</th>
-                <th>RAW</th>
-                <th>Valor interpretado</th>
-                <th>Calidad</th>
-                <th>Última lectura</th>
+                <th>{t('mibVariable')}</th>
+                <th>{t('oid')}</th>
+                <th>{t('raw')}</th>
+                <th>{t('interpretedValue')}</th>
+                <th>{t('qualityLabel')}</th>
+                <th>{t('lastReading')}</th>
               </tr>
             </thead>
             <tbody>

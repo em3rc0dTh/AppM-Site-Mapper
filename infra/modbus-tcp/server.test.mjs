@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import net from 'node:net';
 import { ModbusLatestState, handleFrame, rawPointIndex, startBridge } from './server.mjs';
+import { ExtensionState } from './point-registry.mjs';
+import { clientModbusV13ExtensionRows, clientModbusV13Manifest } from './client-contract-v1.3.mjs';
 import {
   registerMapRows,
   circuitStartAddress,
@@ -207,7 +209,7 @@ test('legacy 4x24 layout remains available as an explicit compatibility mode', (
   assert.throws(() => new ModbusLatestState(sourceMap, 30000, 'bad-layout'), /MODBUS_POINT_LAYOUT/);
 });
 
-test('Metasys map matches Excel v1.2: 388 points/QDF, FC04 and exact offsets', () => {
+test('Metasys base map matches Excel v1.3 Point Schedule: 388 points/QDF, FC04 and exact offsets', () => {
   const rows = registerMapRows(sourceMap, 'blocks-2x48');
   assert.equal(rows.length, 1164);
   assert.equal(REGISTERS_PER_UNIT, 776);
@@ -265,4 +267,75 @@ test('Metasys missing-data exception mode never fabricates a zero', () => {
     () => new ModbusLatestState(sourceMap, 30000, 'blocks-2x48', 'bad'),
     /MODBUS_MISSING_POLICY/,
   );
+});
+
+test('Metasys Excel v1.3 ELTEK extension exposes 17 points per QDF at exact offsets', () => {
+  const rows = clientModbusV13ExtensionRows();
+  assert.equal(rows.length, 51);
+  const expectedStarts = [
+    1024, 1027, 1030, 1033, 1039, 1042, 1045, 1048, 1054, 1057, 1060, 1063, 1066, 1069, 1072, 1075,
+    1078,
+  ];
+  for (const unitId of [1, 2, 3]) {
+    const unitRows = rows.filter((row) => row.unitId === unitId);
+    assert.equal(unitRows.length, 17);
+    assert.deepEqual(
+      unitRows.map((row) => row.startAddress),
+      expectedStarts,
+    );
+    for (const row of unitRows) {
+      assert.equal(
+        row.reference,
+        String(40001 + row.startAddress) + '-' + String(40002 + row.startAddress),
+      );
+    }
+  }
+  assert.deepEqual(
+    rows.filter((row) => row.unitId === 1).map((row) => row.unit),
+    [
+      'A',
+      'V',
+      'A',
+      'kW',
+      'A',
+      'V',
+      'A',
+      'kW',
+      'A',
+      'V',
+      'V',
+      'V',
+      'kW',
+      'kWh',
+      'no-units',
+      'no-units',
+      'no-units',
+    ],
+  );
+});
+
+test('v1.3 TOTAL_ENERGY mirrors the frozen QDF total energy without changing base addresses', () => {
+  const state = new ModbusLatestState(sourceMap);
+  state.extensions = new ExtensionState(clientModbusV13Manifest());
+  const now = Date.now();
+  for (let circuit = 1; circuit <= 96; circuit++) {
+    assert.equal(
+      state.apply(
+        sample(
+          'EMU-BFDB-01',
+          pointIdForCircuit(circuit, 'blocks-2x48'),
+          52,
+          new Date(now).toISOString(),
+        ),
+        now,
+      ),
+      true,
+    );
+  }
+  const base = handleFrame(command(1, 774, 2), state, now);
+  assert.equal(base.readFloatBE(9), 120);
+  const extension = handleFrame(command(1, 1069, 3), state, now);
+  assert.equal(extension[7], 4);
+  assert.equal(extension.readFloatBE(9), 120);
+  assert.equal(extension.readUInt16BE(13), 1);
 });

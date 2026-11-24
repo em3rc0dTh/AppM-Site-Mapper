@@ -124,6 +124,7 @@ lab_modbus_ok() {
     const m=JSON.parse(process.env.MODBUS_SOURCE_UNITS_JSON||"{}");
     if(m["26092403950003"]!==1 || m["26092403950004"]!==2 || m["26092403950002"]!==3) process.exit(1);
   ' >/dev/null
+  lab_dc exec -T modbus-tcp node /opt/site-mapper/v13-operational-check.mjs >/dev/null
 }
 
 run_lab() {

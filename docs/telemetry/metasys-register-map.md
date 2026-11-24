@@ -1,7 +1,7 @@
 # Site Mapper — Metasys Modbus TCP register map (read only)
 
-This document is the runtime companion to the approved **Modbus_TCP_v1.2.xlsx** client schedule.
-The Excel allocation is authoritative for the Site Mapper -> Metasys Modbus surface.
+This document is the runtime companion to the approved **Modbus_TCP_v1.3.xlsx** client schedule.
+The Excel allocation is authoritative for the Site Mapper -> Metasys Modbus surface. The Point Schedule keeps the original 1,164-point base contract; the Eltek Schedule adds 51 governed QDF/ELTEK points without moving any base register.
 
 ## Frozen contract
 
@@ -104,3 +104,44 @@ The optional `exception` policy returns exception 04 for an FC04 request contain
 registers and must be agreed with the Metasys integrator.
 
 This interface is read-only and is not a safety-control channel.
+
+## Modbus TCP v1.3 ELTEK extension
+
+The Eltek Schedule sheet adds **17 client points per QDF** at offsets 1024..1078 for Unit IDs 1/2/3 (QDF-2/QDF-4/QDF-5). Each client value is IEEE-754 FLOAT32 in two registers. The runtime reserves the immediately following third register as the governed quality code, so each extension slot advances by three addresses while the client schedule continues to list only the two data registers.
+
+| Point                  | Start | Reference   | Unit     |
+| ---------------------- | ----: | ----------- | -------- |
+| Input A Rated Current  |  1024 | 41025-41026 | A        |
+| Input A Voltage        |  1027 | 41028-41029 | V        |
+| Input A Current        |  1030 | 41031-41032 | A        |
+| Input A Power          |  1033 | 41034-41035 | kW       |
+| Input B Rated Current  |  1039 | 41040-41041 | A        |
+| Input B Voltage        |  1042 | 41043-41044 | V        |
+| Input B Current        |  1045 | 41046-41047 | A        |
+| Input B Power          |  1048 | 41049-41050 | kW       |
+| Total Current          |  1054 | 41055-41056 | A        |
+| Bus A Voltage          |  1057 | 41058-41059 | V        |
+| Bus B Voltage          |  1060 | 41061-41062 | V        |
+| Total Voltage          |  1063 | 41064-41065 | V        |
+| Total Power            |  1066 | 41067-41068 | kW       |
+| Total Energy           |  1069 | 41070-41071 | kWh      |
+| Communication Status   |  1072 | 41073-41074 | no-units |
+| Controller Alarm State |  1075 | 41076-41077 | no-units |
+| Alarm Severity         |  1078 | 41079-41080 | no-units |
+
+For Config 2, A/B V/I/P are projected from the explicitly commissioned ELTEK SNMP input feeds and Rated Current comes from the recorded input rating. Power is a positive consumption magnitude. The v1.3 Total Energy point mirrors the frozen QDF total-energy value already published from the MQTT breaker block; it does not create a second accumulator.
+
+Status codes are the client schedule codes:
+
+- Communication Status: 0 OFFLINE, 1 LIVE, 2 STALE, 3 ERROR.
+- Controller Alarm State: 0 RESOLVED/CLEAR, 1 ACTIVE.
+- Alarm Severity: 0 NONE, 1 INFO, 2 WARNING, 3 CRITICAL.
+
+The Interface sheet's 1,164 total is the base Point Schedule. With the separate 51-point ELTEK extension, the v1.3 workbook describes 1,215 client-visible values. Quality registers are runtime metadata and are not counted as client points.
+
+The extension is generated and checked from the same source used by the runtime:
+
+    node scripts/operations/generate-modbus-v13-extension.mjs
+    node scripts/operations/generate-modbus-v13-extension.mjs --check
+
+The committed companion file is docs/telemetry/metasys-eltek-register-map-v1.3.csv.

@@ -90,7 +90,7 @@ export function publicationStatus(signal: Signal, manifest: PublicationManifest 
           unitId: point.unitId,
           address: point.address,
           qualityAddress: point.address + 2,
-          functionCode: 3,
+          functionCode: 4,
           dataType: 'FLOAT32',
           wordOrder: 'ABCD',
         }

@@ -139,8 +139,36 @@ export class ModbusLatestState {
     return true;
   }
 
+  syncExtensionMirrors(unit, now = Date.now()) {
+    if (!this.extensions) return;
+    const slots = this.values.get(unit);
+    if (!slots) return;
+    for (const point of this.extensions.registry.points) {
+      if (point.unitId !== unit || !point.logicalPointId?.endsWith('/MODBUS_V13_TOTAL_ENERGY'))
+        continue;
+      const item = slots.get(totalMetricStartAddress('energyKwh'));
+      const timestamp = item
+        ? new Date(item.receivedAt).toISOString()
+        : new Date(now).toISOString();
+      this.extensions.apply({
+        id: point.signalId,
+        logicalPointId: point.logicalPointId,
+        quality: item ? 'VALID' : 'UNOBSERVED',
+        kind: 'measurement',
+        value: item?.value,
+        unit: point.unit,
+        receivedAt: timestamp,
+        observedAt: timestamp,
+        staleMs: this.staleMs,
+      });
+    }
+  }
+
   read(unit, offset, count, now = Date.now()) {
-    if (offset >= 1024 && this.extensions) return this.extensions.read(unit, offset, count, now);
+    if (offset >= 1024 && this.extensions) {
+      this.syncExtensionMirrors(unit, now);
+      return this.extensions.read(unit, offset, count, now);
+    }
     if (!this.values.has(unit)) return null;
     if (
       !Number.isInteger(offset) ||

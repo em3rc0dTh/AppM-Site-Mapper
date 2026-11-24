@@ -87,6 +87,18 @@ describe('BFDB derived electrical engine', () => {
     expect(second[0]?.metrics.energyKwh?.quality).toBe('ESTIMATED');
   });
 
+  it('uses absolute DC power and keeps derived energy positive for negative voltage', async () => {
+    const engine = new BfdbDerivedElectricalEngine(undefined, 120_000);
+
+    const first = await engine.applyBreakerReadings([reading(-53.47, 9.16, t0)], 'm1');
+    expect(first[0]?.metrics.powerW?.value).toBeCloseTo(489.7852, 10);
+    expect(first[0]?.metrics.energyKwh?.value).toBe(0);
+
+    const second = await engine.applyBreakerReadings([reading(-54.02, 10.43, t60)], 'm2');
+    expect(second[0]?.metrics.powerW?.value).toBeCloseTo(563.4286, 10);
+    expect(second[0]?.metrics.energyKwh?.value).toBeGreaterThan(0);
+  });
+
   it('does not interpolate long gaps and preserves explicit zeroes', async () => {
     const engine = new BfdbDerivedElectricalEngine(undefined, 120_000);
     await engine.applyBreakerReadings([reading(48, 2, t0)], 'm1');
@@ -132,14 +144,14 @@ describe('BFDB derived electrical engine', () => {
         voltageV: { value: 48, unit: 'V', observedAt: t0, origin: 'SOURCE' },
         currentA: { value: 2, unit: 'A', observedAt: t0, origin: 'SOURCE' },
         powerW: {
-          value: 96,
+          value: -96,
           unit: 'W',
           observedAt: t0,
           origin: 'DERIVED',
           formula: BFDB_DERIVED_POWER_FORMULA,
         },
         energyKwh: {
-          value: 1.5,
+          value: -1.5,
           unit: 'kWh',
           observedAt: t0,
           origin: 'DERIVED',

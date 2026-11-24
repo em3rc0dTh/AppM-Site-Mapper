@@ -25,21 +25,12 @@ function formatSnmpRaw(value: unknown): string {
       bytes?: string;
     };
 
-    if (
-      encoded.encoding === 'base64' &&
-      typeof encoded.bytes === 'string'
-    ) {
+    if (encoded.encoding === 'base64' && typeof encoded.bytes === 'string') {
       try {
-        const bytes = Uint8Array.from(
-          atob(encoded.bytes),
-          c => c.charCodeAt(0)
-        );
-        const text = new TextDecoder(
-          'utf-8', { fatal: true }
-        ).decode(bytes);
+        const bytes = Uint8Array.from(atob(encoded.bytes), (c) => c.charCodeAt(0));
+        const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
 
-        if (!/[\\x00-\\x1f\\x7f]/.test(text))
-          return text.trim() || '—';
+        if (!/[\\x00-\\x1f\\x7f]/.test(text)) return text.trim() || '—';
       } catch {
         // Preserve binary values without inventing text.
       }
@@ -292,7 +283,6 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
         })}
       </dl>
 
-
       <details style={{ margin: '16px 0' }}>
         <summary style={{ cursor: 'pointer', fontWeight: 600 }}>
           Catálogo SNMP completo · {signals.length} señales
@@ -314,27 +304,21 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
               {[...signals]
                 .sort((a, b) =>
                   a.key.localeCompare(b.key, undefined, {
-                    numeric: true
-                  })
+                    numeric: true,
+                  }),
                 )
-                .map(signal => {
-                  const item = signal as
-                    SnmpControllerObservation & {
-                      mibName?: string | null;
-                      communicationQuality?: string;
-                    };
+                .map((signal) => {
+                  const item = signal as SnmpControllerObservation & {
+                    mibName?: string | null;
+                    communicationQuality?: string;
+                  };
 
                   const observed =
-                    item.lastObservation?.observedAt ??
-                    item.observedAt ??
-                    item.receivedAt;
+                    item.lastObservation?.observedAt ?? item.observedAt ?? item.receivedAt;
 
-                  const raw =
-                    item.lastObservation?.rawValue ??
-                    item.rawValue;
+                  const raw = item.lastObservation?.rawValue ?? item.rawValue;
 
-                  const age =
-                    now === null ? Number.NaN : now - Date.parse(observed);
+                  const age = now === null ? Number.NaN : now - Date.parse(observed);
 
                   const fresh =
                     Number.isFinite(age) &&
@@ -343,21 +327,17 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
                     item.communicationQuality !== 'STALE';
 
                   const interpreted =
-                    item.enumLabel ??
-                    (item.quality === 'VALID'
-                      ? item.value
-                      : null);
+                    item.enumLabel ?? (item.quality === 'VALID' ? item.value : null);
 
                   return (
                     <tr key={item.key}>
                       <td>{item.mibName ?? '—'}</td>
-                      <td><code>{item.key}</code></td>
                       <td>
-                        {formatSnmpRaw(raw)}
+                        <code>{item.key}</code>
                       </td>
+                      <td>{formatSnmpRaw(raw)}</td>
                       <td>
-                        {interpreted === null ||
-                         interpreted === undefined
+                        {interpreted === null || interpreted === undefined
                           ? '—'
                           : String(interpreted)}
                       </td>
@@ -368,10 +348,7 @@ export function SnmpControllerLive({ deviceId }: Readonly<{ deviceId: string }>)
                             ? 'RAW / Sin normalizar'
                             : item.quality}
                       </td>
-                      <td>
-                        {formattedTimestamp(observed, locale)
-                          ?? '—'}
-                      </td>
+                      <td>{formattedTimestamp(observed, locale) ?? '—'}</td>
                     </tr>
                   );
                 })}

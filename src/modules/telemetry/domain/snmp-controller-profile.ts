@@ -97,24 +97,24 @@ export function parseSnmpControllerProfile(value: unknown): SnmpControllerProfil
     if (
       !isRecord(b) ||
       !hasKeys(b, [
-        'method', 'totalOid', 'branchOid',
-        'voltageOid', 'branchStatusOid', 'normalization'
+        'method',
+        'totalOid',
+        'branchOid',
+        'voltageOid',
+        'branchStatusOid',
+        'normalization',
       ]) ||
       b.method !== 'TOTAL_MINUS_BRANCH'
-    ) return null;
+    )
+      return null;
 
-    const oids = [
-      b.totalOid, b.branchOid,
-      b.voltageOid, b.branchStatusOid
-    ];
+    const oids = [b.totalOid, b.branchOid, b.voltageOid, b.branchStatusOid];
 
     if (
-      oids.some(oid =>
-        typeof oid !== 'string' ||
-        !signals.some(spec => spec.oid === oid)
-      ) ||
+      oids.some((oid) => typeof oid !== 'string' || !signals.some((spec) => spec.oid === oid)) ||
       new Set(oids).size !== oids.length
-    ) return null;
+    )
+      return null;
 
     let normalization: ControllerBalanceConfig['normalization'];
 
@@ -122,11 +122,7 @@ export function parseSnmpControllerProfile(value: unknown): SnmpControllerProfil
       const n = b.normalization;
       if (
         !isRecord(n) ||
-        !hasKeys(n, [
-          'totalCurrentScale',
-          'branchCurrentScale',
-          'voltageScale'
-        ]) ||
+        !hasKeys(n, ['totalCurrentScale', 'branchCurrentScale', 'voltageScale']) ||
         typeof n.totalCurrentScale !== 'number' ||
         typeof n.branchCurrentScale !== 'number' ||
         typeof n.voltageScale !== 'number' ||
@@ -136,7 +132,8 @@ export function parseSnmpControllerProfile(value: unknown): SnmpControllerProfil
         n.totalCurrentScale <= 0 ||
         n.branchCurrentScale <= 0 ||
         n.voltageScale === 0
-      ) return null;
+      )
+        return null;
 
       normalization = {
         totalCurrentScale: n.totalCurrentScale,
@@ -169,3 +166,5 @@ export function controllerProfileFromAttributes(
 ): SnmpControllerProfile | null {
   return parseSnmpControllerProfile(attributes?.snmpControllerProfile);
 }
+
+[executed on device: TFARM04 (41aaa2a2-45b1-4e70-8348-0c4d0abdd30e)]

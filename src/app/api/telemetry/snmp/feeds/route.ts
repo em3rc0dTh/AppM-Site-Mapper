@@ -1,3 +1,6 @@
+import { projectControllerBalance } from '@/modules/telemetry/application/controller-balance';
+import { controllerProfileFromAttributes } from '@/modules/telemetry/domain/snmp-controller-profile';
+import { getObservationStore } from '@/modules/telemetry/infrastructure/industrial/runtime';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import {
   assessBdfbInventory,
@@ -65,6 +68,28 @@ export async function GET(request: Request) {
   if (!result) return Response.json({ error: 'BDFB_NOT_FOUND' }, { status: 404 });
 
   const device = await topology.getById(deviceId);
+  const controllerProfile =
+    device?.kind === 'DEVICE'
+      ? controllerProfileFromAttributes(device.attributes)
+      : null;
+
+  let controllerBalance = null;
+
+  if (controllerProfile?.balance) {
+    try {
+      const observations = await (
+        await getObservationStore()
+      ).list(controllerProfile.sourceIdentity, 1000);
+
+      controllerBalance = projectControllerBalance(
+        controllerProfile,
+        observations,
+      );
+    } catch {
+      // Diagnostic availability must not affect certified feeds.
+    }
+  }
+
   const equipment = (await topology.listEquipmentForDevice(deviceId)).filter(
     (node) => node.lifecycle === 'ACTIVE',
   );
@@ -181,6 +206,7 @@ export async function GET(request: Request) {
     {
       ...result,
       historyAvailable,
+      controllerBalance,
       voltageContract: {
         toleranceV,
         semantics: 'COHERENT_REPRESENTATIVE_A_B_BUS_VOLTAGE',

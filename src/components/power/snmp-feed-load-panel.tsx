@@ -158,7 +158,10 @@ export function SnmpFeedLoadPanel({
     const powerKw = operationalPowerKw ?? kilowatts(load?.totalEstimatedPowerW) ?? null;
 
     return (
-      <section className="front01-snmp-summary front01-snmp-summary--operator" aria-label={t('section')}>
+      <section
+        className="front01-snmp-summary front01-snmp-summary--operator"
+        aria-label={t('section')}
+      >
         <header className="front01-summary-header">
           <strong>{t('compactTitle')}</strong>
           <span>
@@ -231,7 +234,10 @@ export function SnmpFeedLoadPanel({
 
   if (view === 'feeds') {
     return (
-      <section className="front01-inputs-summary front01-inputs-summary--operator" aria-label={t('section')}>
+      <section
+        className="front01-inputs-summary front01-inputs-summary--operator"
+        aria-label={t('section')}
+      >
         <header className="front01-inputs-heading">
           <h2>{t('incoming')}</h2>
           <div>
@@ -329,7 +335,9 @@ export function SnmpFeedLoadPanel({
         <footer className="front01-inputs-note">
           <span>{t('protocolSnmp')}</span>
           <span>{t('independentMeasurements')}</span>
-          {load && !load.qdfOperationalContract?.metrics.current.total && <span>{t('noTotal')}</span>}
+          {load && !load.qdfOperationalContract?.metrics.current.total && (
+            <span>{t('noTotal')}</span>
+          )}
         </footer>
       </section>
     );

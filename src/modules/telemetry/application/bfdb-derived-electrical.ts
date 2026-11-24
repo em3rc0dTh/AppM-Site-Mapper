@@ -48,7 +48,7 @@ export function deriveDcPowerMetric(
   currentA: TelemetryMetricValue | undefined,
 ): TelemetryMetricValue | undefined {
   if (!voltageV || !currentA || voltageV.observedAt !== currentA.observedAt) return undefined;
-  const value = voltageV.value * currentA.value;
+  const value = Math.abs(voltageV.value * currentA.value);
   if (!Number.isFinite(value)) return undefined;
   return {
     value,
@@ -185,7 +185,7 @@ export class BfdbDerivedElectricalEngine {
 
     const key = this.key(sourceIdentity, targetId);
     const previous = this.state.get(key);
-    let energyKwh = previous?.energyKwh ?? 0;
+    let energyKwh = Math.abs(previous?.energyKwh ?? 0);
     let integrated = false;
 
     if (
@@ -195,9 +195,11 @@ export class BfdbDerivedElectricalEngine {
     ) {
       const gapMs = receivedAtMs - previous.receivedAtMs;
       if (gapMs <= this.maxGapMs && previous.powerW !== undefined) {
-        const deltaKwh = (((previous.powerW + powerW.value) / 2) * gapMs) / 3_600_000_000;
+        const deltaKwh =
+          (((Math.abs(previous.powerW) + Math.abs(powerW.value)) / 2) * gapMs) /
+          3_600_000_000;
         if (Number.isFinite(deltaKwh)) {
-          energyKwh += deltaKwh;
+          energyKwh += Math.abs(deltaKwh);
           integrated = true;
         }
       }
@@ -256,9 +258,9 @@ export class BfdbDerivedElectricalEngine {
         const receivedAtMs = Date.parse(sample.receivedAt);
         if (!Number.isFinite(receivedAtMs)) continue;
         this.state.set(key, {
-          energyKwh: energy.value,
+          energyKwh: Math.abs(energy.value),
           ...(power && isDerived(sample.reported.powerW, BFDB_DERIVED_POWER_FORMULA)
-            ? { powerW: power.value }
+            ? { powerW: Math.abs(power.value) }
             : {}),
           receivedAtMs,
           ...(sample.messageId ? { messageId: sample.messageId } : {}),

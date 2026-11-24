@@ -62,8 +62,8 @@ mkdir -p "$TMP/unpacked"
 
 log "Decrypting recovery bundle"
 if [ -n "$PASSPHRASE_FILE" ]; then
-  [ -f "$PASSHRASE_FILE" ] || die "passphrase file missing"
-  [ $(( 8#$(stat -c '%a' "$PASSHRASE_FILE") & 077 )) -eq 0 ] || die "passphrase file must be mode 0600"
+  [ -f "$PASSPHRASE_FILE" ] || die "passphrase file missing"
+  [ $(( 8#$(stat -c '%a' "$PASSPHRASE_FILE") & 077 )) -eq 0 ] || die "passphrase file must be mode 0600"
   gpg --batch --yes --pinentry-mode loopback --passphrase-file "$PASSPHRASE_FILE" --decrypt "$RECOVERY" |
     tar -xpf - -C "$TMP/unpacked"
 else

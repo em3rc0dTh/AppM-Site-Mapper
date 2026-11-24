@@ -64,8 +64,8 @@ export function deriveDcPowerMetric(
  *
  * - voltage/current are the authoritative field measurements;
  * - source P/EP remain available in the raw MQTT envelope but never govern LIVE;
- * - power is V x I from the same observed frame;
- * - energy is a Site Mapper cumulative integral using real receive intervals only;
+ * - power is abs(V x I) from the same observed frame;
+ * - energy is a non-negative Site Mapper cumulative integral using real receive intervals only;
  * - gaps larger than maxGapMs are deliberately not interpolated;
  * - when historian state exists, a restart resumes the last derived accumulator.
  */

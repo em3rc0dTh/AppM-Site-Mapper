@@ -14,9 +14,7 @@ import Link from 'next/link';
 import { useRef, useState } from 'react';
 
 import type { BdfbPresentation } from '@/modules/power/domain/bdfb-model';
-import {
-  aggregateBdfbDescendantTelemetry,
-} from '@/modules/telemetry/application/bdfb-descendant-telemetry';
+import { aggregateBdfbDescendantTelemetry } from '@/modules/telemetry/application/bdfb-descendant-telemetry';
 import type { DeviceNode } from '@/modules/topology/domain/entities';
 import { useTranslations } from 'next-intl';
 
@@ -85,11 +83,7 @@ function BdfbAlarmTable({ entityId }: Readonly<{ entityId: string }>) {
     .sort((a, b) => Date.parse(b.openedAt) - Date.parse(a.openedAt));
 
   const severityLabel = (severity: string) =>
-    severity === 'CRITICAL'
-      ? tc('critical')
-      : severity === 'WARNING'
-        ? tc('warning')
-        : tc('info');
+    severity === 'CRITICAL' ? tc('critical') : severity === 'WARNING' ? tc('warning') : tc('info');
 
   return (
     <section className="front01-alarm-table" aria-label={tc('viewLabel')}>

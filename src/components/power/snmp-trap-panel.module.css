@@ -1,8 +1,8 @@
 .panel {
-  margin: 0 0 14px;
-  padding: 0 0 12px;
-  border: 1px solid #d5e0e9;
-  border-radius: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
   background: #fff;
   color: #142b42;
   min-width: 0;
@@ -13,8 +13,8 @@
   justify-content: space-between;
   align-items: center;
   gap: 10px;
-  padding: 12px 16px;
-  background: #f7fbfc;
+  padding: 8px 2px 10px;
+  background: #fff;
   border-bottom: 1px solid #dce8ed;
 }
 .panelHeader h3 {
@@ -207,9 +207,9 @@
   cursor: not-allowed;
 }
 .detail {
-  margin: 14px 12px 2px;
+  margin: 12px 0 0;
   border: 1px solid #dce6f0;
-  border-radius: 10px;
+  border-radius: 0;
   background: #fff;
   overflow: hidden;
 }

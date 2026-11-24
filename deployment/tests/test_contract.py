@@ -27,6 +27,9 @@ class Contract(unittest.TestCase):
         self.assertIn("eth1",commands[1])
         self.assertIn("eth2",commands[2])
         self.assertNotIn("wlan0",str(commands))
+    def test_unassigned_roles(self):
+        self.p["network"]["wan"]="SELECT_WAN"
+        with self.assertRaises(ValueError): self.load(self.p)
     def test_wan_conflict(self):
         self.p["network"]["lan"]=["wlan0"]
         with self.assertRaises(ValueError): self.load(self.p)
@@ -40,6 +43,11 @@ class Contract(unittest.TestCase):
     def test_service_guard(self):
         self.p["services"].append("snmp-trap-test")
         with self.assertRaises(ValueError): self.load(self.p)
+    def test_extra_bundle_member(self):
+        with tempfile.TemporaryDirectory() as d:
+            d=Path(d); (d/"manifest.json").write_text(json.dumps({"schemaVersion":1,"files":{}}))
+            (d/"unexpected").write_text("unexpected")
+            with self.assertRaises(ValueError): kit.verify_directory(d)
     def test_integrity(self):
         with tempfile.TemporaryDirectory() as d:
             d=Path(d); f=d/"file"; f.write_text("original")

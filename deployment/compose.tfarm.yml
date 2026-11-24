@@ -5,7 +5,14 @@ services:
       - /tmp:mode=1777
   site-mapper:
     cpus: 1.0
+    environment:
+      INDUSTRIAL_MQTT_SPOOL: /app/.runtime/industrial-mqtt
+    volumes:
+      - tfarm_mqtt_spool:/app/.runtime/industrial-mqtt
   timescaledb:
     cpus: 1.0
   mongodb:
     cpus: 0.75
+
+volumes:
+  tfarm_mqtt_spool:

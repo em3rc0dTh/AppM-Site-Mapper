@@ -244,7 +244,7 @@ export function startBridge({
       for (const signal of body.signals) {
         state.extensions.apply(signal);
         const point = registry.points.find((candidate) => candidate.signalId === signal.id);
-        if (point?.logicalPointId) {
+        if (point?.logicalPointId && point.legacyTotalMirror !== false) {
           state.applyTotalSignal(point.unitId, point.logicalPointId, signal);
         }
       }

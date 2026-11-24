@@ -93,6 +93,8 @@ services:
       MODBUS_BRIDGE_URL: http://modbus-tcp:18082
       MODBUS_BRIDGE_TOKEN: '${MODBUS_BRIDGE_TOKEN:?Set a private Modbus bridge token}'
       MODBUS_SOURCE_UNITS_JSON: '${MODBUS_SOURCE_UNITS_JSON:?Set the approved serial-to-unit map}'
+      INDUSTRIAL_MODBUS_POINTS_FILE: /app/config/industrial/modbus-points.metasys-eltek-v1.3.json
+      INDUSTRIAL_PROJECTION_TOKEN: '${INDUSTRIAL_PROJECTION_TOKEN:-}'
     ports:
       - '127.0.0.1:3000:3000'
     depends_on:
@@ -128,6 +130,10 @@ services:
       MODBUS_MISSING_POLICY: '${MODBUS_MISSING_POLICY:-zero}'
       MODBUS_STALE_MS: '${MODBUS_STALE_MS:-30000}'
       MODBUS_BRIDGE_TOKEN: '${MODBUS_BRIDGE_TOKEN:?Set a private Modbus bridge token}'
+      MODBUS_POINTS_FILE: /opt/site-mapper/modbus-points.metasys-eltek-v1.3.json
+      MODBUS_REGISTRY_PATH: /data/modbus-registry-metasys-eltek-v1.3.json
+      INDUSTRIAL_PROJECTION_URL: http://site-mapper:3000/api/telemetry/industrial/projection
+      INDUSTRIAL_PROJECTION_TOKEN: '${INDUSTRIAL_PROJECTION_TOKEN:-}'
       MODBUS_BIND_HOST: 0.0.0.0
       MODBUS_BIND_PORT: '1502'
       MODBUS_INGEST_HOST: 0.0.0.0
@@ -135,6 +141,8 @@ services:
     ports:
       - '${MODBUS_CLIENT_BIND_HOST:-127.0.0.1}:${MODBUS_CLIENT_PORT:-1503}:1502'
       - '127.0.0.1:18082:18082'
+    volumes:
+      - site_mapper_modbus_registry_data:/data
     restart: unless-stopped
 
   snmp-collector:
@@ -165,3 +173,4 @@ services:
 volumes:
   site_mapper_mongo_data:
   site_mapper_timescale_data:
+  site_mapper_modbus_registry_data:

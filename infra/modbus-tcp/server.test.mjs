@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import net from 'node:net';
+import { readFileSync } from 'node:fs';
+import { ExtensionState } from './point-registry.mjs';
 import { ModbusLatestState, handleFrame, rawPointIndex, startBridge } from './server.mjs';
 import {
   registerMapRows,
@@ -207,7 +209,7 @@ test('legacy 4x24 layout remains available as an explicit compatibility mode', (
   assert.throws(() => new ModbusLatestState(sourceMap, 30000, 'bad-layout'), /MODBUS_POINT_LAYOUT/);
 });
 
-test('Metasys map matches Excel v1.2: 388 points/QDF, FC04 and exact offsets', () => {
+test('Metasys base map matches Excel v1.3: 388 points/QDF, FC04 and exact offsets', () => {
   const rows = registerMapRows(sourceMap, 'blocks-2x48');
   assert.equal(rows.length, 1164);
   assert.equal(REGISTERS_PER_UNIT, 776);
@@ -243,6 +245,48 @@ test('Metasys map matches Excel v1.2: 388 points/QDF, FC04 and exact offsets', (
   assert.equal(metricStartAddress(96, 'energyKwh'), 766);
   assert.equal(totalMetricStartAddress('voltageV'), 768);
   assert.equal(totalMetricStartAddress('energyKwh'), 774);
+});
+
+test('Metasys v1.3 ELTEK status points are two-register FLOAT32 values at exact Excel offsets', () => {
+  const registry = JSON.parse(
+    readFileSync(
+      new URL('../../config/industrial/modbus-points.metasys-eltek-v1.3.json', import.meta.url),
+    ),
+  );
+  const state = new ModbusLatestState(sourceMap);
+  state.extensions = new ExtensionState(registry);
+  const now = Date.now();
+  const observedAt = new Date(now).toISOString();
+  const statuses = [
+    ['COMMUNICATION_STATUS', 1072, 1],
+    ['CONTROLLER_ALARM_STATE', 1075, 1],
+    ['ALARM_SEVERITY', 1078, 3],
+  ];
+  for (const [name, address, value] of statuses) {
+    const point = registry.points.find(
+      (candidate) => candidate.unitId === 1 && candidate.logicalPointId === `QDF/QDF-2/${name}`,
+    );
+    assert.ok(point);
+    assert.equal(point.address, address);
+    assert.equal(point.dataType, 'FLOAT32');
+    assert.equal(
+      state.extensions.apply({
+        id: point.signalId,
+        quality: 'VALID',
+        kind: 'state',
+        value,
+        unit: '',
+        receivedAt: observedAt,
+        observedAt,
+        staleMs: 30000,
+      }),
+      true,
+    );
+    const response = handleFrame(command(1, address, 2), state, now);
+    assert.equal(response[7], 4);
+    assert.equal(response[8], 4);
+    assert.equal(response.readFloatBE(9), value);
+  }
 });
 
 test('Metasys missing-data exception mode never fabricates a zero', () => {

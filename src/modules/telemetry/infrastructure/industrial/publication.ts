@@ -7,6 +7,7 @@ export interface PublishedPoint {
   address: number;
   unit: string;
   description: string;
+  legacyTotalMirror?: boolean;
 }
 export interface PublicationManifest {
   version: number;
@@ -46,6 +47,7 @@ export async function publicationManifest(): Promise<PublicationManifest | null>
       p.address > 65533 ||
       typeof p.unit !== 'string' ||
       typeof p.description !== 'string' ||
+      (p.legacyTotalMirror !== undefined && typeof p.legacyTotalMirror !== 'boolean') ||
       (p.logicalPointId !== undefined &&
         (typeof p.logicalPointId !== 'string' ||
           !/^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,199}$/.test(p.logicalPointId)))
@@ -90,7 +92,7 @@ export function publicationStatus(signal: Signal, manifest: PublicationManifest 
           unitId: point.unitId,
           address: point.address,
           qualityAddress: point.address + 2,
-          functionCode: 3,
+          functionCode: 4,
           dataType: 'FLOAT32',
           wordOrder: 'ABCD',
         }

@@ -105,11 +105,11 @@ jobs:
             -f docker-compose.telemetry.yml -f docker-compose.office-test.yml \
             -f docker-compose.snmp-field.yml -f deployment/compose.tfarm.yml \
             pull mongodb timescaledb mosquitto
-          python3 deployment/tfarmctl --root "$PWD" --profile /tmp/tfarm-ci/profile.json build
+          sudo -E python3 deployment/tfarmctl --root "$PWD" --profile /tmp/tfarm-ci/profile.json build
 
       - name: Start full field stack from empty runner
         run: |
-          python3 deployment/tfarmctl --root "$PWD" --profile /tmp/tfarm-ci/profile.json start
+          sudo -E python3 deployment/tfarmctl --root "$PWD" --profile /tmp/tfarm-ci/profile.json start
           for i in $(seq 1 90); do
             if curl -fsS http://127.0.0.1:3000/login >/dev/null 2>&1; then break; fi
             test "$i" -lt 90

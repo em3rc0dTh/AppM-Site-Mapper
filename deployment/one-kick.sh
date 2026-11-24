@@ -59,25 +59,7 @@ install_host_dependencies() {
     docker compose version >/dev/null
     return
   fi
-  require_ubuntu_2404
-  export DEBIAN_FRONTEND=noninteractive
-  apt-get update
-  apt-get install -y ca-certificates curl gnupg git python3 gpg iproute2 network-manager kea-dhcp4-server snmp
-
-  if ! command -v docker >/dev/null; then
-    install -m 0755 -d /etc/apt/keyrings
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg |
-      gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-    chmod a+r /etc/apt/keyrings/docker.gpg
-    . /etc/os-release
-    printf 'deb [arch=%s signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu %s stable\n'       "$(dpkg --print-architecture)" "$VERSION_CODENAME"       > /etc/apt/sources.list.d/docker.list
-    apt-get update
-    apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-  fi
-
-  systemctl enable --now docker
-  docker version >/dev/null
-  docker compose version >/dev/null
+  "$ROOT/deployment/bootstrap-host.sh"
 }
 
 lab_dc() {

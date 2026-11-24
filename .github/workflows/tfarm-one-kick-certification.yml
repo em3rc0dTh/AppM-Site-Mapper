@@ -40,6 +40,14 @@ jobs:
           python3 -m py_compile deployment/tfarmctl
           python3 deployment/tests/test_contract.py
 
+      - name: Certify host bootstrap from empty Ubuntu 24.04 userspace
+        run: |
+          docker run --rm \
+            --env TFARM_INSTALL_ONLY=1 \
+            --volume "$PWD:/src:ro" \
+            ubuntu:24.04 \
+            bash /src/deployment/bootstrap-host.sh
+
       - name: Execute the same one-kick used on a fresh host
         env:
           TFARM_SKIP_PACKAGES: '1'

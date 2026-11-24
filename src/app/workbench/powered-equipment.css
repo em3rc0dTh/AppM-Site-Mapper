@@ -643,3 +643,254 @@
   white-space: nowrap;
   border: 0;
 }
+
+
+/*
+ * Powered Equipment workbench readability pass.
+ * Keep the standard desktop A/B connection diagram inside one viewport while
+ * raising operational text above the previous 8–10px microtype.
+ */
+.sm-powered-equipment-workbench {
+  padding: 10px 18px 12px;
+}
+
+.sm-powered-equipment-workbench .sm-workbench-header {
+  align-items: center;
+  margin: -10px -18px 8px;
+  padding: 9px 18px;
+}
+
+.sm-powered-equipment-workbench .sm-workbench-header small {
+  font-size: 11px;
+}
+
+.sm-powered-equipment-workbench .sm-workbench-header h1 {
+  margin: 2px 0;
+  font-size: 22px;
+  line-height: 1.08;
+}
+
+.sm-powered-equipment-workbench .sm-workbench-header p {
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.sm-powered-equipment-workbench .sm-workbench-header button {
+  min-height: 34px;
+  padding: 7px 11px;
+  font-size: 11px;
+}
+
+.sm-powered-summary-card {
+  gap: 12px;
+  margin-bottom: 8px;
+  padding: 8px 14px;
+}
+
+.sm-powered-summary-card p {
+  margin-top: 2px;
+  font-size: 12px;
+}
+
+.sm-powered-summary-card dl > div {
+  min-height: 42px;
+  padding: 2px 12px;
+}
+
+.sm-powered-summary-card dt {
+  font-size: 11px;
+}
+
+.sm-powered-summary-card dd {
+  margin-top: 3px;
+  font-size: 16px;
+}
+
+.sm-powered-summary-card dd small {
+  font-size: 11px;
+}
+
+.sm-powered-diagram-shell {
+  gap: 10px;
+}
+
+.sm-powered-diagram {
+  gap: 8px;
+}
+
+.sm-powered-source-group {
+  padding: 9px;
+}
+
+.sm-powered-diagram-head,
+.sm-powered-feed-layout {
+  gap: 7px;
+}
+
+.sm-powered-diagram-head {
+  margin-bottom: 6px;
+}
+
+.sm-powered-source-title,
+.sm-powered-target-title {
+  min-height: 38px;
+  gap: 9px;
+  padding: 5px 9px;
+}
+
+.sm-powered-source-title strong,
+.sm-powered-target-title strong {
+  font-size: 17px;
+}
+
+.sm-powered-source-title span,
+.sm-powered-target-title span {
+  font-size: 11px;
+}
+
+.sm-powered-qdf-icon {
+  width: 32px;
+  height: 32px;
+  font-size: 19px;
+}
+
+.sm-powered-equipment-icon.is-small {
+  width: 38px;
+  gap: 3px;
+}
+
+.sm-powered-equipment-icon.is-small span {
+  height: 8px;
+}
+
+.sm-powered-feed-layout + .sm-powered-feed-layout {
+  margin-top: 6px;
+}
+
+.sm-powered-feed-panel > header,
+.sm-powered-endpoint-panel > header {
+  min-height: 34px;
+  padding: 5px 10px;
+}
+
+.sm-powered-feed-panel > header strong,
+.sm-powered-endpoint-panel > header strong {
+  font-size: 15px;
+}
+
+.sm-powered-feed-panel > header span,
+.sm-powered-endpoint-panel > header span {
+  font-size: 11px;
+}
+
+.sm-powered-columns {
+  min-height: 25px;
+  font-size: 11px;
+  line-height: 1.1;
+}
+
+.sm-powered-breaker-row {
+  min-height: 38px;
+  font-size: 12px;
+  line-height: 1.15;
+}
+
+.sm-powered-wire-spacer {
+  height: 59px;
+}
+
+.sm-powered-wire {
+  height: 38px;
+}
+
+.sm-powered-endpoint-label {
+  min-height: 25px;
+  font-size: 11px;
+}
+
+.sm-powered-endpoint-row {
+  min-height: 38px;
+  padding: 3px 10px;
+}
+
+.sm-powered-endpoint-row strong {
+  font-size: 12px;
+  line-height: 1.15;
+}
+
+.sm-powered-endpoint-row small {
+  margin-top: 1px;
+  font-size: 10.5px;
+  line-height: 1.15;
+}
+
+.sm-powered-electrical-summary {
+  top: 8px;
+  padding: 8px 10px;
+}
+
+.sm-powered-electrical-summary > header {
+  margin-bottom: 6px;
+}
+
+.sm-powered-electrical-summary h2 {
+  font-size: 16px;
+}
+
+.sm-powered-summary-stack {
+  gap: 6px;
+}
+
+.sm-powered-summary-block h3 {
+  padding: 4px 8px;
+  font-size: 14px;
+  line-height: 1.15;
+}
+
+.sm-powered-summary-block dl {
+  padding: 2px 8px 4px;
+  font-size: 12px;
+  line-height: 1.15;
+}
+
+.sm-powered-summary-block dl > div {
+  min-height: 24px;
+  gap: 8px;
+}
+
+.sm-powered-diagram-footer {
+  gap: 12px;
+  margin-top: 8px;
+  padding: 6px 10px;
+}
+
+.sm-powered-diagram-footer > p {
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.sm-powered-documentary-remarks {
+  margin-top: 8px;
+  padding-top: 8px;
+}
+
+.sm-powered-documentary-remarks h3,
+.sm-powered-documentary-remarks li strong {
+  font-size: 11px;
+}
+
+.sm-powered-documentary-remarks > p,
+.sm-powered-documentary-remarks li {
+  font-size: 11px;
+}
+
+/*
+ * On normal desktop-height workbench windows, the compact connection diagram
+ * should fit naturally without document scrolling. Larger/multi-source diagrams
+ * retain the browser's normal scroll fallback instead of clipping content.
+ */
+@media (min-width: 1120px) and (min-height: 760px) {
+  .sm-powered-equipment-workbench {
+    min-height: calc(100vh - 58px);
+  }
+}

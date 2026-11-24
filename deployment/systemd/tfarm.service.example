@@ -1,0 +1,17 @@
+[Unit]
+Description=Site Mapper TFARM deployment
+Wants=network-online.target
+Requires=docker.service
+After=network-online.target NetworkManager.service docker.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/python3 /opt/AppM-Site-Mapper/deployment/tfarmctl --profile /etc/tfarm/profile.json start
+Restart=on-failure
+RestartSec=15s
+TimeoutStartSec=300
+
+[Install]
+WantedBy=multi-user.target

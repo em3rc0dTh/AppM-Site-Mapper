@@ -14,7 +14,9 @@ import Link from 'next/link';
 import { useRef, useState } from 'react';
 
 import type { BdfbPresentation } from '@/modules/power/domain/bdfb-model';
-import { aggregateBdfbDescendantTelemetry } from '@/modules/telemetry/application/bdfb-descendant-telemetry';
+import {
+  aggregateBdfbDescendantTelemetry,
+} from '@/modules/telemetry/application/bdfb-descendant-telemetry';
 import type { DeviceNode } from '@/modules/topology/domain/entities';
 import { useTranslations } from 'next-intl';
 
@@ -306,7 +308,9 @@ export function BdfbTelemetryInspector({
                     aria-valuemin={0}
                     aria-valuemax={100}
                     aria-valuenow={
-                      positions.length > 0 ? Math.round((breakers.length / positions.length) * 100) : 0
+                      positions.length > 0
+                        ? Math.round((breakers.length / positions.length) * 100)
+                        : 0
                     }
                   >
                     <span

@@ -1711,7 +1711,9 @@
     "diagnosticBalance": "Diagnostic balance · A = Total − B · B: {status} · {normalization} {disclaimer}",
     "scalesVerified": "Scales verified against ELTEK.",
     "normalizationPending": "Normalization pending.",
-    "diagnosticNotIndependent": "Does not certify independent shunts."
+    "diagnosticNotIndependent": "Does not certify independent shunts.",
+    "diagnosticStatus": "SNMP · DIAGNOSTIC",
+    "rawStatus": "SNMP · RAW"
   },
   "snmpHistoryUi": {
     "title": "SNMP · TIMESCALEDB HISTORY",

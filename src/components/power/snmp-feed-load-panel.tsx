@@ -224,8 +224,8 @@ export function SnmpFeedLoadPanel({
                 ? t('statusLive')
                 : diagnostic
                   ? normalized?.totalA != null
-                    ? 'SNMP · DIAGNÓSTICO'
-                    : 'SNMP · RAW'
+                    ? t('diagnosticStatus')
+                    : t('rawStatus')
                   : t('statusPending')}
           </span>
         </header>

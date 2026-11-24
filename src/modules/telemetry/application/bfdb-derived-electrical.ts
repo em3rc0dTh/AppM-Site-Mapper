@@ -196,8 +196,7 @@ export class BfdbDerivedElectricalEngine {
       const gapMs = receivedAtMs - previous.receivedAtMs;
       if (gapMs <= this.maxGapMs && previous.powerW !== undefined) {
         const deltaKwh =
-          (((Math.abs(previous.powerW) + Math.abs(powerW.value)) / 2) * gapMs) /
-          3_600_000_000;
+          (((Math.abs(previous.powerW) + Math.abs(powerW.value)) / 2) * gapMs) / 3_600_000_000;
         if (Number.isFinite(deltaKwh)) {
           energyKwh += Math.abs(deltaKwh);
           integrated = true;

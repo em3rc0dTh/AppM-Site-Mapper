@@ -69,9 +69,7 @@ export async function GET(request: Request) {
 
   const device = await topology.getById(deviceId);
   const controllerProfile =
-    device?.kind === 'DEVICE'
-      ? controllerProfileFromAttributes(device.attributes)
-      : null;
+    device?.kind === 'DEVICE' ? controllerProfileFromAttributes(device.attributes) : null;
 
   let controllerBalance = null;
 
@@ -81,10 +79,7 @@ export async function GET(request: Request) {
         await getObservationStore()
       ).list(controllerProfile.sourceIdentity, 1000);
 
-      controllerBalance = projectControllerBalance(
-        controllerProfile,
-        observations,
-      );
+      controllerBalance = projectControllerBalance(controllerProfile, observations);
     } catch {
       // Diagnostic availability must not affect certified feeds.
     }

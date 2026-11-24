@@ -1,9 +1,9 @@
 import { createHash } from 'node:crypto';
 
 export const CLIENT_MODBUS_V13_QDFS = Object.freeze([
-  Object.freeze({ qdf: 'QDF-2', deviceId: 'qdf-2', unitId: 1 }),
-  Object.freeze({ qdf: 'QDF-4', deviceId: 'qdf-4', unitId: 2 }),
-  Object.freeze({ qdf: 'QDF-5', deviceId: 'qdf-5', unitId: 3 }),
+  Object.freeze({ qdf: 'QDF-2', unitId: 1 }),
+  Object.freeze({ qdf: 'QDF-4', unitId: 2 }),
+  Object.freeze({ qdf: 'QDF-5', unitId: 3 }),
 ]);
 
 export const CLIENT_MODBUS_V13_ELTEK_POINTS = Object.freeze([
@@ -154,7 +154,7 @@ export function clientModbusV13SignalId(logicalPointId) {
 export function clientModbusV13ExtensionRows() {
   return CLIENT_MODBUS_V13_QDFS.flatMap((qdf) =>
     CLIENT_MODBUS_V13_ELTEK_POINTS.map((point) => {
-      const logicalPointId = `QDF/${qdf.deviceId}/${point.logicalSuffix}`;
+      const logicalPointId = `QDF/${qdf.qdf}/${point.logicalSuffix}`;
       return {
         qdf: qdf.qdf,
         unitId: qdf.unitId,

@@ -9,6 +9,7 @@ import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 import type { Signal } from '@/modules/telemetry/domain/industrial/observations';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
+import type { DeviceNode } from '@/modules/topology/domain/entities';
 
 export type QdfClientV13Point =
   | 'INPUT_A_RATED_CURRENT'
@@ -58,10 +59,10 @@ const SEVERITY_CODE = { INFO: 1, WARNING: 2, CRITICAL: 3 } as const;
 
 export function parseQdfClientV13LogicalPoint(
   logicalPointId: string,
-): { deviceId: string; point: QdfClientV13Point } | null {
+): { qdf: string; point: QdfClientV13Point } | null {
   const match = /^QDF\/([^/]{1,160})\/([A-Z][A-Z0-9_]{2,63})$/.exec(logicalPointId);
   if (!match || !POINTS.has(match[2] as QdfClientV13Point)) return null;
-  return { deviceId: match[1]!, point: match[2]! as QdfClientV13Point };
+  return { qdf: match[1]!, point: match[2]! as QdfClientV13Point };
 }
 
 function sideFeed(feeds: readonly SnmpBdfbFeedView[], side: 'A' | 'B'): SnmpBdfbFeedView | null {
@@ -172,14 +173,28 @@ export async function projectQdfClientV13Signals(
   for (const request of requests) {
     const parsed = parseQdfClientV13LogicalPoint(request.logicalPointId);
     if (!parsed) continue;
-    grouped.set(parsed.deviceId, [...(grouped.get(parsed.deviceId) ?? []), request]);
+    grouped.set(parsed.qdf, [...(grouped.get(parsed.qdf) ?? []), request]);
   }
 
+  const devices = (await topology.listByKind('DEVICE')).filter(
+    (node): node is DeviceNode =>
+      node.kind === 'DEVICE' && node.lifecycle === 'ACTIVE' && node.deviceType === 'BDFB',
+  );
+
   const groups = await Promise.all(
-    [...grouped.entries()].map(async ([deviceId, deviceRequests]) => {
-      const device = await topology.getById(deviceId);
-      const validDevice =
-        device?.kind === 'DEVICE' && device.lifecycle === 'ACTIVE' && device.deviceType === 'BDFB';
+    [...grouped.entries()].map(async ([qdf, deviceRequests]) => {
+      const normalized = qdf.trim().toUpperCase();
+      const matches = devices.filter((candidate) => {
+        const name = candidate.name.trim().toUpperCase();
+        const declared =
+          typeof candidate.attributes?.qdfIdentity === 'string'
+            ? candidate.attributes.qdfIdentity.trim().toUpperCase()
+            : null;
+        return declared === normalized || name === normalized || name === 'BDFB ' + normalized;
+      });
+      const device = matches.length === 1 ? matches[0]! : null;
+      const validDevice = device !== null;
+      const deviceId = device?.id ?? qdf;
       const ports = validDevice
         ? (await topology.listEquipmentForDevice(deviceId))
             .filter((node) => node.lifecycle === 'ACTIVE')

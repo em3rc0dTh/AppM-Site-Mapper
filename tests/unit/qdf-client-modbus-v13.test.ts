@@ -14,8 +14,8 @@ const at = '2026-11-24T14:25:00.000Z';
 
 function fixture() {
   const device: DeviceNode = {
-    id: 'qdf-5',
-    name: 'QDF-5',
+    id: 'internal-device-qdf5',
+    name: 'BDFB QDF-5',
     kind: 'DEVICE',
     parentId: 'rack-1',
     deviceType: 'BDFB',
@@ -30,9 +30,9 @@ function fixture() {
     id: 'chassis',
     name: 'Chassis',
     kind: 'EQUIPMENT',
-    parentId: 'qdf-5',
+    parentId: 'internal-device-qdf5',
     parentEquipmentId: null,
-    deviceId: 'qdf-5',
+    deviceId: 'internal-device-qdf5',
     equipmentType: 'CHASSIS',
     childMode: 'DYNAMIC',
     children: [],
@@ -43,7 +43,7 @@ function fixture() {
     accessPorts: [
       {
         id: 'feed-A',
-        deviceId: 'qdf-5',
+        deviceId: 'internal-device-qdf5',
         equipmentId: 'chassis',
         name: 'Input A',
         portType: 'POWER',
@@ -60,7 +60,7 @@ function fixture() {
       },
       {
         id: 'feed-B',
-        deviceId: 'qdf-5',
+        deviceId: 'internal-device-qdf5',
         equipmentId: 'chassis',
         name: 'Input B',
         portType: 'POWER',
@@ -81,9 +81,9 @@ function fixture() {
     id: `panel-${side}`,
     name: `Panel ${side}`,
     kind: 'EQUIPMENT',
-    parentId: 'qdf-5',
+    parentId: 'internal-device-qdf5',
     parentEquipmentId: null,
-    deviceId: 'qdf-5',
+    deviceId: 'internal-device-qdf5',
     equipmentType: 'PANEL',
     childMode: 'POSITIONAL',
     children: [],
@@ -154,19 +154,19 @@ function fixture() {
 
 describe('Modbus TCP v1.3 QDF/ELTEK projection', () => {
   it('parses all v1.3 extension logical points without claiming the frozen base totals', () => {
-    expect(parseQdfClientV13LogicalPoint('QDF/qdf-5/INPUT_A_CURRENT')).toEqual({
-      deviceId: 'qdf-5',
+    expect(parseQdfClientV13LogicalPoint('QDF/QDF-5/INPUT_A_CURRENT')).toEqual({
+      qdf: 'QDF-5',
       point: 'INPUT_A_CURRENT',
     });
-    expect(parseQdfClientV13LogicalPoint('QDF/qdf-5/COMMUNICATION_STATUS')).toEqual({
-      deviceId: 'qdf-5',
+    expect(parseQdfClientV13LogicalPoint('QDF/QDF-5/COMMUNICATION_STATUS')).toEqual({
+      qdf: 'QDF-5',
       point: 'COMMUNICATION_STATUS',
     });
-    expect(parseQdfClientV13LogicalPoint('QDF/qdf-5/MODBUS_V13_TOTAL_CURRENT')).toEqual({
-      deviceId: 'qdf-5',
+    expect(parseQdfClientV13LogicalPoint('QDF/QDF-5/MODBUS_V13_TOTAL_CURRENT')).toEqual({
+      qdf: 'QDF-5',
       point: 'MODBUS_V13_TOTAL_CURRENT',
     });
-    expect(parseQdfClientV13LogicalPoint('QDF/qdf-5/TOTAL_CURRENT')).toBeNull();
+    expect(parseQdfClientV13LogicalPoint('QDF/QDF-5/TOTAL_CURRENT')).toBeNull();
   });
 
   it('publishes Config2 A/B rated, V/I/P and controller status with client units', async () => {
@@ -192,7 +192,7 @@ describe('Modbus TCP v1.3 QDF/ELTEK projection', () => {
     const signals = await projectQdfClientV13Signals(
       names.map((name, index) => ({
         signalId: String(index + 1).padStart(64, '0'),
-        logicalPointId: `QDF/qdf-5/${name}`,
+        logicalPointId: `QDF/QDF-5/${name}`,
       })),
       f.topology,
       f.bindings,
@@ -201,41 +201,42 @@ describe('Modbus TCP v1.3 QDF/ELTEK projection', () => {
       new Date(at),
     );
     const byPoint = new Map(signals.map((signal) => [signal.logicalPointId, signal]));
-    expect(byPoint.get('QDF/qdf-5/INPUT_A_RATED_CURRENT')).toMatchObject({
+    expect(signals.every((signal) => signal.targetId === 'internal-device-qdf5')).toBe(true);
+    expect(byPoint.get('QDF/QDF-5/INPUT_A_RATED_CURRENT')).toMatchObject({
       value: 400,
       unit: 'A',
       quality: 'VALID',
     });
-    expect(byPoint.get('QDF/qdf-5/INPUT_A_VOLTAGE')).toMatchObject({
+    expect(byPoint.get('QDF/QDF-5/INPUT_A_VOLTAGE')).toMatchObject({
       value: -53.5,
       unit: 'V',
       quality: 'VALID',
     });
-    expect(byPoint.get('QDF/qdf-5/INPUT_A_CURRENT')).toMatchObject({
+    expect(byPoint.get('QDF/QDF-5/INPUT_A_CURRENT')).toMatchObject({
       value: 15.1,
       unit: 'A',
       quality: 'VALID',
     });
-    expect(byPoint.get('QDF/qdf-5/INPUT_A_POWER')?.value).toBeCloseTo(0.80785, 6);
-    expect(byPoint.get('QDF/qdf-5/INPUT_B_POWER')?.value).toBeCloseTo(0.801741, 6);
-    expect(byPoint.get('QDF/qdf-5/MODBUS_V13_TOTAL_CURRENT')?.value).toBeCloseTo(30.03, 6);
-    expect(byPoint.get('QDF/qdf-5/MODBUS_V13_BUS_A_VOLTAGE')?.value).toBeCloseTo(-53.5, 6);
-    expect(byPoint.get('QDF/qdf-5/MODBUS_V13_BUS_B_VOLTAGE')?.value).toBeCloseTo(-53.7, 6);
-    expect(byPoint.get('QDF/qdf-5/MODBUS_V13_TOTAL_VOLTAGE')?.value).toBeCloseTo(-53.6, 6);
-    expect(byPoint.get('QDF/qdf-5/MODBUS_V13_TOTAL_POWER')?.value).toBeCloseTo(1.609591, 6);
-    expect(byPoint.get('QDF/qdf-5/COMMUNICATION_STATUS')).toMatchObject({
+    expect(byPoint.get('QDF/QDF-5/INPUT_A_POWER')?.value).toBeCloseTo(0.80785, 6);
+    expect(byPoint.get('QDF/QDF-5/INPUT_B_POWER')?.value).toBeCloseTo(0.801741, 6);
+    expect(byPoint.get('QDF/QDF-5/MODBUS_V13_TOTAL_CURRENT')?.value).toBeCloseTo(30.03, 6);
+    expect(byPoint.get('QDF/QDF-5/MODBUS_V13_BUS_A_VOLTAGE')?.value).toBeCloseTo(-53.5, 6);
+    expect(byPoint.get('QDF/QDF-5/MODBUS_V13_BUS_B_VOLTAGE')?.value).toBeCloseTo(-53.7, 6);
+    expect(byPoint.get('QDF/QDF-5/MODBUS_V13_TOTAL_VOLTAGE')?.value).toBeCloseTo(-53.6, 6);
+    expect(byPoint.get('QDF/QDF-5/MODBUS_V13_TOTAL_POWER')?.value).toBeCloseTo(1.609591, 6);
+    expect(byPoint.get('QDF/QDF-5/COMMUNICATION_STATUS')).toMatchObject({
       value: 1,
       unit: '',
       quality: 'VALID',
     });
-    expect(byPoint.get('QDF/qdf-5/CONTROLLER_ALARM_STATE')?.value).toBe(0);
-    expect(byPoint.get('QDF/qdf-5/ALARM_SEVERITY')?.value).toBe(0);
+    expect(byPoint.get('QDF/QDF-5/CONTROLLER_ALARM_STATE')?.value).toBe(0);
+    expect(byPoint.get('QDF/QDF-5/ALARM_SEVERITY')?.value).toBe(0);
   });
 
   it('leaves TOTAL_ENERGY unobserved for the bridge to mirror from the frozen MQTT total', async () => {
     const f = fixture();
     const [signal] = await projectQdfClientV13Signals(
-      [{ signalId: 'e'.repeat(64), logicalPointId: 'QDF/qdf-5/MODBUS_V13_TOTAL_ENERGY' }],
+      [{ signalId: 'e'.repeat(64), logicalPointId: 'QDF/QDF-5/MODBUS_V13_TOTAL_ENERGY' }],
       f.topology,
       f.bindings,
       f.history,

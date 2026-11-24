@@ -2,408 +2,408 @@
   "version": 13,
   "points": [
     {
-      "signalId": "c411d6fbd4f117bffa90a9ddac73a86e3982fc10b81e93bdb6ea42189fc9ab20",
-      "logicalPointId": "QDF/qdf-2/INPUT_A_RATED_CURRENT",
+      "signalId": "aa5a3991671f641f40b72e9730cd5c989049cb1953050886dc66c28b6d135a91",
+      "logicalPointId": "QDF/QDF-2/INPUT_A_RATED_CURRENT",
       "unitId": 1,
       "address": 1024,
       "unit": "A",
       "description": "QDF-2 · Input A · A · Rated Current"
     },
     {
-      "signalId": "800ef3d5f17de66c53109b44c9621cb446553e5fda8909a00d617133a3595b41",
-      "logicalPointId": "QDF/qdf-2/INPUT_A_VOLTAGE",
+      "signalId": "1bcf55962d8c5f41217bcbe48c2de515efd23322eb6ab463e02225eb7b992a7e",
+      "logicalPointId": "QDF/QDF-2/INPUT_A_VOLTAGE",
       "unitId": 1,
       "address": 1027,
       "unit": "V",
       "description": "QDF-2 · Input A · A · Voltage"
     },
     {
-      "signalId": "16d843a7c6f6ffc9fb516890a0d13a65f4b60ede3568c01dbef8659a841640a5",
-      "logicalPointId": "QDF/qdf-2/INPUT_A_CURRENT",
+      "signalId": "02db32585ac42c96acc1e428a9062de127c4082e8d95445fff48358af82839ad",
+      "logicalPointId": "QDF/QDF-2/INPUT_A_CURRENT",
       "unitId": 1,
       "address": 1030,
       "unit": "A",
       "description": "QDF-2 · Input A · A · Current"
     },
     {
-      "signalId": "a9b4cb567b17ca097ceab6c1fa67836dd18b5039afa765b590dd36bed54656cc",
-      "logicalPointId": "QDF/qdf-2/INPUT_A_POWER",
+      "signalId": "19caeeff61773bf35e181e5c180f6288ed9561093d6b52f352dfc0e28ec7eb93",
+      "logicalPointId": "QDF/QDF-2/INPUT_A_POWER",
       "unitId": 1,
       "address": 1033,
       "unit": "kW",
       "description": "QDF-2 · Input A · A · Power"
     },
     {
-      "signalId": "8889aa60e68cccb0ae1e0a55c6c0977a229e471da9c91c30329bf133f44ba35d",
-      "logicalPointId": "QDF/qdf-2/INPUT_B_RATED_CURRENT",
+      "signalId": "92c111d2c7ad1552dfa33ed5e6c0a817128883e8aa7dd5737a1b567a629c0273",
+      "logicalPointId": "QDF/QDF-2/INPUT_B_RATED_CURRENT",
       "unitId": 1,
       "address": 1039,
       "unit": "A",
       "description": "QDF-2 · Input B · B · Rated Current"
     },
     {
-      "signalId": "d58014ba7f28be6fe502299abb9481d6a9c53aab0f1d8af61577a9103ae27d02",
-      "logicalPointId": "QDF/qdf-2/INPUT_B_VOLTAGE",
+      "signalId": "8af8253c57f2ce58926d0bc610089aae0fb7a29065f2b5036da4a202b05fe33b",
+      "logicalPointId": "QDF/QDF-2/INPUT_B_VOLTAGE",
       "unitId": 1,
       "address": 1042,
       "unit": "V",
       "description": "QDF-2 · Input B · B · Voltage"
     },
     {
-      "signalId": "b5fafaa14fe950a0536b4fdd4aa8245275d19a5a93a3618766baf30ddbda3e55",
-      "logicalPointId": "QDF/qdf-2/INPUT_B_CURRENT",
+      "signalId": "7722c1a25b3aa605b7348a37a2cd17e5259cbb118b7d9c9d9c0a520996c322b1",
+      "logicalPointId": "QDF/QDF-2/INPUT_B_CURRENT",
       "unitId": 1,
       "address": 1045,
       "unit": "A",
       "description": "QDF-2 · Input B · B · Current"
     },
     {
-      "signalId": "868c60e185d0913487f465d218005b252d1dc5562a22c71eeeeb0588d4f12b21",
-      "logicalPointId": "QDF/qdf-2/INPUT_B_POWER",
+      "signalId": "ca5d65dc3360908a783ba7a33a1b2e71eeed2a8b6eb67f9ce49da02a1a9e6a75",
+      "logicalPointId": "QDF/QDF-2/INPUT_B_POWER",
       "unitId": 1,
       "address": 1048,
       "unit": "kW",
       "description": "QDF-2 · Input B · B · Power"
     },
     {
-      "signalId": "c98a190ffec5e0af1b8f043a453e6749b5383781d27447e40d097a3c982b27be",
-      "logicalPointId": "QDF/qdf-2/MODBUS_V13_TOTAL_CURRENT",
+      "signalId": "d4891ed3f91a1a45a17bda2deee03946b5f46b97a6b4367ebd7b1d904a0663ef",
+      "logicalPointId": "QDF/QDF-2/MODBUS_V13_TOTAL_CURRENT",
       "unitId": 1,
       "address": 1054,
       "unit": "A",
       "description": "QDF-2 · Entire QDF (Total) · TOTAL · Current"
     },
     {
-      "signalId": "ee500e0e3a0a7bda600e6f47dfe6182901862872f2d20921ba95fe983bd0a7d3",
-      "logicalPointId": "QDF/qdf-2/MODBUS_V13_BUS_A_VOLTAGE",
+      "signalId": "d70ae3f542f44752e5dd99352171d699c52b7b2739071dc07edfcfc3b03124b5",
+      "logicalPointId": "QDF/QDF-2/MODBUS_V13_BUS_A_VOLTAGE",
       "unitId": 1,
       "address": 1057,
       "unit": "V",
       "description": "QDF-2 · QDF Bus A · BUS-A · Voltage"
     },
     {
-      "signalId": "8f72572d77b1a1519dcc20f8dacb5f8e9766deb969dee098bc48b1f60bfa8b97",
-      "logicalPointId": "QDF/qdf-2/MODBUS_V13_BUS_B_VOLTAGE",
+      "signalId": "9f6449e7b5d940ff2a3897c01a222fa5c211514b39f9320617171c0e05e85277",
+      "logicalPointId": "QDF/QDF-2/MODBUS_V13_BUS_B_VOLTAGE",
       "unitId": 1,
       "address": 1060,
       "unit": "V",
       "description": "QDF-2 · QDF Bus B · BUS-B · Voltage"
     },
     {
-      "signalId": "6c4f23749f645aaeee6a8e21209734ebbad9580059e6f681154b023b2dd8d5ef",
-      "logicalPointId": "QDF/qdf-2/MODBUS_V13_TOTAL_VOLTAGE",
+      "signalId": "7d213db20208942247e3ea3fef4df06720a6c6d9391c410290cc9abd2431add1",
+      "logicalPointId": "QDF/QDF-2/MODBUS_V13_TOTAL_VOLTAGE",
       "unitId": 1,
       "address": 1063,
       "unit": "V",
       "description": "QDF-2 · Entire QDF (Total) · TOTAL · Voltage"
     },
     {
-      "signalId": "c6c35e9e42277b7111ecdbc250c1ff2eaf1bc16250348e2a43e5b49eb3763204",
-      "logicalPointId": "QDF/qdf-2/MODBUS_V13_TOTAL_POWER",
+      "signalId": "9024d2c1c73fba09607c27471c21b0872948753d7664f617f91ab2d730182240",
+      "logicalPointId": "QDF/QDF-2/MODBUS_V13_TOTAL_POWER",
       "unitId": 1,
       "address": 1066,
       "unit": "kW",
       "description": "QDF-2 · Entire QDF (Total) · TOTAL · Power"
     },
     {
-      "signalId": "81719011aeb3e40a3e24015f6da83452821ece79ea42a130253dca0941e8d4ad",
-      "logicalPointId": "QDF/qdf-2/MODBUS_V13_TOTAL_ENERGY",
+      "signalId": "a85dfac5779a8f28b54f93a00351b064d95f0d343eea7f8d14eb30e54ad13e59",
+      "logicalPointId": "QDF/QDF-2/MODBUS_V13_TOTAL_ENERGY",
       "unitId": 1,
       "address": 1069,
       "unit": "kWh",
       "description": "QDF-2 · Entire QDF (Total) · TOTAL · Energy"
     },
     {
-      "signalId": "e57169c6d91396c63674b491ae81b08d6a589aa5b187533e4f1bf82927f57099",
-      "logicalPointId": "QDF/qdf-2/COMMUNICATION_STATUS",
+      "signalId": "3f1ca4181fbe35770c8c8266d10aa6461dbdb6be813a5067f53b1dbdfe526267",
+      "logicalPointId": "QDF/QDF-2/COMMUNICATION_STATUS",
       "unitId": 1,
       "address": 1072,
       "unit": "",
       "description": "QDF-2 · SNMP / Controller · STATUS · Communication Status"
     },
     {
-      "signalId": "933e44e314f59891cbeb2e4f18d367bcb9097303990468913dcd8419b4cacb1f",
-      "logicalPointId": "QDF/qdf-2/CONTROLLER_ALARM_STATE",
+      "signalId": "5eed48682c85ec274e2b651e8299b858966d6668c4ac3fb4cfafec4cd5f9b4a1",
+      "logicalPointId": "QDF/QDF-2/CONTROLLER_ALARM_STATE",
       "unitId": 1,
       "address": 1075,
       "unit": "",
       "description": "QDF-2 · SNMP / Controller · STATUS · Controller Alarm State"
     },
     {
-      "signalId": "e2bec1f687474d301dee3ed14f1ec46260c6f062236e32c6cccbd8469b80da0c",
-      "logicalPointId": "QDF/qdf-2/ALARM_SEVERITY",
+      "signalId": "2a37ecf5187efe6c920def284e7ecfae95dc94412f04c94dce4f0e25105f71a6",
+      "logicalPointId": "QDF/QDF-2/ALARM_SEVERITY",
       "unitId": 1,
       "address": 1078,
       "unit": "",
       "description": "QDF-2 · SNMP / Controller · STATUS · Alarm Severity"
     },
     {
-      "signalId": "ed5fce0811e81c2ae32c4e09913f10b08e187f434d16c308d345ecadeef71c86",
-      "logicalPointId": "QDF/qdf-4/INPUT_A_RATED_CURRENT",
+      "signalId": "79232e7dd3765f94c5ba6d8164436b32402743f2e1bd4ce9e445c32b48deeb2e",
+      "logicalPointId": "QDF/QDF-4/INPUT_A_RATED_CURRENT",
       "unitId": 2,
       "address": 1024,
       "unit": "A",
       "description": "QDF-4 · Input A · A · Rated Current"
     },
     {
-      "signalId": "8eed709625cd6c0b662194a414a78a1ad6f69442abfb68cd4e06f34542d7549e",
-      "logicalPointId": "QDF/qdf-4/INPUT_A_VOLTAGE",
+      "signalId": "4696a0a26b0274740f7cb632ba16d5f9b715c7720f8fbc5286b98bda9368fa99",
+      "logicalPointId": "QDF/QDF-4/INPUT_A_VOLTAGE",
       "unitId": 2,
       "address": 1027,
       "unit": "V",
       "description": "QDF-4 · Input A · A · Voltage"
     },
     {
-      "signalId": "e04d4ad7ce7f132e466f26fd4e3adbadbe0c6c1d4a34c39799791f6a72ba98cf",
-      "logicalPointId": "QDF/qdf-4/INPUT_A_CURRENT",
+      "signalId": "f5dcdd4dc98ad71c5374ac6f687f979980a396486d38a3b9e811e7217bff2cfd",
+      "logicalPointId": "QDF/QDF-4/INPUT_A_CURRENT",
       "unitId": 2,
       "address": 1030,
       "unit": "A",
       "description": "QDF-4 · Input A · A · Current"
     },
     {
-      "signalId": "ca3f476b65c0cad9427c34bd8101cf5ca5a7f7c79de59b79c253cbf1e1cf7e29",
-      "logicalPointId": "QDF/qdf-4/INPUT_A_POWER",
+      "signalId": "c39733625f5824df932d0d4ac568a66359e8b75d67ba820c65eea1cbbf71c91f",
+      "logicalPointId": "QDF/QDF-4/INPUT_A_POWER",
       "unitId": 2,
       "address": 1033,
       "unit": "kW",
       "description": "QDF-4 · Input A · A · Power"
     },
     {
-      "signalId": "c782cb2c4bb409fa7fe6e22b0919b53f44fc8ce8e26f91d560a1634d44d6bed6",
-      "logicalPointId": "QDF/qdf-4/INPUT_B_RATED_CURRENT",
+      "signalId": "a50339849a0e2f2dbd4b4c0d9e88e9f027168576e60fab0ab9fedd78ca099091",
+      "logicalPointId": "QDF/QDF-4/INPUT_B_RATED_CURRENT",
       "unitId": 2,
       "address": 1039,
       "unit": "A",
       "description": "QDF-4 · Input B · B · Rated Current"
     },
     {
-      "signalId": "2bd9c329678bd22d20b3b93953e368f11a48c47bef3a58c3c8c204e2b4909f61",
-      "logicalPointId": "QDF/qdf-4/INPUT_B_VOLTAGE",
+      "signalId": "ed9855562d2053f723c75465b1967953ca9639307f1ac10a19484eda563bef36",
+      "logicalPointId": "QDF/QDF-4/INPUT_B_VOLTAGE",
       "unitId": 2,
       "address": 1042,
       "unit": "V",
       "description": "QDF-4 · Input B · B · Voltage"
     },
     {
-      "signalId": "37da2cacccbc843c67efb0440c193202aa6c8449f165902ab617de297e4d793b",
-      "logicalPointId": "QDF/qdf-4/INPUT_B_CURRENT",
+      "signalId": "d4fb9700782b69f9b4896810e462977c0df287dab574d8da63d11bde9369854d",
+      "logicalPointId": "QDF/QDF-4/INPUT_B_CURRENT",
       "unitId": 2,
       "address": 1045,
       "unit": "A",
       "description": "QDF-4 · Input B · B · Current"
     },
     {
-      "signalId": "0d2f04e074b9e359f95f72bc6d2ba7d445c5af3a0c13a61a1dab7781cc53050d",
-      "logicalPointId": "QDF/qdf-4/INPUT_B_POWER",
+      "signalId": "828d5a4443074bd227683c32e9b3370dea98792bc50ce0c77cba09483ff76722",
+      "logicalPointId": "QDF/QDF-4/INPUT_B_POWER",
       "unitId": 2,
       "address": 1048,
       "unit": "kW",
       "description": "QDF-4 · Input B · B · Power"
     },
     {
-      "signalId": "90f0cb064e4e0bd3979731bfe5e42836e6c9071ac6eb2800d09d3e86d549a9db",
-      "logicalPointId": "QDF/qdf-4/MODBUS_V13_TOTAL_CURRENT",
+      "signalId": "57f488fb521909f4afca1a56475c326cadede60b19fbc2d7ca0bd88fa36a4487",
+      "logicalPointId": "QDF/QDF-4/MODBUS_V13_TOTAL_CURRENT",
       "unitId": 2,
       "address": 1054,
       "unit": "A",
       "description": "QDF-4 · Entire QDF (Total) · TOTAL · Current"
     },
     {
-      "signalId": "46133f4363f571c96fa2549d5cbe7cf8d0236790f7df4749cd6e29866d13d98c",
-      "logicalPointId": "QDF/qdf-4/MODBUS_V13_BUS_A_VOLTAGE",
+      "signalId": "99e3d7a2c4945669bdbe51844b109a860dec206bb4426d988fbcf700560fcd03",
+      "logicalPointId": "QDF/QDF-4/MODBUS_V13_BUS_A_VOLTAGE",
       "unitId": 2,
       "address": 1057,
       "unit": "V",
       "description": "QDF-4 · QDF Bus A · BUS-A · Voltage"
     },
     {
-      "signalId": "69a910a7d332d5d4162413b31743b190b5374c690daf3b737e4c5ac11a976f3c",
-      "logicalPointId": "QDF/qdf-4/MODBUS_V13_BUS_B_VOLTAGE",
+      "signalId": "1ccb6669e8a77671aa9f3fe4741f5e4dd173fff50042665c0c0d069027cb3cca",
+      "logicalPointId": "QDF/QDF-4/MODBUS_V13_BUS_B_VOLTAGE",
       "unitId": 2,
       "address": 1060,
       "unit": "V",
       "description": "QDF-4 · QDF Bus B · BUS-B · Voltage"
     },
     {
-      "signalId": "30cd77600e219f2e0ab891161373ffcd6dcb876b60e4dbb47cf9492ba354a857",
-      "logicalPointId": "QDF/qdf-4/MODBUS_V13_TOTAL_VOLTAGE",
+      "signalId": "bcd9dcf3eafd1b38ec3815b09866aab4c2359407e13bdd0d8978bc7decc34ab4",
+      "logicalPointId": "QDF/QDF-4/MODBUS_V13_TOTAL_VOLTAGE",
       "unitId": 2,
       "address": 1063,
       "unit": "V",
       "description": "QDF-4 · Entire QDF (Total) · TOTAL · Voltage"
     },
     {
-      "signalId": "2f84bc17b5b87b0bce52727908158c303c83d0a924dafd69732640640d610ee8",
-      "logicalPointId": "QDF/qdf-4/MODBUS_V13_TOTAL_POWER",
+      "signalId": "fff295924dae8cb728df91353c959ecef921befb9d9b1e0bfce4a2c40c479c66",
+      "logicalPointId": "QDF/QDF-4/MODBUS_V13_TOTAL_POWER",
       "unitId": 2,
       "address": 1066,
       "unit": "kW",
       "description": "QDF-4 · Entire QDF (Total) · TOTAL · Power"
     },
     {
-      "signalId": "08220370e15913438fc5cd38ac8b9fe0c653b0dc07d0192eca55f6519f3003d9",
-      "logicalPointId": "QDF/qdf-4/MODBUS_V13_TOTAL_ENERGY",
+      "signalId": "02da6475b5d629e1b82bbc1b239f5b5ffca1e1016604537985a263b2bd5c1c5c",
+      "logicalPointId": "QDF/QDF-4/MODBUS_V13_TOTAL_ENERGY",
       "unitId": 2,
       "address": 1069,
       "unit": "kWh",
       "description": "QDF-4 · Entire QDF (Total) · TOTAL · Energy"
     },
     {
-      "signalId": "5ff4b888e7064f4896ed57588ce4f1fcb07784776bb09344f30a212e4874c162",
-      "logicalPointId": "QDF/qdf-4/COMMUNICATION_STATUS",
+      "signalId": "2d10800fa1cdce39564b18f6cba20dfcd1024174806870c96df858387ead23f5",
+      "logicalPointId": "QDF/QDF-4/COMMUNICATION_STATUS",
       "unitId": 2,
       "address": 1072,
       "unit": "",
       "description": "QDF-4 · SNMP / Controller · STATUS · Communication Status"
     },
     {
-      "signalId": "1dc1c6704fd65e060befb1058d8158d173af12750a8e4eecfff94061b42bfa29",
-      "logicalPointId": "QDF/qdf-4/CONTROLLER_ALARM_STATE",
+      "signalId": "4482470a273889e5f0e35530781ea4afe2613c42c66f1a114edc6186c00e52ad",
+      "logicalPointId": "QDF/QDF-4/CONTROLLER_ALARM_STATE",
       "unitId": 2,
       "address": 1075,
       "unit": "",
       "description": "QDF-4 · SNMP / Controller · STATUS · Controller Alarm State"
     },
     {
-      "signalId": "0e736e0f4f297b1e42bf5f0d26bd123062f9d98f9f2ebeb8b632d67fa583fbe7",
-      "logicalPointId": "QDF/qdf-4/ALARM_SEVERITY",
+      "signalId": "566acd98c7c6e9832b72ec2dd45789528c37a66d2ea7be858b142a1556c664c3",
+      "logicalPointId": "QDF/QDF-4/ALARM_SEVERITY",
       "unitId": 2,
       "address": 1078,
       "unit": "",
       "description": "QDF-4 · SNMP / Controller · STATUS · Alarm Severity"
     },
     {
-      "signalId": "44492a7dc654309370d9af9941276c1de4b743c494cdbc3af181b2b183ab6cea",
-      "logicalPointId": "QDF/qdf-5/INPUT_A_RATED_CURRENT",
+      "signalId": "1d4ffd0961567e7232b3c2b67cecc6691346d473c6471ce20e13fb493994ac6b",
+      "logicalPointId": "QDF/QDF-5/INPUT_A_RATED_CURRENT",
       "unitId": 3,
       "address": 1024,
       "unit": "A",
       "description": "QDF-5 · Input A · A · Rated Current"
     },
     {
-      "signalId": "5d9fa1a587418506828ca2a1ba7c93b29a84bee6e7ba0d0093a327435ab3d391",
-      "logicalPointId": "QDF/qdf-5/INPUT_A_VOLTAGE",
+      "signalId": "2958f09f4382aec34573ba74f214d949bba0626ca9339df244ac9568484ae37e",
+      "logicalPointId": "QDF/QDF-5/INPUT_A_VOLTAGE",
       "unitId": 3,
       "address": 1027,
       "unit": "V",
       "description": "QDF-5 · Input A · A · Voltage"
     },
     {
-      "signalId": "b2456a4fd5697412daf631e006a48a9d4073bfeef14679dd0a9d259459748f5c",
-      "logicalPointId": "QDF/qdf-5/INPUT_A_CURRENT",
+      "signalId": "74508568c55142c11380cf88f42fe6400ebb1b06563564293f758dc15b3d68de",
+      "logicalPointId": "QDF/QDF-5/INPUT_A_CURRENT",
       "unitId": 3,
       "address": 1030,
       "unit": "A",
       "description": "QDF-5 · Input A · A · Current"
     },
     {
-      "signalId": "b7384901920b3b9617644f0f40558f97c2fe026f9d30b0223a714ea1e508f6d9",
-      "logicalPointId": "QDF/qdf-5/INPUT_A_POWER",
+      "signalId": "d2835ae08d0c125dbf8f72028d91d57bbd51ef5e3c2efaae1d15459535796623",
+      "logicalPointId": "QDF/QDF-5/INPUT_A_POWER",
       "unitId": 3,
       "address": 1033,
       "unit": "kW",
       "description": "QDF-5 · Input A · A · Power"
     },
     {
-      "signalId": "be1b5d06d303c70e99979e155de0e4b3f755baaf9e82ac6397eba1ff4c28e6cc",
-      "logicalPointId": "QDF/qdf-5/INPUT_B_RATED_CURRENT",
+      "signalId": "ec7246551c32cc9000468c5017d64271f0bd514277b4d7b43a195ddf7ae3b16c",
+      "logicalPointId": "QDF/QDF-5/INPUT_B_RATED_CURRENT",
       "unitId": 3,
       "address": 1039,
       "unit": "A",
       "description": "QDF-5 · Input B · B · Rated Current"
     },
     {
-      "signalId": "d8bf15c6d88654f76e556958fbae348c7b31af6183e6a59ac81e33d8d9a06c2a",
-      "logicalPointId": "QDF/qdf-5/INPUT_B_VOLTAGE",
+      "signalId": "b8201e81e1be497dd9ecd3778751b1184c5b653c5df778eb21615c2a2263f2ea",
+      "logicalPointId": "QDF/QDF-5/INPUT_B_VOLTAGE",
       "unitId": 3,
       "address": 1042,
       "unit": "V",
       "description": "QDF-5 · Input B · B · Voltage"
     },
     {
-      "signalId": "8df389d88b0acc4c6dec56611a88b7ef96014640caec544325bd4401d1ba38a6",
-      "logicalPointId": "QDF/qdf-5/INPUT_B_CURRENT",
+      "signalId": "0e3d136e79b94f0138fa54c7f3467edd234f9a7a3ee126f2cbe97a71ee5edba6",
+      "logicalPointId": "QDF/QDF-5/INPUT_B_CURRENT",
       "unitId": 3,
       "address": 1045,
       "unit": "A",
       "description": "QDF-5 · Input B · B · Current"
     },
     {
-      "signalId": "c8de08d1bc3f640ff9619421be9d7023f8e060d8982906077352d10b44c3022c",
-      "logicalPointId": "QDF/qdf-5/INPUT_B_POWER",
+      "signalId": "2e00dbc25e3b14118ad3a8fe12420dd453724801c10907f3905f869841f43358",
+      "logicalPointId": "QDF/QDF-5/INPUT_B_POWER",
       "unitId": 3,
       "address": 1048,
       "unit": "kW",
       "description": "QDF-5 · Input B · B · Power"
     },
     {
-      "signalId": "52284b9582e1e29911b624e5f8bd6226808cb81d3d1a10be394b5d9550faf84d",
-      "logicalPointId": "QDF/qdf-5/MODBUS_V13_TOTAL_CURRENT",
+      "signalId": "8149513c58ab00212fb330acecb008643ff351fdaae748b472273c75995b0832",
+      "logicalPointId": "QDF/QDF-5/MODBUS_V13_TOTAL_CURRENT",
       "unitId": 3,
       "address": 1054,
       "unit": "A",
       "description": "QDF-5 · Entire QDF (Total) · TOTAL · Current"
     },
     {
-      "signalId": "8753626ede8395323a50dc993958f16eefdec6582bf82ccfe21289234f4b7dbb",
-      "logicalPointId": "QDF/qdf-5/MODBUS_V13_BUS_A_VOLTAGE",
+      "signalId": "7f33af00e9a85999ee87362bd3edfac03d5be2814a2ca7c6d957bdc51502c7fc",
+      "logicalPointId": "QDF/QDF-5/MODBUS_V13_BUS_A_VOLTAGE",
       "unitId": 3,
       "address": 1057,
       "unit": "V",
       "description": "QDF-5 · QDF Bus A · BUS-A · Voltage"
     },
     {
-      "signalId": "d0546b77e60b2a56eda8f8e2dc75714a77f39d768d5e239c2fbbec751f5ee690",
-      "logicalPointId": "QDF/qdf-5/MODBUS_V13_BUS_B_VOLTAGE",
+      "signalId": "86376b6f0e0d38fe35515ad8d2b532f09c8287b0a2806c903e2989c72cea6bca",
+      "logicalPointId": "QDF/QDF-5/MODBUS_V13_BUS_B_VOLTAGE",
       "unitId": 3,
       "address": 1060,
       "unit": "V",
       "description": "QDF-5 · QDF Bus B · BUS-B · Voltage"
     },
     {
-      "signalId": "7c406478ec2c1e85ebdb766df6ffd737eba90d179dcf8d230c53be0f9230d57f",
-      "logicalPointId": "QDF/qdf-5/MODBUS_V13_TOTAL_VOLTAGE",
+      "signalId": "bf542ff3c4b2f04c92287f2f4c7b9e286cd863c93fa20a2d74783833dd083ba5",
+      "logicalPointId": "QDF/QDF-5/MODBUS_V13_TOTAL_VOLTAGE",
       "unitId": 3,
       "address": 1063,
       "unit": "V",
       "description": "QDF-5 · Entire QDF (Total) · TOTAL · Voltage"
     },
     {
-      "signalId": "8f4be7411e87df6f5061618dabcc212f2d777ea4513524c4455a2d8b91cf926f",
-      "logicalPointId": "QDF/qdf-5/MODBUS_V13_TOTAL_POWER",
+      "signalId": "6a6db7e9cad82cc17d7a3e10f8ddb3594115e3694536134707f1face2f3e93cd",
+      "logicalPointId": "QDF/QDF-5/MODBUS_V13_TOTAL_POWER",
       "unitId": 3,
       "address": 1066,
       "unit": "kW",
       "description": "QDF-5 · Entire QDF (Total) · TOTAL · Power"
     },
     {
-      "signalId": "7983d0dd3e1300d55ceee64cf42aae239811dd9e2f448dd72020cdc910045b0b",
-      "logicalPointId": "QDF/qdf-5/MODBUS_V13_TOTAL_ENERGY",
+      "signalId": "08a091e3650000d454260a000f66f8caf0ec1d7348c9f73e88b51b79e4016ea4",
+      "logicalPointId": "QDF/QDF-5/MODBUS_V13_TOTAL_ENERGY",
       "unitId": 3,
       "address": 1069,
       "unit": "kWh",
       "description": "QDF-5 · Entire QDF (Total) · TOTAL · Energy"
     },
     {
-      "signalId": "74c6df2bbb834608d5c427a81ad0fbff7b00d2cd211ac1d9172ea94db1561483",
-      "logicalPointId": "QDF/qdf-5/COMMUNICATION_STATUS",
+      "signalId": "3463735bf743a7663c17d618de1e4cf1f1ebc80e7f3504122a8fb21d72adf27b",
+      "logicalPointId": "QDF/QDF-5/COMMUNICATION_STATUS",
       "unitId": 3,
       "address": 1072,
       "unit": "",
       "description": "QDF-5 · SNMP / Controller · STATUS · Communication Status"
     },
     {
-      "signalId": "fded7eba864028a9df56df28984a32bdfc40a5cf56450c5a3399f05cb47be2ca",
-      "logicalPointId": "QDF/qdf-5/CONTROLLER_ALARM_STATE",
+      "signalId": "c740a68f3f5a3e0f96aaca33c948b27df36d7ee6d85d30c5fbaa3ce68643753c",
+      "logicalPointId": "QDF/QDF-5/CONTROLLER_ALARM_STATE",
       "unitId": 3,
       "address": 1075,
       "unit": "",
       "description": "QDF-5 · SNMP / Controller · STATUS · Controller Alarm State"
     },
     {
-      "signalId": "d906dbecd0ba9be7b9d86c2ebdfd03fc2a88721a83affe7d6fa473b7f76ae007",
-      "logicalPointId": "QDF/qdf-5/ALARM_SEVERITY",
+      "signalId": "e7cbf9643953372bd74c213e37e3cf7173831e292dfd3606703b64a4e7b28cbb",
+      "logicalPointId": "QDF/QDF-5/ALARM_SEVERITY",
       "unitId": 3,
       "address": 1078,
       "unit": "",

@@ -51,6 +51,19 @@ if [ -n "$PASSPHRASE_FILE" ]; then
   [ -f "$PASSPHRASE_FILE" ] || die "passphrase file missing"
   [ $(( 8#$(stat -c '%a' "$PASSPHRASE_FILE") & 077 )) -eq 0 ] ||
     die "passphrase file must be mode 0600"
+else
+  [ -t 0 ] || die "--passphrase-file is required without an interactive terminal"
+  printf 'Recovery bundle passphrase: ' >&2
+  IFS= read -r -s first_pass
+  printf '\nConfirm recovery passphrase: ' >&2
+  IFS= read -r -s second_pass
+  printf '\n' >&2
+  [ -n "$first_pass" ] || die "empty recovery passphrase is not allowed"
+  [ "$first_pass" = "$second_pass" ] || die "recovery passphrases do not match"
+  PASSPHRASE_FILE="$PROFILE_DIR/recovery.passphrase"
+  printf '%s\n' "$first_pass" >"$PASSPHRASE_FILE"
+  chmod 600 "$PASSPHRASE_FILE"
+  unset first_pass second_pass
 fi
 
 cleanup(){

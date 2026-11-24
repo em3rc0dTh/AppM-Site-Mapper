@@ -37,6 +37,9 @@ jobs:
       - name: Deployment contract tests
         run: python3 deployment/tests/test_contract.py
 
+      - name: Validate deployment shell entrypoints
+        run: bash -n deployment/one-kick.sh deployment/capture-live-recovery.sh
+
       - name: Install clean-host network prerequisites
         run: |
           sudo apt-get update
@@ -152,7 +155,17 @@ jobs:
             sudo -E python3 deployment/tfarmctl --root "$PWD" --profile /tmp/tfarm-ci/profile.json \
               backup --staging /tmp/tfarm-ci --output /tmp/tfarm-ci/recovery.gpg
           test -s /tmp/tfarm-ci/recovery.gpg
+          docker ps -a --filter label=com.docker.compose.project=appm-site-mapper             --format '{{.Image}}' | sort -u >/tmp/tfarm-ci/project-images.txt
           dc down -v --remove-orphans
+          while IFS= read -r image; do
+            test -z "$image" || docker image rm -f "$image" >/dev/null 2>&1 || true
+          done </tmp/tfarm-ci/project-images.txt
+          for image in             appm-site-mapper-site-mapper             appm-site-mapper-snmp-traps             appm-site-mapper-telemetry-store             appm-site-mapper-modbus-tcp; do
+            if docker image inspect "$image" >/dev/null 2>&1; then
+              echo "Image survived disaster reset: $image" >&2
+              exit 1
+            fi
+          done
           rm -rf .runtime
           mkdir -p .runtime
 

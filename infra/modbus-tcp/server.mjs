@@ -257,7 +257,7 @@ export function startBridge({
           'content-type': 'application/json',
         },
         body: JSON.stringify({ signalIds: registry.points.map((point) => point.signalId) }),
-        signal: AbortSignal.any([projectionAbort.signal, AbortSignal.timeout(5000)]),
+        signal: AbortSignal.any([projectionAbort.signal, AbortSignal.timeout(10000)]),
       });
       if (!response.ok) {
         failure = `HTTP_${response.status}`;

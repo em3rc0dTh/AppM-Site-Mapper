@@ -175,84 +175,87 @@ export async function projectQdfClientV13Signals(
     grouped.set(parsed.deviceId, [...(grouped.get(parsed.deviceId) ?? []), request]);
   }
 
-  const output: Signal[] = [];
-  for (const [deviceId, deviceRequests] of grouped) {
-    const device = await topology.getById(deviceId);
-    const validDevice =
-      device?.kind === 'DEVICE' && device.lifecycle === 'ACTIVE' && device.deviceType === 'BDFB';
-    const ports = validDevice
-      ? (await topology.listEquipmentForDevice(deviceId))
-          .filter((node) => node.lifecycle === 'ACTIVE')
-          .flatMap((node) => node.accessPorts.filter(isBdfbFeedPort).map((port) => port.id))
-      : [];
-    const hub = new TelemetryHub(Math.max(ports.length, 1));
-    if (ports.length) {
-      try {
-        for (const sample of await history.queryLatestEntities(ports, 'ACCESS_PORT')) {
-          if (sample.protocol === 'SNMP' && ports.includes(sample.targetId)) hub.publish(sample);
+  const groups = await Promise.all(
+    [...grouped.entries()].map(async ([deviceId, deviceRequests]) => {
+      const device = await topology.getById(deviceId);
+      const validDevice =
+        device?.kind === 'DEVICE' && device.lifecycle === 'ACTIVE' && device.deviceType === 'BDFB';
+      const ports = validDevice
+        ? (await topology.listEquipmentForDevice(deviceId))
+            .filter((node) => node.lifecycle === 'ACTIVE')
+            .flatMap((node) => node.accessPorts.filter(isBdfbFeedPort).map((port) => port.id))
+        : [];
+      const hub = new TelemetryHub(Math.max(ports.length, 1));
+      if (ports.length) {
+        try {
+          for (const sample of await history.queryLatestEntities(ports, 'ACCESS_PORT')) {
+            if (sample.protocol === 'SNMP' && ports.includes(sample.targetId)) hub.publish(sample);
+          }
+        } catch {
+          // The status points fail closed below; do not fabricate controller readings.
         }
-      } catch {
-        // The status points fail closed below; do not fabricate controller readings.
       }
-    }
-    const load = validDevice
-      ? await summarizeSnmpBdfbLoad(deviceId, topology, bindings, hub, now.getTime())
-      : null;
-    const config2 = load?.expectedFeedCount === 2 && load.feeds.length === 2;
-    const feedA = config2 ? sideFeed(load.feeds, 'A') : null;
-    const feedB = config2 ? sideFeed(load.feeds, 'B') : null;
-    const communication = validDevice ? communicationStatus(load) : 3;
-    const matchingAlarms = validDevice
-      ? activeAlarms.filter((alarm) => alarm.targetId === deviceId && alarm.targetType === 'DEVICE')
-      : [];
-    const alarmState = matchingAlarms.length ? 1 : 0;
-    const alarmSeverity = matchingAlarms.reduce(
-      (highest, alarm) => Math.max(highest, SEVERITY_CODE[alarm.severity] ?? 0),
-      0,
-    );
-
-    for (const request of deviceRequests) {
-      const parsed = parseQdfClientV13LogicalPoint(request.logicalPointId)!;
-      const projected = requestValue(
-        parsed.point,
-        feedA,
-        feedB,
-        communication,
-        alarmState,
-        alarmSeverity,
+      const load = validDevice
+        ? await summarizeSnmpBdfbLoad(deviceId, topology, bindings, hub, now.getTime())
+        : null;
+      const config2 = load?.expectedFeedCount === 2 && load.feeds.length === 2;
+      const feedA = config2 ? sideFeed(load.feeds, 'A') : null;
+      const feedB = config2 ? sideFeed(load.feeds, 'B') : null;
+      const communication = validDevice ? communicationStatus(load) : 3;
+      const matchingAlarms = validDevice
+        ? activeAlarms.filter(
+            (alarm) => alarm.targetId === deviceId && alarm.targetType === 'DEVICE',
+          )
+        : [];
+      const alarmState = matchingAlarms.length ? 1 : 0;
+      const alarmSeverity = matchingAlarms.reduce(
+        (highest, alarm) => Math.max(highest, SEVERITY_CODE[alarm.severity] ?? 0),
+        0,
       );
-      const observedAt =
-        [feedA?.observedAt, feedB?.observedAt]
-          .filter((value): value is string => Boolean(value))
-          .sort()
-          .at(-1) ?? now.toISOString();
-      output.push({
-        id: request.signalId,
-        logicalPointId: request.logicalPointId,
-        publicationSignalId: request.signalId,
-        authoritative: true,
-        key: request.logicalPointId,
-        sourceIdentity: 'SITE_MAPPER_MODBUS_V13',
-        protocol: 'SNMP',
-        targetId: deviceId,
-        kind: 'measurement',
-        mibName: null,
-        interpretation: 'PROFILE',
-        rawType: projected.value === null ? 'unavailable' : 'derived-number',
-        rawValue: projected.value,
-        value: projected.value,
-        unit: projected.unit,
-        scale: null,
-        quality: validDevice ? projected.quality : 'INVALID',
-        alarmState: null,
-        severity: null,
-        profileVersion: 'modbus-client-v1.3',
-        receivedAt: now.toISOString(),
-        observedAt,
-        staleMs: 90_000,
-        eventId: `modbus-v1.3:${deviceId}:${parsed.point}:${observedAt}`,
+
+      return deviceRequests.map((request) => {
+        const parsed = parseQdfClientV13LogicalPoint(request.logicalPointId)!;
+        const projected = requestValue(
+          parsed.point,
+          feedA,
+          feedB,
+          communication,
+          alarmState,
+          alarmSeverity,
+        );
+        const observedAt =
+          [feedA?.observedAt, feedB?.observedAt]
+            .filter((value): value is string => Boolean(value))
+            .sort()
+            .at(-1) ?? now.toISOString();
+        return {
+          id: request.signalId,
+          logicalPointId: request.logicalPointId,
+          publicationSignalId: request.signalId,
+          authoritative: true,
+          key: request.logicalPointId,
+          sourceIdentity: 'SITE_MAPPER_MODBUS_V13',
+          protocol: 'SNMP' as const,
+          targetId: deviceId,
+          kind: 'measurement' as const,
+          mibName: null,
+          interpretation: 'PROFILE' as const,
+          rawType: projected.value === null ? 'unavailable' : 'derived-number',
+          rawValue: projected.value,
+          value: projected.value,
+          unit: projected.unit,
+          scale: null,
+          quality: validDevice ? projected.quality : ('INVALID' as const),
+          alarmState: null,
+          severity: null,
+          profileVersion: 'modbus-client-v1.3',
+          receivedAt: now.toISOString(),
+          observedAt,
+          staleMs: 90_000,
+          eventId: 'modbus-v1.3:' + deviceId + ':' + parsed.point + ':' + observedAt,
+        } satisfies Signal;
       });
-    }
-  }
-  return output;
+    }),
+  );
+  return groups.flat();
 }

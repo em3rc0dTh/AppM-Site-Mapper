@@ -641,3 +641,208 @@
   white-space: nowrap;
   border: 0;
 }
+
+/* Approved compact connection diagram: wiring left, electrical summary fixed at right. */
+.sm-powered-diagram-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
+  gap: 12px;
+  align-items: start;
+}
+
+.sm-powered-diagram-shell .sm-powered-diagram {
+  min-width: 0;
+}
+
+.sm-powered-diagram-shell .sm-powered-diagram-head,
+.sm-powered-diagram-shell .sm-powered-feed-layout {
+  grid-template-columns: minmax(500px, 1.32fr) minmax(48px, 0.14fr) minmax(280px, 0.72fr);
+  gap: 8px;
+}
+
+.sm-powered-diagram-shell .sm-powered-source-group {
+  padding: 10px;
+}
+
+.sm-powered-diagram-shell .sm-powered-columns,
+.sm-powered-diagram-shell .sm-powered-breaker-row {
+  grid-template-columns: minmax(68px, 0.7fr) minmax(112px, 1.35fr) 76px 42px 42px 56px 60px;
+}
+
+.sm-powered-diagram-shell .sm-powered-columns {
+  padding: 0 8px;
+  font-size: 8px;
+}
+
+.sm-powered-diagram-shell .sm-powered-breaker-row {
+  padding: 0 8px;
+  font-size: 9px;
+}
+
+.sm-powered-diagram-shell .sm-powered-wire-spacer {
+  height: 64px;
+}
+
+.sm-powered-diagram-shell .sm-powered-endpoint-row {
+  padding-right: 8px;
+  padding-left: 8px;
+}
+
+.sm-powered-diagram-shell .sm-powered-source-title,
+.sm-powered-diagram-shell .sm-powered-target-title {
+  padding-right: 9px;
+  padding-left: 9px;
+}
+
+.sm-powered-diagram-shell .sm-powered-electrical-summary {
+  position: sticky;
+  top: 10px;
+  margin-top: 0;
+  padding: 12px;
+  border: 1px solid #cad8e5;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.sm-powered-diagram-shell .sm-powered-electrical-summary > header {
+  display: grid;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.sm-powered-diagram-shell .sm-powered-electrical-summary > header span {
+  margin: 0;
+}
+
+.sm-powered-summary-stack {
+  display: grid;
+  gap: 8px;
+}
+
+.sm-powered-summary-feed {
+  overflow: hidden;
+  border: 1px solid #dbe4ec;
+  border-radius: 7px;
+  background: #fff;
+}
+
+.sm-powered-summary-feed > header {
+  padding: 7px 9px;
+  border-bottom: 1px solid #dbe4ec;
+  background: #f5f8fb;
+  color: #274c6f;
+}
+
+.sm-powered-summary-feed[data-feed='A'] {
+  border-color: #8cc7ef;
+}
+
+.sm-powered-summary-feed[data-feed='A'] > header {
+  background: #edf8ff;
+  color: #176cc2;
+}
+
+.sm-powered-summary-feed[data-feed='B'] {
+  border-color: #e9ca79;
+}
+
+.sm-powered-summary-feed[data-feed='B'] > header {
+  background: #fff8e6;
+  color: #96640b;
+}
+
+.sm-powered-summary-feed.is-total {
+  border-color: #b8d2e8;
+  background: #f6fbff;
+}
+
+.sm-powered-summary-feed.is-total > header {
+  background: #eaf4fc;
+  color: #102b48;
+}
+
+.sm-powered-summary-feed dl {
+  margin: 0;
+}
+
+.sm-powered-summary-feed dl > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: baseline;
+  min-height: 31px;
+  padding: 6px 9px;
+  border-bottom: 1px solid #edf1f4;
+}
+
+.sm-powered-summary-feed dl > div:last-child {
+  border-bottom: 0;
+}
+
+.sm-powered-summary-feed dt,
+.sm-powered-summary-feed dd {
+  margin: 0;
+}
+
+.sm-powered-summary-feed dt {
+  color: #60778d;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.sm-powered-summary-feed dd {
+  color: #173651;
+  font-size: 10px;
+  font-weight: 850;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.sm-powered-summary-feed.is-total dd {
+  font-weight: 950;
+}
+
+.sm-powered-diagram-shell .sm-powered-electrical-summary > p {
+  margin-top: 9px;
+  font-size: 9px;
+}
+
+.sm-powered-diagram-shell .sm-powered-selection {
+  margin-top: 9px;
+}
+
+.sm-powered-equipment-workbench > .sm-powered-documentary-remarks {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #cad8e5;
+  border-radius: 9px;
+  background: #fff;
+}
+
+@media (max-width: 1400px) {
+  .sm-powered-diagram-shell {
+    grid-template-columns: minmax(0, 1fr) 280px;
+  }
+
+  .sm-powered-diagram-shell .sm-powered-diagram-head,
+  .sm-powered-diagram-shell .sm-powered-feed-layout {
+    grid-template-columns: minmax(470px, 1.25fr) 44px minmax(255px, 0.68fr);
+    gap: 7px;
+  }
+
+  .sm-powered-diagram-shell .sm-powered-columns,
+  .sm-powered-diagram-shell .sm-powered-breaker-row {
+    grid-template-columns: minmax(62px, 0.65fr) minmax(100px, 1.25fr) 70px 40px 40px 52px 56px;
+  }
+}
+
+@media print {
+  .sm-powered-diagram-shell {
+    grid-template-columns: minmax(0, 1fr) 260px;
+    gap: 8px;
+  }
+
+  .sm-powered-diagram-shell .sm-powered-electrical-summary {
+    position: static;
+  }
+}

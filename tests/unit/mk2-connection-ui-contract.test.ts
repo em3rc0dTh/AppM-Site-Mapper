@@ -14,11 +14,16 @@ describe('MK2 operator-approved connection UI', () => {
     expect(palette).toContain('<p role="status">');
   });
 
-  it('presents a single full-width electrical summary instead of a legend', () => {
+  it('presents the electrical summary as a compact right sidebar beside the diagram', () => {
     const diagram = source('src/components/workbench/powered-equipment-connection-diagram.tsx');
+    const css = source('src/app/workbench/powered-equipment.css');
     expect(diagram).toContain("t('nominalCurrent')");
     expect(diagram).toContain("t('electricalSummary')");
+    expect(diagram).toContain('sm-powered-diagram-shell');
     expect(diagram).toContain('sm-powered-electrical-summary');
+    expect(diagram).toContain('sm-powered-summary-stack');
+    expect(css).toContain('grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);');
+    expect(css).toContain('position: sticky;');
     expect(diagram).not.toContain('sm-powered-legend');
     expect(diagram).not.toContain('sm-powered-feed-totals');
   });

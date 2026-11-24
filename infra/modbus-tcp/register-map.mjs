@@ -1,5 +1,5 @@
 // Canonical, read-only Site Mapper -> Metasys Modbus TCP contract.
-// The client-facing map is frozen by Modbus_TCP_v1.2.xlsx.
+// The base client-facing map is frozen by Modbus_TCP_v1.3.xlsx (Point Schedule).
 export const CIRCUITS = 96;
 export const METRIC_DEFINITIONS = Object.freeze([
   Object.freeze({ key: 'voltageV', label: 'Voltage', unit: 'V' }),

@@ -306,6 +306,9 @@ jobs:
             console.log("MODBUS_MAP_OK");
           '
 
+          # Client-facing Modbus_TCP_v1.3 acceptance over the actual FC04 TCP surface.
+          dc exec -T modbus-tcp node /opt/site-mapper/v13-operational-check.mjs
+
           dc ps
 
       - name: Record release, restart and isolated backup restore evidence

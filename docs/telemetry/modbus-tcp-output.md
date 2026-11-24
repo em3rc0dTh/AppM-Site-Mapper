@@ -10,7 +10,7 @@ The Site Mapper deployment owns the Modbus TCP server **as a separate runtime se
 
 The Modbus server does not query TimescaleDB or MongoDB when answering a Modbus request, and failure of this optional output does not reject an otherwise valid MQTT message.
 
-## Wire contract (baseline)
+## Wire contract (Modbus_TCP_v1.3)
 
 - Transport: Modbus TCP (MBAP), Input Register read function **04** only
 - Default server: TCP 1502, bound to loopback for local operation. The standard 502 can be mapped at deployment after network authorization.
@@ -22,7 +22,9 @@ The Modbus server does not query TimescaleDB or MongoDB when answering a Modbus 
 - Power is stored internally in watts (`powerW`) and converted at the Modbus publication boundary (`W / 1000`) so the wire value and engineering unit are kW. Historical storage is unchanged.
 - Only explicitly commissioned breaker metrics accepted by Site Mapper are exported. Missing values are not invented.
 - Missing or stale values (default age 30 seconds) use `MODBUS_MISSING_POLICY`. The backward-compatible default `zero` reads **0**, indistinguishable from a valid zero. The opt-in `exception` returns Modbus exception 04 for the entire FC04 request when any requested value is missing/stale. **Do not use this output for safety controls** until Metasys polling and missing-data behavior have been field-certified.
-- The breaker block remains exactly 0–767. Client circuit **00** occupies 768–775: Voltage 768, Current 770, Power 772 and Energy 774 (each FLOAT32/two registers). Governed industrial extensions still begin at address **1024** and remain opt-in.
+- The breaker block remains exactly 0–767. Client circuit **00** occupies 768–775: Voltage 768, Current 770, Power 772 and Energy 774 (each FLOAT32/two registers).
+- **Modbus_TCP_v1.3** enables the governed ELTEK extension at address **1024**. It adds 17 points per QDF (51 total) at the exact Eltek Schedule offsets 1024..1078. Each point uses two FLOAT32 data registers plus one adjacent quality register reserved by Site Mapper.
+- The v1.3 extension preserves the 1,164-point base schedule byte-for-byte; no breaker or total address moves.
 - Function codes other than FC04 return illegal-function exception. Malformed/out-of-range FC04 requests return exception, not out-of-bounds data.
 
 ## Local deployment

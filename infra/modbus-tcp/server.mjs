@@ -139,8 +139,36 @@ export class ModbusLatestState {
     return true;
   }
 
+  syncExtensionMirrors(unit, now = Date.now()) {
+    if (!this.extensions) return;
+    const slots = this.values.get(unit);
+    if (!slots) return;
+    for (const point of this.extensions.registry.points) {
+      if (point.unitId !== unit || !point.logicalPointId?.endsWith('/MODBUS_V13_TOTAL_ENERGY'))
+        continue;
+      const item = slots.get(totalMetricStartAddress('energyKwh'));
+      const timestamp = item
+        ? new Date(item.receivedAt).toISOString()
+        : new Date(now).toISOString();
+      this.extensions.apply({
+        id: point.signalId,
+        logicalPointId: point.logicalPointId,
+        quality: item ? 'VALID' : 'UNOBSERVED',
+        kind: 'measurement',
+        value: item?.value,
+        unit: point.unit,
+        receivedAt: timestamp,
+        observedAt: timestamp,
+        staleMs: this.staleMs,
+      });
+    }
+  }
+
   read(unit, offset, count, now = Date.now()) {
-    if (offset >= 1024 && this.extensions) return this.extensions.read(unit, offset, count, now);
+    if (offset >= 1024 && this.extensions) {
+      this.syncExtensionMirrors(unit, now);
+      return this.extensions.read(unit, offset, count, now);
+    }
     if (!this.values.has(unit)) return null;
     if (
       !Number.isInteger(offset) ||
@@ -229,7 +257,7 @@ export function startBridge({
           'content-type': 'application/json',
         },
         body: JSON.stringify({ signalIds: registry.points.map((point) => point.signalId) }),
-        signal: AbortSignal.any([projectionAbort.signal, AbortSignal.timeout(5000)]),
+        signal: AbortSignal.any([projectionAbort.signal, AbortSignal.timeout(10000)]),
       });
       if (!response.ok) {
         failure = `HTTP_${response.status}`;
@@ -252,7 +280,13 @@ export function startBridge({
       if (!stopped) {
         const reason =
           error?.name === 'TimeoutError' || error?.name === 'AbortError' ? 'TIMEOUT' : failure;
-        console.warn(JSON.stringify({ event: 'modbus.projection.unavailable', reason }));
+        const detail =
+          error instanceof Error
+            ? (error.name + ':' + (error.cause?.code ?? error.message))
+                .replace(/[\r\n]/g, ' ')
+                .slice(0, 120)
+            : 'unknown';
+        console.warn(JSON.stringify({ event: 'modbus.projection.unavailable', reason, detail }));
       }
     } finally {
       if (!stopped) projectionTimer = setTimeout(refreshProjection, 2000);

@@ -334,98 +334,126 @@ export function PoweredEquipmentConnectionDiagram({
         </dl>
       </section>
 
-      <section className="sm-powered-diagram">
-        {groups.map((group) => (
-          <article className="sm-powered-source-group" key={group.qdf}>
-            <div className="sm-powered-diagram-head">
-              <div className="sm-powered-source-title">
-                <div className="sm-powered-qdf-icon" aria-hidden="true">
-                  ▥
+      <section className="sm-powered-diagram-shell">
+        <section className="sm-powered-diagram">
+          {groups.map((group) => (
+            <article className="sm-powered-source-group" key={group.qdf}>
+              <div className="sm-powered-diagram-head">
+                <div className="sm-powered-source-title">
+                  <div className="sm-powered-qdf-icon" aria-hidden="true">
+                    ▥
+                  </div>
+                  <div>
+                    <strong>{group.qdf}</strong>
+                    <span>{t('powerSource')}</span>
+                  </div>
                 </div>
-                <div>
-                  <strong>{group.qdf}</strong>
-                  <span>{t('powerSource')}</span>
+                <span aria-hidden="true" />
+                <div className="sm-powered-target-title">
+                  <div className="sm-powered-equipment-icon is-small" aria-hidden="true">
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                  <div>
+                    <strong>{equipment.name}</strong>
+                    <span>{targetTypeLabel}</span>
+                  </div>
                 </div>
               </div>
-              <span aria-hidden="true" />
-              <div className="sm-powered-target-title">
-                <div className="sm-powered-equipment-icon is-small" aria-hidden="true">
-                  <span />
-                  <span />
-                  <span />
-                </div>
-                <div>
-                  <strong>{equipment.name}</strong>
-                  <span>{targetTypeLabel}</span>
-                </div>
-              </div>
-            </div>
 
-            {renderFeed(feedConnections(group.connections, 'A'), 'A')}
-            {renderFeed(feedConnections(group.connections, 'B'), 'B')}
-            {renderFeed(feedConnections(group.connections, 'UNSPECIFIED'), 'UNSPECIFIED')}
-          </article>
-        ))}
-      </section>
+              {renderFeed(feedConnections(group.connections, 'A'), 'A')}
+              {renderFeed(feedConnections(group.connections, 'B'), 'B')}
+              {renderFeed(feedConnections(group.connections, 'UNSPECIFIED'), 'UNSPECIFIED')}
+            </article>
+          ))}
+        </section>
 
-      <section className="sm-powered-footer-card sm-powered-electrical-summary">
-        <header>
-          <h2>{t('electricalSummary')}</h2>
-          <span>{t('summaryByFeed')}</span>
-        </header>
-        <div className="sm-powered-summary-table">
-          <div className="is-header">
-            <span>{t('feedLabel')}</span>
-            <span>{t('summaryVoltage')}</span>
-            <span>{t('summaryCurrent')}</span>
-            <span>{t('summaryPower')}</span>
-            <span>{t('summaryEnergy')}</span>
-          </div>
-          {aggregate
-            .filter((item) => item.breakerCount > 0)
-            .map((item) => (
-              <div key={item.feed}>
-                <b data-feed={item.feed}>{item.feed === 'UNSPECIFIED' ? '—' : item.feed}</b>
-                <span>{item.voltage}</span>
-                <span>{summaryValue(item.current, item.breakerCount, 2, 'A')}</span>
-                <span>{summaryValue(item.power, item.breakerCount, 3, 'kW', 1000)}</span>
-                <span>{summaryValue(item.energy, item.breakerCount, 3, 'kWh')}</span>
-              </div>
-            ))}
-          <div className="is-total">
-            <b>{t('total')}</b>
-            <strong>{overall.voltage}</strong>
-            <strong>{summaryValue(overall.current, overall.breakerCount, 2, 'A')}</strong>
-            <strong>{summaryValue(overall.power, overall.breakerCount, 3, 'kW', 1000)}</strong>
-            <strong>{summaryValue(overall.energy, overall.breakerCount, 3, 'kWh')}</strong>
-          </div>
-        </div>
-        <p>{t('electricalSummaryNote')}</p>
-        {selectedAid ? (
-          <div className="sm-powered-selection" aria-live="polite">
-            <small>{t('selectedEndpoint')}</small>
-            <code>{selectedAid}</code>
-          </div>
-        ) : null}
-        {remarkConnections.length ? (
-          <div className="sm-powered-documentary-remarks">
-            <h3>{t('documentaryRemarks')}</h3>
-            <p>{t('documentaryRemarksHelp')}</p>
-            <ul>
-              {remarkConnections.map((connection) => (
-                <li key={`remarks-${connection.breakerId}-${connection.endpoint.aid}`}>
-                  <strong>
-                    {connection.breakerName} · {connection.endpoint.displayLabel}
-                  </strong>
-                  {connection.remarks.map((remark) => (
-                    <span key={remark}>{remark}</span>
-                  ))}
-                </li>
+        <aside className="sm-powered-electrical-summary" aria-label={t('electricalSummary')}>
+          <header>
+            <h2>{t('electricalSummary')}</h2>
+            <span>{t('summaryByFeed')}</span>
+          </header>
+          <div className="sm-powered-summary-stack">
+            {aggregate
+              .filter((item) => item.breakerCount > 0)
+              .map((item) => (
+                <section className="sm-powered-summary-feed" data-feed={item.feed} key={item.feed}>
+                  <header>
+                    <b>{item.feed === 'UNSPECIFIED' ? '—' : item.feed}</b>
+                  </header>
+                  <dl>
+                    <div>
+                      <dt>{t('summaryVoltage')}</dt>
+                      <dd>{item.voltage}</dd>
+                    </div>
+                    <div>
+                      <dt>{t('summaryCurrent')}</dt>
+                      <dd>{summaryValue(item.current, item.breakerCount, 2, 'A')}</dd>
+                    </div>
+                    <div>
+                      <dt>{t('summaryPower')}</dt>
+                      <dd>{summaryValue(item.power, item.breakerCount, 3, 'kW', 1000)}</dd>
+                    </div>
+                    <div>
+                      <dt>{t('summaryEnergy')}</dt>
+                      <dd>{summaryValue(item.energy, item.breakerCount, 3, 'kWh')}</dd>
+                    </div>
+                  </dl>
+                </section>
               ))}
-            </ul>
+            <section className="sm-powered-summary-feed is-total">
+              <header>
+                <b>{t('total')}</b>
+              </header>
+              <dl>
+                <div>
+                  <dt>{t('summaryVoltage')}</dt>
+                  <dd>{overall.voltage}</dd>
+                </div>
+                <div>
+                  <dt>{t('summaryCurrent')}</dt>
+                  <dd>{summaryValue(overall.current, overall.breakerCount, 2, 'A')}</dd>
+                </div>
+                <div>
+                  <dt>{t('summaryPower')}</dt>
+                  <dd>{summaryValue(overall.power, overall.breakerCount, 3, 'kW', 1000)}</dd>
+                </div>
+                <div>
+                  <dt>{t('summaryEnergy')}</dt>
+                  <dd>{summaryValue(overall.energy, overall.breakerCount, 3, 'kWh')}</dd>
+                </div>
+              </dl>
+            </section>
           </div>
-        ) : null}
+          <p>{t('electricalSummaryNote')}</p>
+          {selectedAid ? (
+            <div className="sm-powered-selection" aria-live="polite">
+              <small>{t('selectedEndpoint')}</small>
+              <code>{selectedAid}</code>
+            </div>
+          ) : null}
+        </aside>
       </section>
+
+      {remarkConnections.length ? (
+        <section className="sm-powered-footer-card sm-powered-documentary-remarks">
+          <h3>{t('documentaryRemarks')}</h3>
+          <p>{t('documentaryRemarksHelp')}</p>
+          <ul>
+            {remarkConnections.map((connection) => (
+              <li key={`remarks-${connection.breakerId}-${connection.endpoint.aid}`}>
+                <strong>
+                  {connection.breakerName} · {connection.endpoint.displayLabel}
+                </strong>
+                {connection.remarks.map((remark) => (
+                  <span key={remark}>{remark}</span>
+                ))}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
     </main>
   );
 }

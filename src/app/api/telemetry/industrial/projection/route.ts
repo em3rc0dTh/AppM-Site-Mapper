@@ -4,6 +4,10 @@ import {
 } from '@/modules/alarm/application/alarm-modbus-projection';
 import { createAlarmRepository } from '@/modules/alarm/infrastructure/alarm-repository-factory';
 import {
+  parseQdfClientV13LogicalPoint,
+  projectQdfClientV13Signals,
+} from '@/modules/telemetry/application/qdf-client-modbus-v13';
+import {
   parseQdfTotalCurrentLogicalPoint,
   parseQdfTotalPowerLogicalPoint,
   parseQdfVoltageLogicalPoint,
@@ -79,44 +83,62 @@ export async function POST(request: Request) {
         ? [{ signalId: id, logicalPointId: point.logicalPointId }]
         : [];
     });
+    const qdfClientV13Requests = signalIds.flatMap((id) => {
+      const point = manifest?.points.find((item) => item.signalId === id);
+      return point?.logicalPointId && parseQdfClientV13LogicalPoint(point.logicalPointId)
+        ? [{ signalId: id, logicalPointId: point.logicalPointId }]
+        : [];
+    });
     const qdfDependencies =
-      qdfCurrentRequests.length || qdfPowerRequests.length || qdfVoltageRequests.length
+      qdfCurrentRequests.length ||
+      qdfPowerRequests.length ||
+      qdfVoltageRequests.length ||
+      qdfClientV13Requests.length
         ? {
             bindings: await createTelemetryBindingRepository(),
             history: createTelemetryStoreClient(),
           }
         : null;
-    const [qdfCurrentSignals, qdfPowerSignals, qdfVoltageSignals] = await Promise.all([
-      qdfCurrentRequests.length && qdfDependencies
-        ? projectQdfTotalCurrentSignals(
-            qdfCurrentRequests,
-            topology,
-            qdfDependencies.bindings,
-            qdfDependencies.history,
-          )
-        : [],
-      qdfPowerRequests.length && qdfDependencies
-        ? projectQdfTotalPowerSignals(
-            qdfPowerRequests,
-            topology,
-            qdfDependencies.bindings,
-            qdfDependencies.history,
-          )
-        : [],
-      qdfVoltageRequests.length && qdfDependencies
-        ? projectQdfVoltageSignals(
-            qdfVoltageRequests,
-            topology,
-            qdfDependencies.bindings,
-            qdfDependencies.history,
-          )
-        : [],
-    ]);
+    const [qdfCurrentSignals, qdfPowerSignals, qdfVoltageSignals, qdfClientV13Signals] =
+      await Promise.all([
+        qdfCurrentRequests.length && qdfDependencies
+          ? projectQdfTotalCurrentSignals(
+              qdfCurrentRequests,
+              topology,
+              qdfDependencies.bindings,
+              qdfDependencies.history,
+            )
+          : [],
+        qdfPowerRequests.length && qdfDependencies
+          ? projectQdfTotalPowerSignals(
+              qdfPowerRequests,
+              topology,
+              qdfDependencies.bindings,
+              qdfDependencies.history,
+            )
+          : [],
+        qdfVoltageRequests.length && qdfDependencies
+          ? projectQdfVoltageSignals(
+              qdfVoltageRequests,
+              topology,
+              qdfDependencies.bindings,
+              qdfDependencies.history,
+            )
+          : [],
+        qdfClientV13Requests.length && qdfDependencies
+          ? projectQdfClientV13Signals(
+              qdfClientV13Requests,
+              topology,
+              qdfDependencies.bindings,
+              qdfDependencies.history,
+              await createAlarmRepository(),
+            )
+          : [],
+      ]);
     const qdfById = new Map(
-      [...qdfCurrentSignals, ...qdfPowerSignals, ...qdfVoltageSignals].map((signal) => [
-        signal.id,
-        signal,
-      ]),
+      [...qdfCurrentSignals, ...qdfPowerSignals, ...qdfVoltageSignals, ...qdfClientV13Signals].map(
+        (signal) => [signal.id, signal],
+      ),
     );
 
     const industrialPoints = signalIds

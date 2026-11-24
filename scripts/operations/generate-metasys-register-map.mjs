@@ -50,7 +50,10 @@ else if (args.has('--check')) {
       'Metasys register map has drifted: run node scripts/operations/generate-metasys-register-map.mjs',
     );
     process.exitCode = 1;
-  } else console.log('METASYS_REGISTER_MAP_MATCH: 1164 points (388 per QDF, Excel v1.2)');
+  } else
+    console.log(
+      'METASYS_REGISTER_MAP_MATCH: 1164 base points (388 per QDF, Excel v1.3 Point Schedule)',
+    );
 } else {
   fs.mkdirSync(path.dirname(target), { recursive: true });
   fs.writeFileSync(target, data);

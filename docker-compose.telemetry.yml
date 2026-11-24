@@ -93,6 +93,10 @@ services:
       MODBUS_BRIDGE_URL: http://modbus-tcp:18082
       MODBUS_BRIDGE_TOKEN: '${MODBUS_BRIDGE_TOKEN:?Set a private Modbus bridge token}'
       MODBUS_SOURCE_UNITS_JSON: '${MODBUS_SOURCE_UNITS_JSON:?Set the approved serial-to-unit map}'
+      INDUSTRIAL_PROJECTION_TOKEN: '${MODBUS_BRIDGE_TOKEN:?Set a private Modbus bridge token}'
+      INDUSTRIAL_MODBUS_POINTS_FILE: /config/industrial/modbus-points-v1.3.json
+    volumes:
+      - ./config/industrial/modbus-points-v1.3.json:/config/industrial/modbus-points-v1.3.json:ro
     ports:
       - '127.0.0.1:3000:3000'
     depends_on:
@@ -132,6 +136,12 @@ services:
       MODBUS_BIND_PORT: '1502'
       MODBUS_INGEST_HOST: 0.0.0.0
       MODBUS_INGEST_PORT: '18082'
+      MODBUS_POINTS_FILE: /config/industrial/modbus-points-v1.3.json
+      INDUSTRIAL_PROJECTION_URL: http://site-mapper:3000/api/telemetry/industrial/projection
+      INDUSTRIAL_PROJECTION_TOKEN: '${MODBUS_BRIDGE_TOKEN:?Set a private Modbus bridge token}'
+    volumes:
+      - ./config/industrial/modbus-points-v1.3.json:/config/industrial/modbus-points-v1.3.json:ro
+      - site_mapper_modbus_registry:/data
     ports:
       - '${MODBUS_CLIENT_BIND_HOST:-127.0.0.1}:${MODBUS_CLIENT_PORT:-1503}:1502'
       - '127.0.0.1:18082:18082'
@@ -165,3 +175,4 @@ services:
 volumes:
   site_mapper_mongo_data:
   site_mapper_timescale_data:
+  site_mapper_modbus_registry:

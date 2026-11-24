@@ -145,6 +145,9 @@ services:
     ports:
       - '${MODBUS_CLIENT_BIND_HOST:-127.0.0.1}:${MODBUS_CLIENT_PORT:-1503}:1502'
       - '127.0.0.1:18082:18082'
+    depends_on:
+      site-mapper:
+        condition: service_started
     restart: unless-stopped
 
   snmp-collector:

@@ -123,6 +123,11 @@ services:
         condition: service_healthy
     restart: 'no'
 
+  modbus-tcp:
+    depends_on:
+      site-mapper:
+        condition: service_healthy
+
   snmp-traps:
     build:
       context: .

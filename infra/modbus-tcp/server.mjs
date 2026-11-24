@@ -280,7 +280,13 @@ export function startBridge({
       if (!stopped) {
         const reason =
           error?.name === 'TimeoutError' || error?.name === 'AbortError' ? 'TIMEOUT' : failure;
-        console.warn(JSON.stringify({ event: 'modbus.projection.unavailable', reason }));
+        const detail =
+          error instanceof Error
+            ? (error.name + ':' + (error.cause?.code ?? error.message))
+                .replace(/[\r\n]/g, ' ')
+                .slice(0, 120)
+            : 'unknown';
+        console.warn(JSON.stringify({ event: 'modbus.projection.unavailable', reason, detail }));
       }
     } finally {
       if (!stopped) projectionTimer = setTimeout(refreshProjection, 2000);

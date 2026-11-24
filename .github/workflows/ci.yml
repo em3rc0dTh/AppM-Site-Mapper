@@ -60,8 +60,8 @@ jobs:
 
       - name: Format check
         run: |
-          npx prettier --write src/components/power/bdfb-telemetry-inspector.tsx
-          git diff -- src/components/power/bdfb-telemetry-inspector.tsx
+          npx prettier --write src/modules/telemetry/application/bfdb-derived-electrical.ts
+          git diff -- src/modules/telemetry/application/bfdb-derived-electrical.ts
           exit 1
 
       - name: MVP documentation links

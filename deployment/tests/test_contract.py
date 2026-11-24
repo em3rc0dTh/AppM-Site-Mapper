@@ -48,6 +48,10 @@ class Contract(unittest.TestCase):
             d=Path(d); (d/"manifest.json").write_text(json.dumps({"schemaVersion":1,"files":{}}))
             (d/"unexpected").write_text("unexpected")
             with self.assertRaises(ValueError): kit.verify_directory(d)
+    def test_incomplete_recovery_bundle(self):
+        with tempfile.TemporaryDirectory() as d:
+            d=Path(d); (d/"manifest.json").write_text(json.dumps({"schemaVersion":1,"files":{}}))
+            with self.assertRaises(ValueError): kit.verify_bundle(d)
     def test_integrity(self):
         with tempfile.TemporaryDirectory() as d:
             d=Path(d); f=d/"file"; f.write_text("original")

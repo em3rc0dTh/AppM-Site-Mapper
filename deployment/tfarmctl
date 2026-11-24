@@ -208,6 +208,24 @@ def verify_directory(directory):
         fail("Unexpected or missing bundle members")
     return manifest
 
+def verify_bundle(directory):
+    manifest=verify_directory(directory)
+    required={"runtime.env","profile.json","images.tar","host-evidence.tar","packages.txt","source.diff","untracked-source.tar",*[f"compose-{i:02d}.yml" for i in range(len(COMPOSE_FILES))]}
+    if not required.issubset(manifest["files"]):
+        fail("Recovery bundle is incomplete")
+    volumes=manifest.get("volumes")
+    if not isinstance(volumes,list) or not volumes or not isinstance(manifest.get("images"),dict) or not manifest["images"]:
+        fail("Missing volume/image inventory")
+    names=set()
+    for v in volumes:
+        if not isinstance(v,dict) or not isinstance(v.get("name"),str) or not IDENT.fullmatch(v["name"]) or v["name"] in names or v.get("file") not in manifest["files"] or not v["file"].endswith(".tar"):
+            fail("Invalid or duplicate recovery volume")
+        names.add(v["name"])
+    required_volumes={"appm-site-mapper_site_mapper_mongo_data","appm-site-mapper_site_mapper_timescale_data","appm-site-mapper_snmp_field_trap_spool",MQTT_VOLUME}
+    if not required_volumes.issubset(names):
+        fail("Required database/spool volume absent")
+    return manifest
+
 def backup(p, output, staging):
     require_root(); model(p)
     output=Path(output).resolve(); staging=Path(staging).resolve()
@@ -218,6 +236,9 @@ def backup(p, output, staging):
         fail("Cold backup requires ALL project containers stopped in an approved maintenance window")
     if not BASE_SERVICES-{"mongo-init"} <= {x["Config"]["Labels"]["com.docker.compose.service"] for x in records}:
         fail("Incomplete source service inventory")
+    for x in records:
+        if x["Config"]["Labels"]["com.docker.compose.service"] in {"mongodb","timescaledb"} and (x["State"]["ExitCode"]!=0 or x["State"].get("OOMKilled")):
+            fail("Database did not stop cleanly; physical backup not accepted")
     mounted={m["Name"] for x in records for m in x.get("Mounts",[]) if m["Type"]=="volume"}
     app=next(x for x in records if x["Config"]["Labels"]["com.docker.compose.service"]=="site-mapper")
     env=dict(v.split("=",1) for v in app["Config"].get("Env",[]) if "=" in v)
@@ -286,7 +307,7 @@ def backup(p, output, staging):
         (d/"packages.txt").write_text(run("dpkg-query","-W",capture=True))
         manifest["files"]={f.name:digest(f) for f in d.iterdir() if f.is_file()}
         (d/"manifest.json").write_text(json.dumps(manifest,indent=2))
-        verify_directory(d)
+        verify_bundle(d)
         # Pipe directly into encryption: no unencrypted outer archive.
         # Staging files themselves are sensitive; use encrypted staging storage.
         tar=subprocess.Popen(["tar","-C",str(d),"-cf","-","."],stdout=subprocess.PIPE)
@@ -302,7 +323,7 @@ def backup(p, output, staging):
 def restore(p, directory, apply):
     require_root()
     directory=Path(directory).resolve()
-    m=verify_directory(directory)
+    m=verify_bundle(directory)
     if not isinstance(m.get("volumes"),list) or not isinstance(m.get("images"),dict) or not m["images"]:
         fail("Missing volume/image inventory")
     for v in m["volumes"]:
@@ -347,14 +368,35 @@ def restore(p, directory, apply):
     model(p)
     print("RESTORE_FILES_COMPLETE_SERVICES_NOT_STARTED")
 
+def validate_runtime(p):
+    model(p)
+    records=inspect_ids(project_ids(p))
+    expected=set(p["services"])
+    by_service={x["Config"]["Labels"]["com.docker.compose.service"]:x for x in records}
+    failed=[]
+    for name in sorted(expected):
+        rec=by_service.get(name)
+        state=rec.get("State",{}) if rec else {}
+        healthy=(state.get("Health") or {}).get("Status")
+        ok=(state.get("Status")=="exited" and state.get("ExitCode")==0) if name=="mongo-init" else (state.get("Running") and healthy not in ("unhealthy","starting"))
+        print(("PASS" if ok else "FAIL"),name,healthy or state.get("Status","missing"))
+        if not ok: failed.append(name)
+    for name,rec in by_service.items():
+        if name not in expected and rec["State"]["Running"]:
+            failed.append("unexpected "+name)
+            print("FAIL unexpected running service",name)
+    if failed: fail("Runtime service acceptance incomplete")
+    print("SERVICE_HEALTH_OK — FIELD COMMISSIONING AND DATA_RECOVERY STILL REQUIRED")
+
 def main():
     global ROOT
     ap=argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--root",default=str(KIT_ROOT),help="Existing application checkout; kit may be stored separately")
     ap.add_argument("--profile",default=str(KIT_ROOT/"deployment/profiles/tfarm.example.json"))
     sub=ap.add_subparsers(dest="cmd",required=True)
-    for command in ("discover","plan","preflight","status","start","build","packages"): sub.add_parser(command)
+    for command in ("discover","plan","preflight","status","start","build","packages","validate"): sub.add_parser(command)
     n=sub.add_parser("network"); n.add_argument("--apply",action="store_true"); n.add_argument("--local-console",action="store_true")
+    v=sub.add_parser("verify"); v.add_argument("--directory",required=True)
     b=sub.add_parser("backup"); b.add_argument("--output",required=True); b.add_argument("--staging",required=True)
     r=sub.add_parser("restore"); r.add_argument("--directory",required=True); r.add_argument("--apply",action="store_true")
     args=ap.parse_args()
@@ -371,6 +413,8 @@ def main():
         run("apt-get","update")
         run("apt-get","install","--yes","ca-certificates","curl","git","python3","gnupg","network-manager","kea-dhcp4-server","snmp","docker-ce","docker-ce-cli","containerd.io","docker-buildx-plugin","docker-compose-plugin")
         return
+    if args.cmd=="verify":
+        verify_bundle(Path(args.directory).resolve()); print("BUNDLE_INTEGRITY_OK_NOT_RESTORE_CERTIFIED"); return
     p=load_profile(args.profile)
     if args.cmd=="plan": configure_network(p,False)
     elif args.cmd=="network":
@@ -385,6 +429,7 @@ def main():
     elif args.cmd=="build":
         require_root(); model(p); run(*compose(p),"build",*p["services"])
     elif args.cmd=="start": start(p)
+    elif args.cmd=="validate": validate_runtime(p)
     elif args.cmd=="backup": backup(p,args.output,args.staging)
     elif args.cmd=="restore": restore(p,args.directory,args.apply)
 

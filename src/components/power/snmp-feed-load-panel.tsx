@@ -149,10 +149,16 @@ export function SnmpFeedLoadPanel({
   const reportingFeeds = load ? load.freshFeedCount + labCount : null;
   const operationalVoltage = load?.qdfOperationalContract?.metrics.voltage;
   const operationalPowerKw = load?.qdfOperationalContract?.metrics.power.total?.powerKw ?? null;
+  const operationalCurrentA = load?.qdfOperationalContract?.metrics.current.total?.currentA ?? null;
 
   if (view === 'summary') {
+    const totalVoltage =
+      operationalVoltage?.total?.voltageV ?? load?.voltageContract?.total?.voltageV ?? null;
+    const totalCurrent = error ? null : (operationalCurrentA ?? capacity?.measuredA ?? null);
+    const powerKw = operationalPowerKw ?? kilowatts(load?.totalEstimatedPowerW) ?? null;
+
     return (
-      <section className="front01-snmp-summary" aria-label={t('section')}>
+      <section className="front01-snmp-summary front01-snmp-summary--operator" aria-label={t('section')}>
         <header className="front01-summary-header">
           <strong>{t('compactTitle')}</strong>
           <span>
@@ -164,10 +170,18 @@ export function SnmpFeedLoadPanel({
           </span>
         </header>
 
-        <dl className="front01-snmp-kpis">
+        <dl className="front01-snmp-kpis front01-snmp-kpis--operator">
           <div>
             <dt>{t('totalCurrent')}</dt>
-            <dd>{numeric(error ? null : capacity?.measuredA, 'A')}</dd>
+            <dd>{numeric(totalCurrent, 'A')}</dd>
+          </div>
+          <div>
+            <dt>{t('qdfVoltage')}</dt>
+            <dd>{numeric(totalVoltage, 'V')}</dd>
+          </div>
+          <div>
+            <dt>{t('approxPower')}</dt>
+            <dd>{numeric(powerKw, 'kW')}</dd>
           </div>
           <div>
             <dt>{t('nominalCapacity')}</dt>
@@ -181,170 +195,141 @@ export function SnmpFeedLoadPanel({
             <dt>{t('utilization')}</dt>
             <dd>{numeric(capacity?.utilizationPct, '%')}</dd>
           </div>
-          <div>
-            <dt>{t('qdfVoltage')}</dt>
-            <dd>
-              {numeric(
-                operationalVoltage?.total?.voltageV ?? load?.voltageContract?.total?.voltageV,
-                'V',
-              )}
-            </dd>
-          </div>
-          <div>
-            <dt>{t('busA')}</dt>
-            <dd>
-              {numeric(
-                operationalVoltage?.busA?.voltageV ?? load?.voltageContract?.busA?.voltageV,
-                'V',
-              )}
-            </dd>
-          </div>
-          <div>
-            <dt>{t('approxPower')}</dt>
-            <dd>{numeric(operationalPowerKw ?? kilowatts(load?.totalEstimatedPowerW), 'kW')}</dd>
-          </div>
-          <div>
-            <dt>{t('busB')}</dt>
-            <dd>
-              {numeric(
-                operationalVoltage?.busB?.voltageV ?? load?.voltageContract?.busB?.voltageV,
-                'V',
-              )}
-            </dd>
-          </div>
         </dl>
 
-        <div className="front01-snmp-table-wrap">
-          <table className="front01-snmp-table">
-            <thead>
-              <tr>
-                <th>{t('shunt')}</th>
-                <th>{t('current')}</th>
-                <th>{t('ratedSmall')}</th>
-                <th>{t('usage')}</th>
-                <th>{t('available')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(capacity?.feedUtilization ?? []).map((feed) => (
-                <tr key={feed.accessPortId}>
-                  <td>{feed.label}</td>
-                  <td>{numeric(feed.measuredA, 'A')}</td>
-                  <td>{numeric(feed.ratedA, 'A')}</td>
-                  <td>
-                    {feed.utilizationPct === null ? '—' : `${feed.utilizationPct.toFixed(1)}%`}
-                  </td>
-                  <td>{numeric(feed.availableA, 'A')}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="front01-summary-utilization">
+          <strong>{t('utilization')}</strong>
+          <div
+            className="front01-utilization-meter"
+            role="meter"
+            aria-label={t('utilization')}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.max(0, Math.min(100, capacity?.utilizationPct ?? 0))}
+          >
+            <span
+              style={{
+                width: `${Math.max(0, Math.min(100, capacity?.utilizationPct ?? 0))}%`,
+              }}
+            />
+          </div>
+          <b>
+            {capacity?.utilizationPct === null || capacity?.utilizationPct === undefined
+              ? '—'
+              : `${capacity.utilizationPct.toFixed(2)} %`}
+          </b>
         </div>
 
-        <div className="front01-snmp-footer">
-          <strong>
-            {t('activeInputs', {
-              value:
-                reportingFeeds === null || !load
-                  ? '—'
-                  : `${reportingFeeds} / ${load.expectedFeedCount}`,
-            })}
-          </strong>
-          {capacity?.utilizationPct !== null && capacity?.utilizationPct !== undefined ? (
-            <>
-              <div
-                className="front01-utilization-meter"
-                role="meter"
-                aria-label={t('utilization')}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuenow={Math.max(0, Math.min(100, capacity.utilizationPct))}
-              >
-                <span
-                  style={{ width: `${Math.max(0, Math.min(100, capacity.utilizationPct))}%` }}
-                />
-              </div>
-              <b>{capacity.utilizationPct.toFixed(1)}%</b>
-            </>
-          ) : null}
-        </div>
+        {(awaitingVerification || !inventoryRecorded) && (
+          <p className="front01-data-warning" role="status">
+            {awaitingVerification ? t('verifyPending') : t('commissionIncomplete')}
+          </p>
+        )}
       </section>
     );
   }
 
   if (view === 'feeds') {
     return (
-      <section className="front01-inputs-summary" aria-label={t('section')}>
-        <header className="front01-summary-header">
-          <strong>{t('compactTitle')}</strong>
-          <span>
-            {error
-              ? t('statusUnavailable')
-              : reportingFeeds && load && reportingFeeds === load.expectedFeedCount
-                ? t('statusLive')
-                : t('statusPending')}
-          </span>
+      <section className="front01-inputs-summary front01-inputs-summary--operator" aria-label={t('section')}>
+        <header className="front01-inputs-heading">
+          <h2>{t('incoming')}</h2>
+          <div>
+            <span>{t('protocolSnmp')}</span>
+            <strong>
+              {error
+                ? t('statusUnavailable')
+                : reportingFeeds && load && reportingFeeds === load.expectedFeedCount
+                  ? t('statusLive')
+                  : t('statusPending')}
+            </strong>
+          </div>
         </header>
 
-        <div className="front01-inputs-table-wrap">
-          <table className="front01-inputs-table">
-            <thead>
-              <tr>
-                <th>{t('input')}</th>
-                <th>{t('status')}</th>
-                <th>{t('current')}</th>
-                <th>{t('voltage')}</th>
-                <th>{t('panel')}</th>
-                <th>{t('lastReadingColumn')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {load?.feeds.map((feed) => {
-                const mappedPanels = feed.servedPanelIds
-                  .map((id) => panels.get(id))
-                  .filter((panel): panel is PhysicalPanel => panel !== undefined);
-                const panelLabel =
-                  mappedPanels.length > 0
-                    ? mappedPanels
-                        .map((panel) => readablePanel(panel, t('frameWord'), t('panelWord')))
-                        .join(', ')
-                    : feed.servedPanelIds.length
-                      ? t('assignedPanels', { count: feed.servedPanelIds.length })
-                      : '—';
+        <div className="front01-inputs-grid">
+          {(load?.feeds ?? []).map((feed, index) => {
+            const utilization = capacity?.feedUtilization.find(
+              (item) => item.accessPortId === feed.accessPortId,
+            );
+            const mappedPanels = feed.servedPanelIds
+              .map((id) => panels.get(id))
+              .filter((panel): panel is PhysicalPanel => panel !== undefined);
+            const panelLabel =
+              mappedPanels.length > 0
+                ? mappedPanels
+                    .map((panel) => readablePanel(panel, t('frameWord'), t('panelWord')))
+                    .join(', ')
+                : feed.servedPanelIds.length
+                  ? t('assignedPanels', { count: feed.servedPanelIds.length })
+                  : '—';
+            const utilizationPct = utilization?.utilizationPct ?? null;
 
-                return (
-                  <tr key={feed.accessPortId}>
-                    <td>
-                      <strong>{feed.label}</strong>
-                      <small>
-                        {feed.feedPosition
-                          ? t('inputSide', { position: feed.feedPosition })
-                          : feed.side
-                            ? t('side', { side: feed.side })
-                            : t('unassignedSide')}
-                      </small>
-                    </td>
-                    <td>{statusLabel(feed.status)}</td>
-                    <td>{numeric(feed.currentA, 'A')}</td>
-                    <td>{numeric(feed.voltageV, 'V')}</td>
-                    <td>{panelLabel}</td>
-                    <td>
-                      <OperationalTime value={feed.observedAt} />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+            return (
+              <article
+                className="front01-input-column"
+                data-side={index % 2 === 0 ? 'a' : 'b'}
+                key={feed.accessPortId}
+              >
+                <div className="front01-input-title">
+                  <div>
+                    <h3>{feed.feedPosition ?? feed.side ?? feed.label}</h3>
+                    <small>{feed.label}</small>
+                  </div>
+                  <span data-status={feed.status}>{statusLabel(feed.status)}</span>
+                </div>
+
+                <div className="front01-input-primary">
+                  <div>
+                    <span>{t('current')}</span>
+                    <strong>{numeric(feed.currentA, 'A')}</strong>
+                  </div>
+                  <div>
+                    <span>{t('utilization')}</span>
+                    <strong>
+                      {utilizationPct === null ? '—' : `${utilizationPct.toFixed(2)} %`}
+                    </strong>
+                  </div>
+                </div>
+
+                <div
+                  className="front01-input-meter"
+                  role="meter"
+                  aria-label={t('shuntUtilization', { label: feed.label })}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={Math.max(0, Math.min(100, utilizationPct ?? 0))}
+                >
+                  <span
+                    style={{
+                      width: `${Math.max(0, Math.min(100, utilizationPct ?? 0))}%`,
+                    }}
+                  />
+                </div>
+
+                <dl className="front01-input-facts">
+                  <dt>{t('ratedSmall')}</dt>
+                  <dd>{numeric(utilization?.ratedA, 'A')}</dd>
+                  <dt>{t('available')}</dt>
+                  <dd>{numeric(utilization?.availableA, 'A')}</dd>
+                  <dt>{t('voltage')}</dt>
+                  <dd>{numeric(feed.voltageV, 'V')}</dd>
+                  <dt>{t('panel')}</dt>
+                  <dd>{panelLabel}</dd>
+                  <dt>{t('lastReadingColumn')}</dt>
+                  <dd>
+                    <OperationalTime value={feed.observedAt} />
+                  </dd>
+                </dl>
+              </article>
+            );
+          })}
         </div>
 
         {!load?.feedCount && !error && <p>{t('noFeeds')}</p>}
         <footer className="front01-inputs-note">
           <span>{t('protocolSnmp')}</span>
           <span>{t('independentMeasurements')}</span>
-          {load && !load.qdfOperationalContract?.metrics.current.total && (
-            <span>{t('noTotal')}</span>
-          )}
+          {load && !load.qdfOperationalContract?.metrics.current.total && <span>{t('noTotal')}</span>}
         </footer>
       </section>
     );

@@ -73,15 +73,22 @@ export async function POST(request: Request) {
   const optional = (value: unknown): string | undefined =>
     typeof value === 'string' && value.trim() ? value.trim() : undefined;
 
+  const shelf = optional(body.shelf);
+  const moduleName = optional(body.module);
+  const endpoint = optional(body.endpoint);
+  const displayLabel = optional(body.displayLabel);
   const result = await (await catalogService()).create({
     equipmentName: body.equipmentName.trim(),
     footprint: body.footprint.trim(),
-    ...(optional(body.shelf) ? { shelf: optional(body.shelf) } : {}),
-    ...(optional(body.module) ? { module: optional(body.module) } : {}),
-    ...(optional(body.endpoint) ? { endpoint: optional(body.endpoint) } : {}),
-    ...(optional(body.displayLabel) ? { displayLabel: optional(body.displayLabel) } : {}),
+    ...(shelf ? { shelf } : {}),
+    ...(moduleName ? { module: moduleName } : {}),
+    ...(endpoint ? { endpoint } : {}),
+    ...(displayLabel ? { displayLabel } : {}),
     ...(body.feed === 'A' || body.feed === 'B' ? { feed: body.feed } : {}),
   });
 
+  if (!result.ok) {
+    return NextResponse.json({ error: 'TARGET_CREATE_FAILED' }, { status: 500 });
+  }
   return NextResponse.json({ target: result.value }, { status: 201 });
 }

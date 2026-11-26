@@ -23,48 +23,6 @@ function localTime(value: string, locale: string): string {
   }).format(milliseconds);
 }
 
-function localizedEnum(value: string, locale: string): string {
-  if (!locale.toLowerCase().startsWith('es')) return value;
-  return (
-    (
-      {
-        normal: 'Normal',
-        minorAlarm: 'Alarma menor',
-        majorAlarm: 'Alarma mayor',
-        critical: 'Crítica',
-        warning: 'Advertencia',
-        error: 'Error',
-        disabled: 'Deshabilitada',
-        disconnected: 'Desconectada',
-        notPresent: 'No presente',
-        off: 'Desactivada',
-        on: 'Activa',
-      } as Record<string, string>
-    )[value] ?? value
-  );
-}
-
-function decodeValue(item: TrapView['varbinds'][number], locale: string): string {
-  let rendered = item.value || '—';
-  try {
-    const decoded = JSON.parse(item.value) as { encoding?: string; bytes?: string };
-    if (decoded?.encoding === 'base64' && typeof decoded.bytes === 'string') {
-      const bytes = Uint8Array.from(atob(decoded.bytes), (character) => character.charCodeAt(0));
-      try {
-        const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-        rendered = /[\x00-\x1f\x7f]/.test(text) ? `Binario · ${bytes.length} bytes` : text.trim();
-      } catch {
-        rendered = `Binario · ${bytes.length} bytes`;
-      }
-    }
-  } catch {
-    // Plain scalar.
-  }
-  if (item.enumLabel) return `${localizedEnum(item.enumLabel, locale)} (${rendered})`;
-  if (item.referencedName) return `${item.referencedName} · ${rendered}`;
-  return rendered;
-}
-
 function varbind(event: TrapView, name: string) {
   return event.varbinds.find((item) => item.name === name);
 }
@@ -75,6 +33,58 @@ export function SnmpTrapPanel({
 }: Readonly<{ deviceId: string; deviceName: string }>) {
   const t = useTranslations('snmpTraps');
   const locale = useLocale();
+  const enumT = useTranslations('snmpEnums');
+  const localizedEnum = (value: string): string => {
+    if (!locale.toLowerCase().startsWith('es')) return value;
+    switch (value) {
+      case 'normal':
+        return enumT('normal');
+      case 'minorAlarm':
+        return enumT('minorAlarm');
+      case 'majorAlarm':
+        return enumT('majorAlarm');
+      case 'critical':
+        return enumT('critical');
+      case 'warning':
+        return enumT('warning');
+      case 'error':
+        return enumT('error');
+      case 'disabled':
+        return enumT('disabled');
+      case 'disconnected':
+        return enumT('disconnected');
+      case 'notPresent':
+        return enumT('notPresent');
+      case 'off':
+        return enumT('off');
+      case 'on':
+        return enumT('on');
+      default:
+        return value;
+    }
+  };
+  const decodeValue = (item: TrapView['varbinds'][number]): string => {
+    let rendered = item.value || '—';
+    try {
+      const decoded = JSON.parse(item.value) as { encoding?: string; bytes?: string };
+      if (decoded?.encoding === 'base64' && typeof decoded.bytes === 'string') {
+        const bytes = Uint8Array.from(atob(decoded.bytes), (character) => character.charCodeAt(0));
+        try {
+          const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+          rendered = /[\x00-\x1f\x7f]/.test(text)
+            ? enumT('binaryBytes', { count: bytes.length })
+            : text.trim();
+        } catch {
+          rendered = enumT('binaryBytes', { count: bytes.length });
+        }
+      }
+    } catch {
+      // Plain scalar.
+    }
+    if (item.enumLabel) return `${localizedEnum(item.enumLabel)} (${rendered})`;
+    if (item.referencedName) return `${item.referencedName} · ${rendered}`;
+    return rendered;
+  };
   const [events, setEvents] = useState<TrapView[]>([]);
   const [sourceConfigured, setSourceConfigured] = useState<boolean | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -199,9 +209,9 @@ export function SnmpTrapPanel({
                             {localTime(event.receivedAt, locale)}
                           </time>
                         </td>
-                        <td>{origin ? decodeValue(origin, locale) : deviceName}</td>
+                        <td>{origin ? decodeValue(origin) : deviceName}</td>
                         <td>
-                          {status ? decodeValue(status, locale) : (event.notificationName ?? '—')}
+                          {status ? decodeValue(status) : (event.notificationName ?? '—')}
                         </td>
                         <td>
                           <span className={styles.chip} data-severity={event.severity ?? 'none'}>
@@ -242,12 +252,12 @@ export function SnmpTrapPanel({
                   <div>
                     <dt>{t('originShort')}</dt>
                     <dd>
-                      {sourceDescr ? decodeValue(sourceDescr, locale) : selected.sourceIdentity}
+                      {sourceDescr ? decodeValue(sourceDescr) : selected.sourceIdentity}
                     </dd>
                   </div>
                   <div>
                     <dt>{t('condition')}</dt>
-                    <dd>{condition ? decodeValue(condition, locale) : '—'}</dd>
+                    <dd>{condition ? decodeValue(condition) : '—'}</dd>
                   </div>
                   <div>
                     <dt>{t('severity')}</dt>
@@ -259,11 +269,11 @@ export function SnmpTrapPanel({
                   </div>
                   <div>
                     <dt>{t('relatedSignal')}</dt>
-                    <dd>{measuredOid ? decodeValue(measuredOid, locale) : '—'}</dd>
+                    <dd>{measuredOid ? decodeValue(measuredOid) : '—'}</dd>
                   </div>
                   <div>
                     <dt>{t('measuredValue')}</dt>
-                    <dd>{measuredValue ? decodeValue(measuredValue, locale) : '—'}</dd>
+                    <dd>{measuredValue ? decodeValue(measuredValue) : '—'}</dd>
                   </div>
                   <div>
                     <dt>{t('siteMapperAlarm')}</dt>
@@ -281,7 +291,7 @@ export function SnmpTrapPanel({
                     {selected.varbinds.map((item, index) => (
                       <div key={item.oid + ':' + index}>
                         <dt>{item.name ?? item.oid}</dt>
-                        <dd>{decodeValue(item, locale)}</dd>
+                        <dd>{decodeValue(item)}</dd>
                       </div>
                     ))}
                   </dl>

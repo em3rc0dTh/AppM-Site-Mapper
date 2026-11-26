@@ -1816,7 +1816,13 @@
     "connectionNoteOptional": "Nota de conexión (opcional)",
     "connectionNotePlaceholder": "Observación operativa, referencia, etc.",
     "declaredCaution": "Este destino no necesita estar materializado como Equipment + POWER INPUT. La acción registra una asociación eléctrica declarada y la incorpora al Connection Diagram; no energiza hardware ni simula telemetría.",
-    "confirmDeclared": "CONFIRMAR ASOCIACIÓN ELÉCTRICA"
+    "confirmDeclared": "CONFIRMAR ASOCIACIÓN ELÉCTRICA",
+    "newEquipmentPlaceholder": "UAT-SWITCH-01",
+    "shelfPlaceholder": "SH1",
+    "modulePlaceholder": "PSU1",
+    "endpointPlaceholder": "A0",
+    "rackAidValue": "RACK::{footprint}",
+    "unknownValue": "…"
   },
   "connectPower": {
     "header": "POWER / COMISIONAMIENTO",

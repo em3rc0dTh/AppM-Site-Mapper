@@ -210,9 +210,7 @@ export function SnmpTrapPanel({
                           </time>
                         </td>
                         <td>{origin ? decodeValue(origin) : deviceName}</td>
-                        <td>
-                          {status ? decodeValue(status) : (event.notificationName ?? '—')}
-                        </td>
+                        <td>{status ? decodeValue(status) : (event.notificationName ?? '—')}</td>
                         <td>
                           <span className={styles.chip} data-severity={event.severity ?? 'none'}>
                             {severityLabel(event.severity)}
@@ -251,9 +249,7 @@ export function SnmpTrapPanel({
                 <dl className={styles.contextList}>
                   <div>
                     <dt>{t('originShort')}</dt>
-                    <dd>
-                      {sourceDescr ? decodeValue(sourceDescr) : selected.sourceIdentity}
-                    </dd>
+                    <dd>{sourceDescr ? decodeValue(sourceDescr) : selected.sourceIdentity}</dd>
                   </div>
                   <div>
                     <dt>{t('condition')}</dt>

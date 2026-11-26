@@ -224,7 +224,6 @@ export function SnmpControllerHistory({ deviceId }: Readonly<{ deviceId: string 
   useEffect(() => {
     if (!signalIds) return;
     const controller = new AbortController();
-    setLoading(true);
     void Promise.all([
       fetchSeries(signalIds.current, window, controller.signal),
       fetchSeries(signalIds.voltage, window, controller.signal),
@@ -274,7 +273,10 @@ export function SnmpControllerHistory({ deviceId }: Readonly<{ deviceId: string 
             type="button"
             role="tab"
             aria-selected={window === option}
-            onClick={() => setWindow(option)}
+            onClick={() => {
+              setLoading(true);
+              setWindow(option);
+            }}
           >
             {option.toUpperCase()}
           </button>

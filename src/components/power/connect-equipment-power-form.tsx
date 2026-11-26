@@ -462,7 +462,7 @@ export function ConnectEquipmentPowerForm({
                       <input
                         value={newTarget.equipmentName}
                         onChange={(event) => updateNewTarget('equipmentName', event.target.value)}
-                        placeholder="UAT-SWITCH-01"
+                        placeholder={t('newEquipmentPlaceholder')}
                       />
                     </label>
                     <label>
@@ -478,7 +478,7 @@ export function ConnectEquipmentPowerForm({
                       <input
                         value={newTarget.shelf}
                         onChange={(event) => updateNewTarget('shelf', event.target.value)}
-                        placeholder="SH1"
+                        placeholder={t('shelfPlaceholder')}
                       />
                     </label>
                     <label>
@@ -486,7 +486,7 @@ export function ConnectEquipmentPowerForm({
                       <input
                         value={newTarget.module}
                         onChange={(event) => updateNewTarget('module', event.target.value)}
-                        placeholder="PSU1"
+                        placeholder={t('modulePlaceholder')}
                       />
                     </label>
                     <label>
@@ -494,7 +494,7 @@ export function ConnectEquipmentPowerForm({
                       <input
                         value={newTarget.endpoint}
                         onChange={(event) => updateNewTarget('endpoint', event.target.value)}
-                        placeholder="A0"
+                        placeholder={t('endpointPlaceholder')}
                       />
                     </label>
                     <label>
@@ -508,7 +508,12 @@ export function ConnectEquipmentPowerForm({
                   </div>
                   <div className="power-target-derived-preview">
                     <span>
-                      {t('rackAidPreview')} <code>RACK::{newTarget.footprint || '…'}</code>
+                      {t('rackAidPreview')}{' '}
+                      <code>
+                        {t('rackAidValue', {
+                          footprint: newTarget.footprint || t('unknownValue'),
+                        })}
+                      </code>
                     </span>
                     <span>{t('missingHierarchyHelp')}</span>
                   </div>

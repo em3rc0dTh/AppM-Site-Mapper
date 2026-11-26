@@ -124,48 +124,46 @@ export class DeclaredPowerTraceService {
     if (!isActiveBreaker(selected)) return null;
 
     const selectedMetadata = metadata(selected.attributes?.declaredPower);
-    if (
-      !selectedMetadata?.feed ||
-      !selectedMetadata.targetLabel ||
-      !selectedMetadata.targetKind ||
-      !selectedMetadata.companionFeed
-    ) {
+    if (!selectedMetadata?.feed || !selectedMetadata.targetLabel || !selectedMetadata.targetKind) {
       return null;
     }
 
     const selectedFeed = await this.feedView(selected, selectedMetadata);
-    const companionNode = await this.topology.getById(selectedMetadata.companionFeed.breakerId);
-    const companionMetadata = isActiveBreaker(companionNode)
-      ? metadata(companionNode.attributes?.declaredPower)
-      : null;
+    let companionFeed: DeclaredPowerTraceFeed | undefined;
+    if (selectedMetadata.companionFeed) {
+      const companionNode = await this.topology.getById(selectedMetadata.companionFeed.breakerId);
+      const companionMetadata = isActiveBreaker(companionNode)
+        ? metadata(companionNode.attributes?.declaredPower)
+        : null;
 
-    const fallbackCompanion: DeclaredPowerTraceFeed = {
-      feed: selectedMetadata.companionFeed.feed,
-      breakerId: selectedMetadata.companionFeed.breakerId,
-      breakerName:
-        selectedMetadata.companionFeed.panel +
-        '-' +
-        String(selectedMetadata.companionFeed.position).padStart(2, '0'),
-      panelName: selectedMetadata.companionFeed.panel,
-      qdfName: selectedMetadata.qdf ?? selected.deviceId,
-      targetLabel: selectedMetadata.companionFeed.targetLabel,
-    };
+      const fallbackCompanion: DeclaredPowerTraceFeed = {
+        feed: selectedMetadata.companionFeed.feed,
+        breakerId: selectedMetadata.companionFeed.breakerId,
+        breakerName:
+          selectedMetadata.companionFeed.panel +
+          '-' +
+          String(selectedMetadata.companionFeed.position).padStart(2, '0'),
+        panelName: selectedMetadata.companionFeed.panel,
+        qdfName: selectedMetadata.qdf ?? selected.deviceId,
+        targetLabel: selectedMetadata.companionFeed.targetLabel,
+      };
 
-    const companionFeed =
-      isActiveBreaker(companionNode) && companionMetadata?.feed
-        ? await this.feedView(companionNode, companionMetadata)
-        : fallbackCompanion;
+      companionFeed =
+        isActiveBreaker(companionNode) && companionMetadata?.feed
+          ? await this.feedView(companionNode, companionMetadata)
+          : fallbackCompanion;
+    }
 
     const feedA =
       selectedFeed.feed === 'A'
         ? selectedFeed
-        : companionFeed.feed === 'A'
+        : companionFeed?.feed === 'A'
           ? companionFeed
           : undefined;
     const feedB =
       selectedFeed.feed === 'B'
         ? selectedFeed
-        : companionFeed.feed === 'B'
+        : companionFeed?.feed === 'B'
           ? companionFeed
           : undefined;
 

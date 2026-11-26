@@ -59,6 +59,23 @@ export async function ensurePersistenceIndexes(database: Db): Promise<void> {
     ),
   ]);
 
+  const powerTargetCatalog = database.collection('power_target_catalog');
+  await Promise.all([
+    powerTargetCatalog.createIndex({ id: 1 }, { unique: true, name: 'uq_power_target_catalog_id' }),
+    powerTargetCatalog.createIndex(
+      { identityKey: 1 },
+      {
+        unique: true,
+        name: 'uq_active_power_target_identity',
+        partialFilterExpression: { lifecycle: 'ACTIVE' },
+      },
+    ),
+    powerTargetCatalog.createIndex(
+      { lifecycle: 1, equipmentKey: 1, rackAid: 1 },
+      { name: 'ix_power_target_catalog_lookup' },
+    ),
+  ]);
+
   const telemetryBindings = database.collection('telemetry_bindings');
   await Promise.all([
     telemetryBindings.createIndex({ id: 1 }, { unique: true, name: 'uq_telemetry_binding_id' }),

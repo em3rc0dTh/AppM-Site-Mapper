@@ -32,8 +32,6 @@ export class MongoPowerTargetCatalogRepository implements PowerTargetCatalogRepo
   }
 
   async insert(target: PowerTargetCatalogEntry): Promise<void> {
-    await this.collection.insertOne(
-      target as OptionalUnlessRequiredId<PowerTargetCatalogDocument>,
-    );
+    await this.collection.insertOne(target as OptionalUnlessRequiredId<PowerTargetCatalogDocument>);
   }
 }

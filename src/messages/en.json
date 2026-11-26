@@ -3164,5 +3164,22 @@
     "notRegistered": "Not registered",
     "selectTrap": "Select a trap to view its context.",
     "technicalDetails": "Technical details"
+  },
+  "snmpEnums": {
+    "normal": "Normal",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "normallyOpen": "Normally open",
+    "normallyClosed": "Normally closed",
+    "minorAlarm": "Minor alarm",
+    "majorAlarm": "Major alarm",
+    "critical": "Critical",
+    "warning": "Warning",
+    "error": "Error",
+    "disconnected": "Disconnected",
+    "notPresent": "Not present",
+    "off": "Off",
+    "on": "On",
+    "binaryBytes": "Binary · {count} bytes"
   }
 }

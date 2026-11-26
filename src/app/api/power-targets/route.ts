@@ -61,8 +61,7 @@ export async function POST(request: Request) {
     !isBoundedString(body.footprint, 64) ||
     (body.shelf !== undefined && !isBoundedString(body.shelf, 64, { allowEmpty: true })) ||
     (body.module !== undefined && !isBoundedString(body.module, 64, { allowEmpty: true })) ||
-    (body.endpoint !== undefined &&
-      !isBoundedString(body.endpoint, 64, { allowEmpty: true })) ||
+    (body.endpoint !== undefined && !isBoundedString(body.endpoint, 64, { allowEmpty: true })) ||
     (body.displayLabel !== undefined &&
       !isBoundedString(body.displayLabel, 160, { allowEmpty: true })) ||
     (body.feed !== undefined && body.feed !== 'A' && body.feed !== 'B')
@@ -77,7 +76,9 @@ export async function POST(request: Request) {
   const moduleName = optional(body.module);
   const endpoint = optional(body.endpoint);
   const displayLabel = optional(body.displayLabel);
-  const result = await (await catalogService()).create({
+  const result = await (
+    await catalogService()
+  ).create({
     equipmentName: body.equipmentName.trim(),
     footprint: body.footprint.trim(),
     ...(shelf ? { shelf } : {}),

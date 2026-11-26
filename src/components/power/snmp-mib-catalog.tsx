@@ -27,20 +27,24 @@ function raw(signal: ControllerCatalogSignal | undefined): unknown {
 
 function localizedEnum(value: string, locale: string): string {
   if (!locale.toLowerCase().startsWith('es')) return value;
-  return ({
-    normal: 'Normal',
-    enabled: 'Habilitada',
-    disabled: 'Deshabilitada',
-    normallyOpen: 'Normalmente abierto',
-    normallyClosed: 'Normalmente cerrado',
-    minorAlarm: 'Alarma menor',
-    majorAlarm: 'Alarma mayor',
-    critical: 'Crítica',
-    warning: 'Advertencia',
-    error: 'Error',
-    disconnected: 'Desconectada',
-    notPresent: 'No presente',
-  } as Record<string, string>)[value] ?? value;
+  return (
+    (
+      {
+        normal: 'Normal',
+        enabled: 'Habilitada',
+        disabled: 'Deshabilitada',
+        normallyOpen: 'Normalmente abierto',
+        normallyClosed: 'Normalmente cerrado',
+        minorAlarm: 'Alarma menor',
+        majorAlarm: 'Alarma mayor',
+        critical: 'Crítica',
+        warning: 'Advertencia',
+        error: 'Error',
+        disconnected: 'Desconectada',
+        notPresent: 'No presente',
+      } as Record<string, string>
+    )[value] ?? value
+  );
 }
 
 function textValue(signal: ControllerCatalogSignal | undefined, locale: string): string {
@@ -165,21 +169,27 @@ export function SnmpMibCatalog({ deviceId }: Readonly<{ deviceId: string }>) {
           .map(observedAt)
           .filter(Boolean)
           .sort();
-        return [{
-          index,
-          label: textValue(description, locale),
-          status: textValue(status, locale),
-          alarmEnabled: textValue(alarmEnabled, locale),
-          configuration: textValue(configuration, locale),
-          observedAt: times.at(-1) ?? '',
-        }];
+        return [
+          {
+            index,
+            label: textValue(description, locale),
+            status: textValue(status, locale),
+            alarmEnabled: textValue(alarmEnabled, locale),
+            configuration: textValue(configuration, locale),
+            observedAt: times.at(-1) ?? '',
+          },
+        ];
       })
       .sort((left, right) => left.label.localeCompare(right.label, undefined, { numeric: true }));
   }, [byName, locale]);
 
   if (loading) return <p role="status">{t('operationalLoading')}</p>;
   if (error || !profile)
-    return <p role="alert" className="form-error">{t('failed')}: {error || 'SNMP_PROFILE_UNAVAILABLE'}</p>;
+    return (
+      <p role="alert" className="form-error">
+        {t('failed')}: {error || 'SNMP_PROFILE_UNAVAILABLE'}
+      </p>
+    );
 
   const status = signals.find((signal) => signal.mibName === 'powerSystemStatus');
   const total = signals.find((signal) => signal.key === profile.balance?.totalOid);
@@ -189,7 +199,10 @@ export function SnmpMibCatalog({ deviceId }: Readonly<{ deviceId: string }>) {
   const activeInputs = inputRows.filter((row) => /alarma|alarm/i.test(row.status)).length;
 
   return (
-    <section className="front01-inputs-summary front01-inputs-summary--operator" aria-label={t('operationalTitle')}>
+    <section
+      className="front01-inputs-summary front01-inputs-summary--operator"
+      aria-label={t('operationalTitle')}
+    >
       <header className="front01-inputs-heading">
         <h2>{t('operationalTitle')}</h2>
         <div>
@@ -209,7 +222,9 @@ export function SnmpMibCatalog({ deviceId }: Readonly<{ deviceId: string }>) {
         </div>
         <div>
           <dt>{t('operationalInputs')}</dt>
-          <dd>{normalInputs} / {inputRows.length}</dd>
+          <dd>
+            {normalInputs} / {inputRows.length}
+          </dd>
         </div>
         <div>
           <dt>{t('operationalActiveAlarms')}</dt>
@@ -232,7 +247,9 @@ export function SnmpMibCatalog({ deviceId }: Readonly<{ deviceId: string }>) {
             <tbody>
               {inputRows.map((row) => (
                 <tr key={row.index}>
-                  <td><strong>{row.label}</strong></td>
+                  <td>
+                    <strong>{row.label}</strong>
+                  </td>
                   <td>{row.status}</td>
                   <td>{row.alarmEnabled}</td>
                   <td>{row.configuration}</td>

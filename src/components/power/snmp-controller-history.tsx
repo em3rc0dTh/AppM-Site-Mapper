@@ -93,7 +93,9 @@ function derivedPower(
   const voltageByBucket = new Map(
     voltage.map((point) => [Math.floor(point.time / (bucketSeconds * 1000)), point]),
   );
-  const keys = [...currentByBucket.keys()].filter((key) => voltageByBucket.has(key)).sort((a, b) => a - b);
+  const keys = [...currentByBucket.keys()]
+    .filter((key) => voltageByBucket.has(key))
+    .sort((a, b) => a - b);
   return keys.map((key) => {
     const amps = currentByBucket.get(key)!;
     const volts = voltageByBucket.get(key)!;
@@ -158,13 +160,33 @@ function MetricChart({ metric }: Readonly<{ metric: Metric }>) {
     <article className="sm-snmp-history-chart">
       <div className="sm-snmp-history-heading">
         <strong>{metric.label}</strong>
-        <small>{latest.toFixed(metric.digits)} {metric.unit}</small>
+        <small>
+          {latest.toFixed(metric.digits)} {metric.unit}
+        </small>
       </div>
       <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={metric.label}>
-        <line x1={left} y1={height - bottom} x2={width - right} y2={height - bottom} stroke="currentColor" opacity="0.2" />
-        <line x1={left} y1={top} x2={left} y2={height - bottom} stroke="currentColor" opacity="0.2" />
-        <text x="2" y={top + 8} fontSize="10">{maxV.toFixed(metric.digits)}</text>
-        <text x="2" y={height - bottom} fontSize="10">{minV.toFixed(metric.digits)}</text>
+        <line
+          x1={left}
+          y1={height - bottom}
+          x2={width - right}
+          y2={height - bottom}
+          stroke="currentColor"
+          opacity="0.2"
+        />
+        <line
+          x1={left}
+          y1={top}
+          x2={left}
+          y2={height - bottom}
+          stroke="currentColor"
+          opacity="0.2"
+        />
+        <text x="2" y={top + 8} fontSize="10">
+          {maxV.toFixed(metric.digits)}
+        </text>
+        <text x="2" y={height - bottom} fontSize="10">
+          {minV.toFixed(metric.digits)}
+        </text>
         {points.length > 1 ? (
           <polyline
             fill="none"
@@ -172,7 +194,9 @@ function MetricChart({ metric }: Readonly<{ metric: Metric }>) {
             strokeWidth="2"
             strokeLinejoin="round"
             strokeLinecap="round"
-            points={points.map((point) => `${x(point.time).toFixed(1)},${y(point.value).toFixed(1)}`).join(' ')}
+            points={points
+              .map((point) => `${x(point.time).toFixed(1)},${y(point.value).toFixed(1)}`)
+              .join(' ')}
           />
         ) : (
           <circle cx={x(points[0]!.time)} cy={y(points[0]!.value)} r="3" fill="currentColor" />
@@ -284,10 +308,16 @@ export function SnmpControllerHistory({ deviceId }: Readonly<{ deviceId: string 
       </div>
 
       {loading && <p role="status">{t('loading')}</p>}
-      {error && <p role="alert" className="form-error">{t('error', { error })}</p>}
+      {error && (
+        <p role="alert" className="form-error">
+          {t('error', { error })}
+        </p>
+      )}
       {!loading && !error && (
         <div className="sm-snmp-history-metrics sm-snmp-history-metrics--all">
-          {metrics.map((metric) => <MetricChart key={metric.key} metric={metric} />)}
+          {metrics.map((metric) => (
+            <MetricChart key={metric.key} metric={metric} />
+          ))}
         </div>
       )}
     </section>

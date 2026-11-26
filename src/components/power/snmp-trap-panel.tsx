@@ -25,19 +25,23 @@ function localTime(value: string, locale: string): string {
 
 function localizedEnum(value: string, locale: string): string {
   if (!locale.toLowerCase().startsWith('es')) return value;
-  return ({
-    normal: 'Normal',
-    minorAlarm: 'Alarma menor',
-    majorAlarm: 'Alarma mayor',
-    critical: 'Crítica',
-    warning: 'Advertencia',
-    error: 'Error',
-    disabled: 'Deshabilitada',
-    disconnected: 'Desconectada',
-    notPresent: 'No presente',
-    off: 'Desactivada',
-    on: 'Activa',
-  } as Record<string, string>)[value] ?? value;
+  return (
+    (
+      {
+        normal: 'Normal',
+        minorAlarm: 'Alarma menor',
+        majorAlarm: 'Alarma mayor',
+        critical: 'Crítica',
+        warning: 'Advertencia',
+        error: 'Error',
+        disabled: 'Deshabilitada',
+        disconnected: 'Desconectada',
+        notPresent: 'No presente',
+        off: 'Desactivada',
+        on: 'Activa',
+      } as Record<string, string>
+    )[value] ?? value
+  );
 }
 
 function decodeValue(item: TrapView['varbinds'][number], locale: string): string {
@@ -143,10 +147,20 @@ export function SnmpTrapPanel({
         </span>
       </header>
 
-      {error && <p className={styles.alert} role="alert">{t('error')}: {error}</p>}
-      {loading && <p className={styles.empty} role="status">{t('loading')}</p>}
+      {error && (
+        <p className={styles.alert} role="alert">
+          {t('error')}: {error}
+        </p>
+      )}
+      {loading && (
+        <p className={styles.empty} role="status">
+          {t('loading')}
+        </p>
+      )}
       {!loading && sourceConfigured === false && <p className={styles.empty}>{t('noSource')}</p>}
-      {!loading && sourceConfigured && events.length === 0 && <p className={styles.empty}>{t('empty')}</p>}
+      {!loading && sourceConfigured && events.length === 0 && (
+        <p className={styles.empty}>{t('empty')}</p>
+      )}
 
       {events.length > 0 && (
         <div className={styles.trapWorkspace}>
@@ -180,9 +194,15 @@ export function SnmpTrapPanel({
                           }
                         }}
                       >
-                        <td><time dateTime={event.receivedAt}>{localTime(event.receivedAt, locale)}</time></td>
+                        <td>
+                          <time dateTime={event.receivedAt}>
+                            {localTime(event.receivedAt, locale)}
+                          </time>
+                        </td>
                         <td>{origin ? decodeValue(origin, locale) : deviceName}</td>
-                        <td>{status ? decodeValue(status, locale) : event.notificationName ?? '—'}</td>
+                        <td>
+                          {status ? decodeValue(status, locale) : (event.notificationName ?? '—')}
+                        </td>
                         <td>
                           <span className={styles.chip} data-severity={event.severity ?? 'none'}>
                             {severityLabel(event.severity)}
@@ -211,7 +231,9 @@ export function SnmpTrapPanel({
                     <span className={styles.bell} aria-hidden="true" />
                     <div>
                       <h4>{selected.notificationName ?? t('detail')}</h4>
-                      <small>{deviceName} · {localTime(selected.receivedAt, locale)}</small>
+                      <small>
+                        {deviceName} · {localTime(selected.receivedAt, locale)}
+                      </small>
                     </div>
                   </div>
                 </header>
@@ -219,7 +241,9 @@ export function SnmpTrapPanel({
                 <dl className={styles.contextList}>
                   <div>
                     <dt>{t('originShort')}</dt>
-                    <dd>{sourceDescr ? decodeValue(sourceDescr, locale) : selected.sourceIdentity}</dd>
+                    <dd>
+                      {sourceDescr ? decodeValue(sourceDescr, locale) : selected.sourceIdentity}
+                    </dd>
                   </div>
                   <div>
                     <dt>{t('condition')}</dt>

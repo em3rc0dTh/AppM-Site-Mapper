@@ -7,14 +7,23 @@ import {
   type CommissioningPort,
 } from '@/components/power/connect-equipment-power-form';
 import { requirePermission } from '@/modules/identity/application/current-session';
+import { PowerTargetCatalogService } from '@/modules/power/application/power-target-catalog-service';
+import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
+import { createPowerTargetCatalogRepository } from '@/modules/power/infrastructure/power-target-catalog-repository-factory';
 import type { EquipmentNode } from '@/modules/topology/domain/entities';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
-import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
 
 export const dynamic = 'force-dynamic';
 
 function feedOf(value: unknown): 'A' | 'B' | undefined {
   return value === 'A' || value === 'B' ? value : undefined;
+}
+
+function panelFeed(value: string | undefined): 'A' | 'B' | undefined {
+  const normalized = value?.trim().toUpperCase() ?? '';
+  if (/^A(?:\d|\b|[-_ ])/.test(normalized)) return 'A';
+  if (/^B(?:\d|\b|[-_ ])/.test(normalized)) return 'B';
+  return undefined;
 }
 
 export default async function ConnectEquipmentPowerPage({
@@ -29,13 +38,20 @@ export default async function ConnectEquipmentPowerPage({
   const params = await searchParams;
   const topology = await createTopologyRepository();
   const power = await createPowerRepository();
+  const targetCatalogRepository = await createPowerTargetCatalogRepository();
   const [nodes, activePaths] = await Promise.all([
     topology.listByKind('EQUIPMENT'),
     power.listActive(),
   ]);
+  const catalogTargets = await new PowerTargetCatalogService(
+    topology,
+    power,
+    targetCatalogRepository,
+  ).list();
   const equipment = nodes.filter(
     (node): node is EquipmentNode => node.kind === 'EQUIPMENT' && node.lifecycle === 'ACTIVE',
   );
+  const equipmentById = new Map(equipment.map((node) => [node.id, node] as const));
   const pathByPort = new Map(
     activePaths.flatMap(
       (path) =>
@@ -56,7 +72,11 @@ export default async function ConnectEquipmentPowerPage({
   for (const node of equipment) {
     for (const port of node.accessPorts) {
       if (port.lifecycle !== 'ACTIVE' || port.portType !== 'POWER') continue;
-      const fixedFeed = feedOf(port.attributes?.feed);
+      const parentPanel =
+        node.equipmentType === 'CIRCUIT_BREAKER' && node.parentEquipmentId
+          ? equipmentById.get(node.parentEquipmentId)
+          : undefined;
+      const fixedFeed = feedOf(port.attributes?.feed) ?? panelFeed(parentPanel?.name);
       const existing = pathByPort.get(port.id);
       const peerId = existing
         ? existing.sourceAccessPortId === port.id
@@ -80,9 +100,7 @@ export default async function ConnectEquipmentPowerPage({
           : {}),
       };
       if (port.direction !== 'INPUT') sources.push(item);
-      if (port.direction !== 'OUTPUT') {
-        targets.push(item);
-      }
+      if (port.direction !== 'OUTPUT') targets.push(item);
     }
   }
 
@@ -99,13 +117,14 @@ export default async function ConnectEquipmentPowerPage({
       <ConnectEquipmentPowerForm
         sources={sources}
         targets={targets}
+        catalogTargets={catalogTargets}
         {...(selectedSource ? { selectedSourceId: selectedSource.id } : {})}
         {...(selectedTarget ? { selectedTargetId: selectedTarget.id } : {})}
         returnHref={returnHref}
       />
-      {!sources.length || !targets.length ? (
+      {!sources.length ? (
         <div className="power-port-connect-empty">
-          {t('requireTerminals')} <Link href={returnHref}>{t('return')}</Link> {t('configureFirst')}
+          {t('requireSource')} <Link href={returnHref}>{t('return')}</Link> {t('configureSource')}
         </div>
       ) : null}
     </>

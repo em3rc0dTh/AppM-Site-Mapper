@@ -26,13 +26,13 @@ describe('Mk2 shared product header', () => {
     );
 
     expect(productHeader).toContain('<SiteMapperBrand variant="compact" tagline={tagline} />');
-    expect(productHeader).toContain('className="sm-product-header-link"');
+    expect(productHeader).not.toContain('className="sm-product-header-link"');
     expect(productHeader).toContain('className="sm-product-header-home"');
     expect(productHeader).toContain('href="/workspace"');
     expect(productHeader).toContain('forwardRef<HTMLDivElement');
-    // The complete identity is inside the Home link, not only the house icon.
+    // TFARM04 live contract: only the Home icon navigates; the product identity is visual.
     expect(productHeader).toContain(
-      '<SiteMapperBrand variant="compact" tagline={tagline} />\n        </Link>',
+      '</Link>\n        <SiteMapperBrand variant="compact" tagline={tagline} />',
     );
   });
 

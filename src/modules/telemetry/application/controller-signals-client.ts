@@ -1,9 +1,17 @@
 import type { SnmpControllerObservation } from './snmp-controller-presentation';
 
 export interface ControllerCatalogSignal extends SnmpControllerObservation {
+  readonly id: string;
+  readonly eventId?: string;
   readonly sourceIdentity: string;
   readonly protocol: 'SNMP';
   readonly mibName?: string | null;
+  readonly mibFile?: string | null;
+  readonly mibKind?: string | null;
+  readonly mibSyntax?: string | null;
+  readonly mibObjects?: readonly string[] | null;
+  readonly communicationQuality?: string;
+  readonly kind?: string;
 }
 
 /** Follow the existing catalog cursor; publish no partial page set on errors. */

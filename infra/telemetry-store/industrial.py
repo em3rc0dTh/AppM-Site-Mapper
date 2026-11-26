@@ -87,7 +87,20 @@ def query_industrial(dsn, query):
     if logical and aliases:
         where = '(' + where + ' OR signal_id = ANY(%s))'
         params.append(aliases)
+    bucket_text = query.get('bucketSeconds', [None])[0]
+    bucket_seconds = None
+    if bucket_text is not None:
+        try:
+            bucket_seconds = int(bucket_text)
+        except (TypeError, ValueError) as error:
+            raise ValueError('invalid bucket') from error
+        if bucket_seconds < 1 or bucket_seconds > 86400:
+            raise ValueError('invalid bucket')
+
     cursor = query.get('cursor', [None])[0]
+    if bucket_seconds is not None and cursor:
+        raise ValueError('cursor and bucket are mutually exclusive')
+
     if cursor:
         try:
             cursor_at, cursor_event, cursor_signal = json.loads(cursor)
@@ -98,13 +111,32 @@ def query_industrial(dsn, query):
             raise ValueError('invalid cursor') from error
         where += ' AND (observed_at, event_id, signal_id) < (%s,%s,%s)'
         params += [instant(cursor_at), cursor_event, cursor_signal]
+
     params += [start, end]
     with psycopg.connect(dsn) as conn:
-        rows = conn.execute('SELECT sample FROM industrial_observations WHERE ' + where + '''
-          AND observed_at >= %s AND observed_at < %s
-          ORDER BY observed_at DESC, event_id DESC, signal_id DESC LIMIT 1000''',
-          params).fetchall()
+        if bucket_seconds is None:
+            rows = conn.execute('SELECT sample FROM industrial_observations WHERE ' + where + '''
+              AND observed_at >= %s AND observed_at < %s
+              ORDER BY observed_at DESC, event_id DESC, signal_id DESC LIMIT 1000''',
+              params).fetchall()
+        else:
+            bucket_params = [bucket_seconds] + params
+            rows = conn.execute('''WITH ranked AS (
+                SELECT sample, observed_at, event_id, signal_id,
+                       row_number() OVER (
+                         PARTITION BY floor(extract(epoch FROM observed_at) / %s)
+                         ORDER BY observed_at DESC, event_id DESC, signal_id DESC
+                       ) AS rank_in_bucket
+                FROM industrial_observations
+                WHERE ''' + where + '''
+                  AND observed_at >= %s AND observed_at < %s
+              )
+              SELECT sample
+              FROM ranked
+              WHERE rank_in_bucket = 1
+              ORDER BY observed_at DESC, event_id DESC, signal_id DESC
+              LIMIT 1000''', bucket_params).fetchall()
     samples = [row[0] for row in rows]
-    last = samples[-1] if len(samples) == 1000 else None
+    last = samples[-1] if bucket_seconds is None and len(samples) == 1000 else None
     return {'observations': samples, 'limit': 1000,
             'nextCursor': json.dumps([last['observedAt'], last['eventId'], last['id']]) if last else None}

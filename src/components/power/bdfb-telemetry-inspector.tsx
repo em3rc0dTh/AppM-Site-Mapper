@@ -2,9 +2,10 @@
 
 import { useBdfbTelemetrySnapshot } from '@/components/telemetry/use-bdfb-telemetry';
 import { SnmpFeedLoadPanel } from '@/components/power/snmp-feed-load-panel';
+import { SnmpMibCatalog } from '@/components/power/snmp-mib-catalog';
+import { SnmpControllerHistory } from '@/components/power/snmp-controller-history';
 import { SnmpControllerEditor } from '@/components/power/snmp-controller-editor';
 import { SnmpTrapPanel } from '@/components/power/snmp-trap-panel';
-import { SnmpFeedHistory } from '@/components/power/snmp-feed-history';
 import { SnmpFeedCommissioning } from '@/components/power/snmp-feed-commissioning';
 import { useAlarmSnapshot } from '@/components/alarm/use-alarm-snapshot';
 import { ThradexAttribution } from '@/shared/ui/thradex-attribution';
@@ -355,16 +356,9 @@ export function BdfbTelemetryInspector({
           <SnmpTrapPanel key={node.id} deviceId={node.id} deviceName={node.name} />
         )}
 
-        {tab === 'feeds' && (
-          <SnmpFeedLoadPanel
-            key={node.id}
-            deviceId={node.id}
-            chassisId={presentation.chassisId}
-            view="feeds"
-          />
-        )}
+        {tab === 'feeds' && <SnmpMibCatalog key={node.id} deviceId={node.id} />}
 
-        {tab === 'history' && <SnmpFeedHistory deviceId={node.id} />}
+        {tab === 'history' && <SnmpControllerHistory key={node.id} deviceId={node.id} />}
 
         {tab === 'settings' && (
           <>

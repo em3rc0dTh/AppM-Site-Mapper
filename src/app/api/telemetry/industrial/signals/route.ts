@@ -8,6 +8,7 @@ import {
   publicationStatus,
 } from '@/modules/telemetry/infrastructure/industrial/publication';
 import { correlateObservations } from '@/modules/telemetry/domain/industrial/correlation';
+import { eltekMibMetadata } from '@/modules/telemetry/domain/industrial/eltek';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { getObservationStore } from '@/modules/telemetry/infrastructure/industrial/runtime';
 import {
@@ -52,8 +53,20 @@ export async function GET(request: Request) {
       .filter((s) => !target || s.targetId === target)
       .map((s) => {
         const current = { ...s, quality: signalQuality(s) };
+        const mib =
+          current.protocol === 'SNMP' && current.key.startsWith('1.3.6.1.4.1.12148.')
+            ? eltekMibMetadata(current.key)
+            : undefined;
         return {
           ...current,
+          ...(mib
+            ? {
+                mibFile: mib.file,
+                mibKind: mib.kind,
+                mibSyntax: mib.syntax ?? null,
+                mibObjects: mib.objects ?? null,
+              }
+            : {}),
           communicationQuality: communicationQuality(s),
           publication: publicationStatus(current, manifest),
         };

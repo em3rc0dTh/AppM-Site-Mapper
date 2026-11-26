@@ -7,10 +7,22 @@ export interface MibDefinition {
   enums?: Record<string, number>;
   objects?: string[];
 }
-const definitions = catalog.modules.flatMap((m) => m.definitions) as MibDefinition[];
-const byOid = new Map(definitions.map((d) => [d.oid, d]));
-export const eltekNotifications = [...byOid.values()].filter((d) => d.kind === 'NOTIFICATION-TYPE');
-export function eltekDefinition(oid: string): MibDefinition | undefined {
+export interface MibMetadata extends MibDefinition {
+  readonly file: string;
+}
+
+const definitions = catalog.modules.flatMap((module) =>
+  module.definitions.map((definition) => ({
+    ...(definition as MibDefinition),
+    file: module.file,
+  })),
+) as MibMetadata[];
+const byOid = new Map(definitions.map((definition) => [definition.oid, definition]));
+export const eltekNotifications = [...byOid.values()].filter(
+  (definition) => definition.kind === 'NOTIFICATION-TYPE',
+);
+
+export function eltekMibMetadata(oid: string): MibMetadata | undefined {
   let candidate = oid;
   while (candidate.includes('.')) {
     const found = byOid.get(candidate);
@@ -18,6 +30,10 @@ export function eltekDefinition(oid: string): MibDefinition | undefined {
     candidate = candidate.slice(0, candidate.lastIndexOf('.'));
   }
   return undefined;
+}
+
+export function eltekDefinition(oid: string): MibDefinition | undefined {
+  return eltekMibMetadata(oid);
 }
 /** Derived alarm condition keys include the reported status OID and condition code.
  * Different subsystem alarms never share the generic on/off varbind's identity.

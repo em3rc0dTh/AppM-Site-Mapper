@@ -5,6 +5,14 @@ export class IndustrialInputError extends Error {}
 
 export type Quality = 'UNOBSERVED' | 'VALID' | 'STALE' | 'INVALID' | 'UNKNOWN' | 'OFFLINE';
 export type SignalKind = 'measurement' | 'state' | 'event' | 'alarm' | 'unknown';
+
+function eltekAlarmSeverity(value: string): 'INFO' | 'WARNING' | 'CRITICAL' | undefined {
+  const normalized = value.toLowerCase();
+  if (normalized.includes('critical') || normalized.includes('major')) return 'CRITICAL';
+  if (normalized.includes('warning') || normalized.includes('minor')) return 'WARNING';
+  if (normalized === 'event') return 'INFO';
+  return undefined;
+}
 export interface SignalRule {
   key: string;
   kind: SignalKind;
@@ -300,12 +308,20 @@ export function normalizeObservations(
     );
     if (alarm) {
       add(alarm.key, alarm.value, 'derived-eltek-onOff');
+      const severity = eltekAlarmSeverity(alarm.severity);
       extraRules.push({
         key: alarm.key,
         kind: 'alarm',
         activeValues: [1],
         clearValues: [0],
-        severity: alarm.severity,
+        ...(severity ? { severity } : {}),
+        ...(profile.targetId
+          ? {
+              targetId: profile.targetId,
+              alarmCode: 'CONTROLLER_ALARM',
+              evidence: 'ELTEK SmartPack2 trap interpreted by the rev54 MIB profile.',
+            }
+          : {}),
       });
     }
   }

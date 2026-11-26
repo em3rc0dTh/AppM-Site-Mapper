@@ -308,15 +308,6 @@ export function SnmpFeedLoadPanel({
           </b>
         </div>
 
-        {diagnostic && (
-          <p className="front01-data-warning" role="status">
-            {t('diagnosticBalance', { status: balance?.branchStatus ?? 'UNKNOWN' })}{' '}
-            {normalized?.totalA != null
-              ? t('diagnosticScaleVerified')
-              : t('diagnosticNormalizationPending')}{' '}
-            {t('diagnosticShuntDisclaimer')}
-          </p>
-        )}
         {!diagnostic && (awaitingVerification || !inventoryRecorded) && (
           <p className="front01-data-warning" role="status">
             {awaitingVerification ? t('verifyPending') : t('commissionIncomplete')}

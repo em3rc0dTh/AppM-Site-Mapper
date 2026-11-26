@@ -212,7 +212,8 @@ export class PoweredEquipmentProjectionService {
             : {}),
         };
         const feed = metadata.feed ?? endpoint.side ?? panelFeed(panelName);
-        const group = groups.get(endpoint.equipmentKey) ?? {
+        const internalGroupKey = `${endpoint.equipmentKey}\u0000${endpoint.rackAid ?? ''}`;
+        const group = groups.get(internalGroupKey) ?? {
           name: endpoint.equipmentName,
           kind: endpoint.targetKind,
           connections: [],
@@ -232,12 +233,23 @@ export class PoweredEquipmentProjectionService {
           remarks: metadata.remarks,
           endpoint,
         });
-        groups.set(endpoint.equipmentKey, group);
+        groups.set(internalGroupKey, group);
       }
     }
 
+    const baseKeyCounts = new Map<string, number>();
+    for (const [internalKey] of groups) {
+      const baseKey = internalKey.split('\u0000')[0] ?? internalKey;
+      baseKeyCounts.set(baseKey, (baseKeyCounts.get(baseKey) ?? 0) + 1);
+    }
+
     return [...groups.entries()]
-      .map(([key, group]) => {
+      .map(([internalKey, group]) => {
+        const [baseKey = internalKey, rackAid = ''] = internalKey.split('\u0000');
+        const key =
+          (baseKeyCounts.get(baseKey) ?? 0) > 1 && rackAid
+            ? `${baseKey}@${rackAid.replace(/^RACK::/i, '').toLocaleLowerCase()}`
+            : baseKey;
         const connections = [...group.connections].sort(compareConnections);
         const qdfs = [...new Set(connections.map((connection) => connection.qdfName))].sort();
         const rackAids = [

@@ -17,6 +17,7 @@ type CompanionFeed = {
 
 type DeclaredPowerMetadata = {
   readonly feed?: 'A' | 'B';
+  readonly targetLabel?: string;
   readonly companionFeed?: CompanionFeed;
   readonly remarks?: readonly string[];
 };
@@ -25,6 +26,10 @@ function declaredPowerMetadata(value: unknown): DeclaredPowerMetadata | null {
   if (!value || typeof value !== 'object') return null;
   const record = value as Record<string, unknown>;
   const feed = record.feed === 'A' || record.feed === 'B' ? record.feed : undefined;
+  const targetLabel =
+    typeof record.targetLabel === 'string' && record.targetLabel.trim()
+      ? record.targetLabel.trim()
+      : undefined;
   const remarks = Array.isArray(record.remarks)
     ? record.remarks.filter((item): item is string => typeof item === 'string')
     : undefined;
@@ -52,6 +57,7 @@ function declaredPowerMetadata(value: unknown): DeclaredPowerMetadata | null {
 
   return {
     ...(feed ? { feed } : {}),
+    ...(targetLabel ? { targetLabel } : {}),
     ...(companionFeed ? { companionFeed } : {}),
     ...(remarks ? { remarks } : {}),
   };
@@ -79,7 +85,8 @@ export default async function PowerPathWorkbenchPage({
     notFound();
   }
 
-  const target = breaker.aliases?.find((alias) => alias.trim().length > 0);
+  const metadata = declaredPowerMetadata(breaker.attributes?.declaredPower);
+  const target = metadata?.targetLabel ?? breaker.aliases?.find((alias) => alias.trim().length > 0);
   if (!target) notFound();
 
   const panel = breaker.parentEquipmentId
@@ -87,8 +94,6 @@ export default async function PowerPathWorkbenchPage({
     : null;
 
   const device = await repository.getById(breaker.deviceId);
-
-  const metadata = declaredPowerMetadata(breaker.attributes?.declaredPower);
   const normalizedPanel = panel?.kind === 'EQUIPMENT' ? panel.name.trim().toUpperCase() : '';
   const feed: 'A' | 'B' | undefined =
     metadata?.feed ??

@@ -25,31 +25,12 @@ function raw(signal: ControllerCatalogSignal | undefined): unknown {
   return signal?.lastObservation?.rawValue ?? signal?.rawValue;
 }
 
-function localizedEnum(value: string, locale: string): string {
-  if (!locale.toLowerCase().startsWith('es')) return value;
-  return (
-    (
-      {
-        normal: 'Normal',
-        enabled: 'Habilitada',
-        disabled: 'Deshabilitada',
-        normallyOpen: 'Normalmente abierto',
-        normallyClosed: 'Normalmente cerrado',
-        minorAlarm: 'Alarma menor',
-        majorAlarm: 'Alarma mayor',
-        critical: 'Crítica',
-        warning: 'Advertencia',
-        error: 'Error',
-        disconnected: 'Desconectada',
-        notPresent: 'No presente',
-      } as Record<string, string>
-    )[value] ?? value
-  );
-}
-
-function textValue(signal: ControllerCatalogSignal | undefined, locale: string): string {
+function textValue(
+  signal: ControllerCatalogSignal | undefined,
+  translateEnum: (value: string) => string,
+): string {
   if (!signal) return '—';
-  if (signal.enumLabel) return localizedEnum(signal.enumLabel, locale);
+  if (signal.enumLabel) return translateEnum(signal.enumLabel);
   const value = raw(signal);
   if (value === null || value === undefined) return '—';
   if (typeof value === 'object') {
@@ -101,6 +82,38 @@ function suffix(signal: ControllerCatalogSignal): string | null {
 export function SnmpMibCatalog({ deviceId }: Readonly<{ deviceId: string }>) {
   const t = useTranslations('snmpController');
   const locale = useLocale();
+  const enumT = useTranslations('snmpEnums');
+  const translateEnum = (value: string): string => {
+    if (!locale.toLowerCase().startsWith('es')) return value;
+    switch (value) {
+      case 'normal':
+        return enumT('normal');
+      case 'enabled':
+        return enumT('enabled');
+      case 'disabled':
+        return enumT('disabled');
+      case 'normallyOpen':
+        return enumT('normallyOpen');
+      case 'normallyClosed':
+        return enumT('normallyClosed');
+      case 'minorAlarm':
+        return enumT('minorAlarm');
+      case 'majorAlarm':
+        return enumT('majorAlarm');
+      case 'critical':
+        return enumT('critical');
+      case 'warning':
+        return enumT('warning');
+      case 'error':
+        return enumT('error');
+      case 'disconnected':
+        return enumT('disconnected');
+      case 'notPresent':
+        return enumT('notPresent');
+      default:
+        return value;
+    }
+  };
   const [profile, setProfile] = useState<SnmpControllerProfile | null>(null);
   const [signals, setSignals] = useState<ControllerCatalogSignal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -172,16 +185,16 @@ export function SnmpMibCatalog({ deviceId }: Readonly<{ deviceId: string }>) {
         return [
           {
             index,
-            label: textValue(description, locale),
-            status: textValue(status, locale),
-            alarmEnabled: textValue(alarmEnabled, locale),
-            configuration: textValue(configuration, locale),
+            label: textValue(description, translateEnum),
+            status: textValue(status, translateEnum),
+            alarmEnabled: textValue(alarmEnabled, translateEnum),
+            configuration: textValue(configuration, translateEnum),
             observedAt: times.at(-1) ?? '',
           },
         ];
       })
       .sort((left, right) => left.label.localeCompare(right.label, undefined, { numeric: true }));
-  }, [byName, locale]);
+  }, [byName, locale, translateEnum]);
 
   if (loading) return <p role="status">{t('operationalLoading')}</p>;
   if (error || !profile)
@@ -196,7 +209,7 @@ export function SnmpMibCatalog({ deviceId }: Readonly<{ deviceId: string }>) {
   const voltage = signals.find((signal) => signal.key === profile.balance?.voltageOid);
   const normalization = profile.balance?.normalization;
   const normalInputs = inputRows.filter((row) => row.status.toLowerCase() === 'normal').length;
-  const activeInputs = inputRows.filter((row) => /alarma|alarm/i.test(row.status)).length;
+  const activeInputs = inputRows.filter((row) => /alarm/i.test(row.status)).length;
 
   return (
     <section
@@ -207,7 +220,7 @@ export function SnmpMibCatalog({ deviceId }: Readonly<{ deviceId: string }>) {
         <h2>{t('operationalTitle')}</h2>
         <div>
           <span>{profile.title}</span>
-          <strong>{textValue(status, locale).toUpperCase()}</strong>
+          <strong>{textValue(status, translateEnum).toUpperCase()}</strong>
         </div>
       </header>
 

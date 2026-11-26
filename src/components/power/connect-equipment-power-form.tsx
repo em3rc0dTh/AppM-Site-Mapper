@@ -64,7 +64,8 @@ export function ConnectEquipmentPowerForm({
   const [targetId, setTargetId] = useState(selectedTargetId ?? '');
   const [destinationMode, setDestinationMode] = useState<DestinationMode>('CATALOG');
   const [catalogTab, setCatalogTab] = useState<CatalogTab>('EXISTING');
-  const [catalogRows, setCatalogRows] = useState<readonly PowerTargetCatalogEntry[]>(catalogTargets);
+  const [catalogRows, setCatalogRows] =
+    useState<readonly PowerTargetCatalogEntry[]>(catalogTargets);
   const [catalogSearch, setCatalogSearch] = useState('');
   const [catalogPage, setCatalogPage] = useState(1);
   const [selectedCatalogKey, setSelectedCatalogKey] = useState('');
@@ -80,9 +81,7 @@ export function ConnectEquipmentPowerForm({
   const target = targets.find((port) => port.id === targetId);
   const selectedCatalog = catalogRows.find((item) => item.identityKey === selectedCatalogKey);
   const chosenFeed =
-    source?.feed ??
-    (destinationMode === 'CATALOG' ? selectedCatalog?.feed : target?.feed) ??
-    feed;
+    source?.feed ?? (destinationMode === 'CATALOG' ? selectedCatalog?.feed : target?.feed) ?? feed;
   const physicalMismatch = Boolean(source?.feed && target?.feed && source.feed !== target.feed);
   const catalogMismatch = Boolean(
     source?.feed && selectedCatalog?.feed && source.feed !== selectedCatalog.feed,
@@ -96,12 +95,12 @@ export function ConnectEquipmentPowerForm({
       ? Boolean(source && selectedCatalog && !source.connected && !catalogMismatch && !saving)
       : Boolean(
           source &&
-            target &&
-            !source.connected &&
-            !target.connected &&
-            !physicalMismatch &&
-            !sourceAndTargetSameEquipment &&
-            !saving,
+          target &&
+          !source.connected &&
+          !target.connected &&
+          !physicalMismatch &&
+          !sourceAndTargetSameEquipment &&
+          !saving,
         );
 
   const filteredPhysicalTargets = useMemo(() => {
@@ -583,8 +582,7 @@ export function ConnectEquipmentPowerForm({
                       {port.connected ? t('alreadyConnected') : ''}
                     </option>
                   ))}
-                  {target &&
-                  !filteredPhysicalTargets.some((port) => port.id === target.id) ? (
+                  {target && !filteredPhysicalTargets.some((port) => port.id === target.id) ? (
                     <option value={target.id}>
                       {target.equipmentName} / {target.name}
                     </option>
@@ -611,9 +609,7 @@ export function ConnectEquipmentPowerForm({
       </div>
 
       <section className="power-port-connect-review">
-        <h2>
-          {destinationMode === 'CATALOG' ? t('verifyDeclared') : t('verify')}
-        </h2>
+        <h2>{destinationMode === 'CATALOG' ? t('verifyDeclared') : t('verify')}</h2>
         <div className="power-port-connect-path">
           <strong>{source ? `${source.equipmentName} / ${source.name}` : t('selectSource')}</strong>
           <span aria-hidden="true">→</span>
@@ -636,7 +632,7 @@ export function ConnectEquipmentPowerForm({
               value={chosenFeed}
               disabled={Boolean(
                 source?.feed ||
-                  (destinationMode === 'CATALOG' ? selectedCatalog?.feed : target?.feed),
+                (destinationMode === 'CATALOG' ? selectedCatalog?.feed : target?.feed),
               )}
               onChange={(event) => setFeed(event.target.value as 'A' | 'B')}
             >

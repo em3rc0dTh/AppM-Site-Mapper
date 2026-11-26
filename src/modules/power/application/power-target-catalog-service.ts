@@ -139,8 +139,7 @@ export class PowerTargetCatalogService {
         identityKey,
         equipmentKey: parsed.equipmentKey,
         equipmentName: metadata.targetEntityName ?? parsed.equipmentName,
-        canonicalEquipmentName:
-          metadata.targetCanonicalEntityName ?? parsed.canonicalEquipmentName,
+        canonicalEquipmentName: metadata.targetCanonicalEntityName ?? parsed.canonicalEquipmentName,
         targetKind: metadata.targetKind ?? parsed.targetKind,
         footprint: metadata.targetFootprint ?? footprintFromRackAid(rackAid),
         rackAid,
@@ -151,10 +150,9 @@ export class PowerTargetCatalogService {
         ...(parsed.module ? { module: parsed.module } : {}),
         ...(parsed.endpoint ? { endpoint: parsed.endpoint } : {}),
         ...(inferredFeed ? { feed: inferredFeed } : {}),
-        origin:
-          sourceReference?.toUpperCase().includes('SITEMAPPER_POWER_TARGET_CATALOG')
-            ? 'SITEMAPPER'
-            : 'EXCEL',
+        origin: sourceReference?.toUpperCase().includes('SITEMAPPER_POWER_TARGET_CATALOG')
+          ? 'SITEMAPPER'
+          : 'EXCEL',
         ...(sourceReference ? { sourceReference } : {}),
       });
     }

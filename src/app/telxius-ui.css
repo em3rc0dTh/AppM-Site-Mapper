@@ -3608,7 +3608,6 @@ button.zip-rack-tree-row {
   overflow-wrap: anywhere;
 }
 
-
 /* MK2 UAT: reusable declared Power Target Catalog commissioning. */
 .power-port-connect-columns--catalog {
   grid-template-columns: minmax(270px, 0.72fr) minmax(0, 1.68fr);
@@ -3871,7 +3870,9 @@ button.zip-rack-tree-row {
 
 .power-target-review-destination small {
   color: #5d737d;
-  font: 9px ui-monospace, monospace;
+  font:
+    9px ui-monospace,
+    monospace;
   overflow-wrap: anywhere;
 }
 

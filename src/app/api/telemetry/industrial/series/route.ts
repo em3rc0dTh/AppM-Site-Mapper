@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     return Response.json({ error: 'INVALID_QUERY' }, { status: 400 });
   try {
     const url = industrialStoreUrl('/industrial-history');
-    for (const key of ['signalId', 'logicalPointId', 'from', 'to', 'cursor']) {
+    for (const key of ['signalId', 'logicalPointId', 'from', 'to', 'cursor', 'bucketSeconds']) {
       if (params.has(key)) url.searchParams.set(key, params.get(key)!);
     }
     if (params.has('logicalPointId')) {

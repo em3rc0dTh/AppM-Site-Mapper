@@ -1,5 +1,5 @@
 import type { Envelope, Signal } from './observations';
-import { eltekDefinition } from './eltek';
+import { eltekDefinition, eltekMibMetadata } from './eltek';
 
 export interface TrapView {
   readonly id: string;
@@ -12,7 +12,21 @@ export interface TrapView {
   readonly severity: string | null;
   readonly alarmState: 'ACTIVE' | 'RESOLVED' | null;
   readonly alarmCode: string | null;
-  readonly varbinds: readonly { oid: string; name: string | null; type: string; value: string }[];
+  readonly notificationMibFile: string | null;
+  readonly notificationMibKind: string | null;
+  readonly notificationMibObjects: readonly string[];
+  readonly varbinds: readonly {
+    oid: string;
+    name: string | null;
+    type: string;
+    value: string;
+    mibFile: string | null;
+    mibKind: string | null;
+    mibSyntax: string | null;
+    enumLabel: string | null;
+    referencedName: string | null;
+    referencedMibFile: string | null;
+  }[];
   readonly varbindCount: number;
 }
 
@@ -47,6 +61,24 @@ export function parseTrapCursor(value: string | null): { receivedAt: string; id:
 }
 
 /** Preserve evidence exactly; never invent a severity, an alarm, or a feed association. */
+function standardSnmpDefinition(oid: string) {
+  if (oid === '1.3.6.1.2.1.1.3.0')
+    return {
+      name: 'sysUpTime',
+      file: 'SNMPv2-MIB',
+      kind: 'OBJECT-TYPE',
+      syntax: 'TimeTicks',
+    };
+  if (oid === '1.3.6.1.6.3.1.1.4.1.0')
+    return {
+      name: 'snmpTrapOID',
+      file: 'SNMPv2-MIB',
+      kind: 'OBJECT-TYPE',
+      syntax: 'OBJECT IDENTIFIER',
+    };
+  return null;
+}
+
 export function presentTrap(
   id: string,
   envelope: Envelope,
@@ -88,16 +120,35 @@ export function presentTrap(
         printable = '—';
       }
     }
+    const mib = eltekMibMetadata(record.oid);
+    const standard = standardSnmpDefinition(record.oid);
+    const referenced =
+      typeof value === 'string' && /^\d+(?:\.\d+){5,}$/.test(value)
+        ? eltekMibMetadata(value)
+        : undefined;
+    const numeric = typeof value === 'number' ? value : null;
+    const enumLabel =
+      numeric === null
+        ? null
+        : (Object.entries(mib?.enums ?? {}).find(([, enumValue]) => enumValue === numeric)?.[0] ??
+          null);
     return [
       {
         oid: record.oid,
-        name: eltekDefinition(record.oid)?.name ?? null,
+        name: mib?.name ?? standard?.name ?? null,
         type: String(record.type ?? ''),
         value: printable.slice(0, 512),
+        mibFile: mib?.file ?? standard?.file ?? null,
+        mibKind: mib?.kind ?? standard?.kind ?? null,
+        mibSyntax: mib?.syntax ?? standard?.syntax ?? null,
+        enumLabel,
+        referencedName: referenced?.name ?? null,
+        referencedMibFile: referenced?.file ?? null,
       },
     ];
   });
   const oid = typeof envelope.notificationOid === 'string' ? envelope.notificationOid : null;
+  const notificationMib = oid ? eltekMibMetadata(oid) : undefined;
   return {
     id,
     sourceIdentity: envelope.sourceIdentity,
@@ -110,6 +161,9 @@ export function presentTrap(
     alarmState:
       alarm?.alarmState === 'ACTIVE' || alarm?.alarmState === 'RESOLVED' ? alarm.alarmState : null,
     alarmCode: alarm?.alarmCode ?? null,
+    notificationMibFile: notificationMib?.file ?? null,
+    notificationMibKind: notificationMib?.kind ?? null,
+    notificationMibObjects: notificationMib?.objects ?? [],
     varbinds: points,
     varbindCount: varbinds.length,
   };

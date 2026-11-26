@@ -47,7 +47,9 @@ export function powerTargetIdentityKey(rackAid: string, localAid: string): strin
   return `${rackAid.trim().toUpperCase()}|${localAid.trim().toUpperCase()}`;
 }
 
-export function buildPowerTargetCatalogIdentity(input: CreatePowerTargetCatalogInput): Omit<
+export function buildPowerTargetCatalogIdentity(
+  input: CreatePowerTargetCatalogInput,
+): Omit<
   PowerTargetCatalogEntry,
   'id' | 'lifecycle' | 'createdAt' | 'updatedAt' | 'origin' | 'sourceReference'
 > {

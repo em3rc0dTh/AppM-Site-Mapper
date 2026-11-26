@@ -81,19 +81,15 @@
    with one dedicated Home control before the wordmark and cube. */
 .sm-product-header {
   display: inline-flex;
-  min-width: 0;
-  border-right: 1px solid #d4dfe7;
-  color: inherit;
-}
-
-.sm-product-header-link {
-  display: inline-flex;
   align-items: center;
   gap: 17px;
   min-width: 0;
-  padding: 0 13px 0 14px;
+  padding: 4px 13px 4px 4px;
+  border: 1px solid rgba(24, 185, 143, 0.42);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(20, 43, 66, 0.06);
   color: inherit;
-  text-decoration: none;
 }
 
 .sm-product-header .sm-brand {
@@ -159,10 +155,6 @@
   stroke-linejoin: round;
 }
 
-.sm-product-header-link:focus-visible {
-  outline: 2px solid #087e66;
-  outline-offset: -2px;
-}
 
 /* Global compact identity — same component in every AppShell view. */
 .sm-brand--compact,
@@ -733,18 +725,26 @@
 .sm-product-header .sm-brand {
   cursor: default;
 }
-.sm-product-header.zip-brand,
-.sm-product-header.zip-brand:hover,
-.sm-product-header.zip-brand:focus-visible {
-  border-color: transparent;
-  background: transparent;
-  box-shadow: none;
+.sm-product-header.zip-brand {
+  gap: 17px;
+  padding: 4px 13px 4px 4px;
+  border: 1px solid rgba(24, 185, 143, 0.42);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(20, 43, 66, 0.08);
   cursor: default;
-  transition: none;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease;
 }
-.sm-product-header.zip-brand:hover .sm-product-header-home,
-.sm-product-header.zip-brand:focus-visible .sm-product-header-home {
-  transform: none;
+.sm-product-header.zip-brand:has(.sm-product-header-home:hover),
+.sm-product-header.zip-brand:has(.sm-product-header-home:focus-visible) {
+  border-color: rgba(24, 185, 143, 0.82);
+  background: rgba(24, 185, 143, 0.035);
+  box-shadow:
+    0 1px 3px rgba(20, 43, 66, 0.08),
+    0 0 0 2px rgba(24, 185, 143, 0.10);
 }
 .sm-product-header-home {
   text-decoration: none;

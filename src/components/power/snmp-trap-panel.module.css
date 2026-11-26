@@ -318,6 +318,18 @@
   color: #0c58ae;
   font-weight: 800;
 }
+.varbindList dt,
+.varbindList dd {
+  display: grid;
+  gap: 2px;
+}
+.varbindList small {
+  color: #6b7d8d;
+  font-family: inherit;
+  font-size: 9px;
+  font-weight: 500;
+  line-height: 1.25;
+}
 .contextIntro {
   padding: 8px 10px;
   background: #eaf5ff;
@@ -386,5 +398,74 @@
   }
   .detailBadges {
     flex-basis: 100%;
+  }
+}
+
+.trapWorkspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.75fr);
+  gap: 12px;
+  align-items: start;
+  padding-top: 10px;
+}
+.trapList {
+  min-width: 0;
+  border: 1px solid #dce6f0;
+}
+.trapList .table {
+  min-width: 620px;
+}
+.trapList tbody tr {
+  cursor: pointer;
+}
+.trapList tbody tr:focus-visible {
+  outline: 2px solid #0069cf;
+  outline-offset: -2px;
+}
+.trapDetail {
+  min-width: 0;
+  border: 1px solid #dce6f0;
+  background: #fff;
+  position: sticky;
+  top: 0;
+}
+.detailPlaceholder {
+  display: grid;
+  place-items: center;
+  min-height: 220px;
+  padding: 24px;
+  color: #61788e;
+  text-align: center;
+  font-size: 12px;
+}
+.trapDetail .contextList {
+  padding: 10px 12px 0;
+}
+.trapDetail .actions {
+  padding: 0 12px 12px;
+}
+.technicalDetails {
+  margin: 0 12px 12px;
+  border-top: 1px solid #e1e9f1;
+  padding-top: 10px;
+}
+.technicalDetails summary {
+  cursor: pointer;
+  color: #315d7c;
+  font-size: 11px;
+  font-weight: 750;
+}
+.technicalDetails .varbindList {
+  margin-top: 10px;
+  max-height: 230px;
+  overflow: auto;
+}
+
+@container (max-width: 900px) {
+  .trapWorkspace {
+    grid-template-columns: 1fr;
+  }
+  .trapDetail {
+    position: static;
   }
 }

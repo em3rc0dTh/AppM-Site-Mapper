@@ -5,11 +5,17 @@ on:
     branches:
       - feat/power-target-catalog-uat-20261126
 
+permissions:
+  contents: write
+
 jobs:
   format:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: feat/power-target-catalog-uat-20261126
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -17,24 +23,29 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - name: Format changed power target files
         run: |
-          npx prettier --write             src/app/api/power-targets/route.ts             src/app/telxius-ui.css             src/components/power/connect-equipment-power-form.tsx             src/modules/power/application/power-target-catalog-service.ts             src/modules/power/domain/power-target-catalog.ts             src/modules/power/infrastructure/mongo-power-target-catalog-repository.ts             src/shared/infrastructure/mongodb/bootstrap.ts
-      - name: Package formatted files
+          npx prettier --write \
+            src/app/api/power-targets/route.ts \
+            src/app/telxius-ui.css \
+            src/components/power/connect-equipment-power-form.tsx \
+            src/modules/power/application/power-target-catalog-service.ts \
+            src/modules/power/domain/power-target-catalog.ts \
+            src/modules/power/infrastructure/mongo-power-target-catalog-repository.ts \
+            src/shared/infrastructure/mongodb/bootstrap.ts
+      - name: Commit exact Prettier output
         run: |
-          mkdir -p formatted/src/app/api/power-targets
-          mkdir -p formatted/src/app
-          mkdir -p formatted/src/components/power
-          mkdir -p formatted/src/modules/power/application
-          mkdir -p formatted/src/modules/power/domain
-          mkdir -p formatted/src/modules/power/infrastructure
-          mkdir -p formatted/src/shared/infrastructure/mongodb
-          cp src/app/api/power-targets/route.ts formatted/src/app/api/power-targets/route.ts
-          cp src/app/telxius-ui.css formatted/src/app/telxius-ui.css
-          cp src/components/power/connect-equipment-power-form.tsx formatted/src/components/power/connect-equipment-power-form.tsx
-          cp src/modules/power/application/power-target-catalog-service.ts formatted/src/modules/power/application/power-target-catalog-service.ts
-          cp src/modules/power/domain/power-target-catalog.ts formatted/src/modules/power/domain/power-target-catalog.ts
-          cp src/modules/power/infrastructure/mongo-power-target-catalog-repository.ts formatted/src/modules/power/infrastructure/mongo-power-target-catalog-repository.ts
-          cp src/shared/infrastructure/mongodb/bootstrap.ts formatted/src/shared/infrastructure/mongodb/bootstrap.ts
-      - uses: actions/upload-artifact@v4
-        with:
-          name: power-target-prettier
-          path: formatted
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            src/app/api/power-targets/route.ts \
+            src/app/telxius-ui.css \
+            src/components/power/connect-equipment-power-form.tsx \
+            src/modules/power/application/power-target-catalog-service.ts \
+            src/modules/power/domain/power-target-catalog.ts \
+            src/modules/power/infrastructure/mongo-power-target-catalog-repository.ts \
+            src/shared/infrastructure/mongodb/bootstrap.ts
+          if git diff --cached --quiet; then
+            echo "No formatting changes required."
+            exit 0
+          fi
+          git commit -m "chore: apply prettier to power target catalog"
+          git push origin HEAD:feat/power-target-catalog-uat-20261126

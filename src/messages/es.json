@@ -3164,5 +3164,22 @@
     "notRegistered": "No registrada",
     "selectTrap": "Selecciona un trap para ver su contexto.",
     "technicalDetails": "Detalles técnicos"
+  },
+  "snmpEnums": {
+    "normal": "Normal",
+    "enabled": "Habilitada",
+    "disabled": "Deshabilitada",
+    "normallyOpen": "Normalmente abierto",
+    "normallyClosed": "Normalmente cerrado",
+    "minorAlarm": "Alarma menor",
+    "majorAlarm": "Alarma mayor",
+    "critical": "Crítica",
+    "warning": "Advertencia",
+    "error": "Error",
+    "disconnected": "Desconectada",
+    "notPresent": "No presente",
+    "off": "Desactivada",
+    "on": "Activa",
+    "binaryBytes": "Binario · {count} bytes"
   }
 }

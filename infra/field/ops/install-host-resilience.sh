@@ -168,8 +168,12 @@ docker update --restart unless-stopped "${app_ids[0]}" >/dev/null
   fail "Site Mapper restart policy was not applied"
 
 systemctl daemon-reload
+# Keep watchdog recovery quiescent until DNS and trusted HTTPS have passed
+# acceptance. This prevents a partially applied host change from consuming
+# recovery attempts or persisting a stale lockout.
+systemctl disable --now site-mapper-watchdog.timer >/dev/null 2>&1 || true
+systemctl stop site-mapper-watchdog.service >/dev/null 2>&1 || true
 systemctl enable --now site-mapper-dns.service
-systemctl enable --now site-mapper-watchdog.timer
 
 log "Acceptance"
 for _ in $(seq 1 20); do
@@ -181,11 +185,23 @@ done
 [[ "${resolved:-}" == "$EXPECTED_IP" ]] || fail "$HOST did not resolve to $EXPECTED_IP"
 curl -fsS --max-time 10 "https://$HOST/api/health" >/dev/null ||
   fail "trusted HTTPS health check failed"
+
+# A successful, explicit operator APPLY is the recovery boundary that may clear
+# an old watchdog lockout. Ordinary watchdog/service restarts never clear it.
+install -d -m 0700 /var/lib/site-mapper
+rm -f /var/lib/site-mapper/watchdog.json
+systemctl reset-failed site-mapper-watchdog.service >/dev/null 2>&1 || true
 systemctl start site-mapper-watchdog.service
+python3 - /var/lib/site-mapper/watchdog.json <<'PY'
+import json, pathlib, sys
+state = json.loads(pathlib.Path(sys.argv[1]).read_text())
+if state.get("lockout") is not False:
+    raise SystemExit("watchdog lockout remained set after successful operator APPLY")
+PY
+systemctl enable --now site-mapper-watchdog.timer
 systemctl is-active --quiet site-mapper-dns.service || fail "DNS service is not active"
 systemctl is-active --quiet site-mapper-watchdog.timer || fail "watchdog timer is not active"
 
-install -d -m 0700 /var/lib/site-mapper
 cat > /var/lib/site-mapper/resilience-receipt.txt <<EOF
 status=S06_HOST_RESILIENCE_APPLIED
 hostname=$HOST
@@ -193,6 +209,7 @@ dns=$EXPECTED_IP
 dnsService=active
 watchdog=active
 watchdogRecovery=enabled
+watchdogLockout=false
 dockerBoot=enabled
 siteMapperRestart=unless-stopped
 caddyUnit=$CADDY_UNIT

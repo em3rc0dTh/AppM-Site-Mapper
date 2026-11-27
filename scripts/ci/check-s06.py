@@ -63,6 +63,10 @@ def main() -> int:
     assert "--force-recreate" not in installer
     assert "--remove-orphans" not in installer
     assert "site-mapper-watchdog.timer" in installer and "site-mapper-dns.service" in installer
+    assert "rm -f /var/lib/site-mapper/watchdog.json" in installer
+    assert "watchdogLockout=false" in installer
+    assert installer.index("trusted HTTPS health check failed") < installer.index("rm -f /var/lib/site-mapper/watchdog.json")
+    assert installer.index("rm -f /var/lib/site-mapper/watchdog.json") < installer.index("systemctl enable --now site-mapper-watchdog.timer")
     recreate = (ROOT / "scripts/operations/recreate-site-mapper-tfarm.sh").read_text()
     assert "docker-compose.snmp-field.yml" in recreate
     assert "--profile snmp" in recreate

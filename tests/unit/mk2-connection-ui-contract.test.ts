@@ -90,6 +90,20 @@ describe('MK2 operator-approved connection UI', () => {
     expect(css).not.toContain('max-height: 310px;');
   });
 
+  it('keeps declared commissioning on-screen after confirmation and opens the diagram separately', () => {
+    const component = source('src/components/power/connect-equipment-power-form.tsx');
+
+    expect(component).toContain('setDeclaredSuccess({');
+    expect(component).toContain('className="power-port-connect-success"');
+    expect(component).toContain('target="_blank"');
+    expect(component).toContain('rel="noopener noreferrer"');
+    expect(component).toContain('/workbench/powered-equipment?breakerId=');
+    expect(component).toContain("t('backToSource', { source: declaredSuccess.sourceName })");
+    expect(component).not.toContain(
+      'router.push(\n          `/workbench/powered-equipment?breakerId=',
+    );
+  });
+
   it('reserves red and green for alarm semantics, not feed identity in Power Trace', () => {
     const css = source('src/app/workbench/power-trace.css');
     expect(css).toContain('--trace-a: #168fe4');

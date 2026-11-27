@@ -1835,7 +1835,13 @@
     "modulePlaceholder": "PSU1",
     "endpointPlaceholder": "A0",
     "rackAidValue": "RACK::{footprint}",
-    "unknownValue": "…"
+    "unknownValue": "…",
+    "associationConfirmedTitle": "3 · Asociación eléctrica",
+    "associationConfirmed": "✓ ASOCIACIÓN CREADA",
+    "associationFeed": "Alimentación",
+    "rackAid": "Rack AID",
+    "openConnectionDiagram": "ABRIR DIAGRAMA DE CONEXIONES ↗",
+    "backToSource": "← VOLVER A {source}"
   },
   "connectPower": {
     "header": "POWER / COMISIONAMIENTO",

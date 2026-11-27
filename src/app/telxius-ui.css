@@ -3645,6 +3645,84 @@ button.zip-rack-tree-row {
   order: 2;
 }
 
+.power-port-connect-success {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #95c9ad;
+  border-radius: 7px;
+  background: #eef8f1;
+}
+
+.power-port-connect-success > strong {
+  color: #236d46;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+.power-port-connect-success-route {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.power-port-connect-success-route span:nth-child(2) {
+  color: #087ab5;
+  font-size: 18px;
+}
+
+.power-port-connect-success-details {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.power-port-connect-success-details > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.power-port-connect-success-details dt {
+  color: #60737c;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.power-port-connect-success-details dd {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.power-port-connect-success-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.power-port-connect-success-actions a {
+  display: block;
+  padding: 11px 12px;
+  border: 1px solid #087ab5;
+  border-radius: 5px;
+  color: #087ab5;
+  background: #fff;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.power-port-connect-success-actions a:first-child {
+  color: #fff;
+  background: #087ab5;
+}
+
 .power-target-panel {
   gap: 12px;
   width: 100%;

@@ -16,7 +16,10 @@ describe('account menu logout', () => {
     expect(shell).toContain('void logout();');
     expect(shell).toContain("fetch('/api/auth/logout', { method: 'POST' })");
 
-    const logoutBlock = shell.slice(shell.indexOf('async function logout()'), shell.indexOf('return ('));
+    const logoutBlock = shell.slice(
+      shell.indexOf('async function logout()'),
+      shell.indexOf('return ('),
+    );
     expect(logoutBlock).not.toContain("role === 'ADMIN'");
     expect(logoutBlock).not.toContain("role === 'SUPERADMIN'");
   });

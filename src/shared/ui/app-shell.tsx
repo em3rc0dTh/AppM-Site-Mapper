@@ -19,9 +19,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [role, setRole] = useState<Role | null>(null);
+  const [accountOpen, setAccountOpen] = useState(false);
   const shellRef = useRef<HTMLDivElement>(null);
   const brandRef = useRef<HTMLDivElement>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
+  const accountMenuRef = useRef<HTMLDivElement>(null);
 
   // The root layout persists across client-side login/navigation. Resolve the
   // current role in the shell so a STANDARD user never sees the ADMIN label.
@@ -52,6 +54,30 @@ export function AppShell({ children }: { children: ReactNode }) {
       });
     return () => controller.abort();
   }, [pathname]);
+
+  useEffect(() => {
+    setAccountOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!accountOpen) return;
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (!accountMenuRef.current?.contains(event.target as Node)) {
+        setAccountOpen(false);
+      }
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setAccountOpen(false);
+    };
+
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [accountOpen]);
 
   useEffect(() => {
     if (
@@ -213,36 +239,43 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Link className="zip-warehouse" href="/warehouse">
             {t('warehouse')}
           </Link>
-          <Link className="zip-account" href="/settings">
-            {role === 'ADMIN' || role === 'SUPERADMIN' ? t('admin') : t('myAccount')} <b>⌄</b>
-          </Link>
-          <button
-            className="zip-more"
-            disabled={busy}
-            onClick={logout}
-            aria-label={t('signOut')}
-            title={t('signOut')}
-          >
-            {busy ? (
-              '…'
-            ) : (
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 24 24"
-                width="18"
-                height="18"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <path d="M16 17l5-5-5-5" />
-                <path d="M21 12H9" />
-              </svg>
-            )}
-          </button>
+          <div className="zip-account-menu" ref={accountMenuRef}>
+            <button
+              type="button"
+              className="zip-account"
+              aria-haspopup="menu"
+              aria-expanded={accountOpen}
+              onClick={() => setAccountOpen((open) => !open)}
+            >
+              {role === 'ADMIN' || role === 'SUPERADMIN' ? t('admin') : t('myAccount')}{' '}
+              <b aria-hidden="true">{accountOpen ? '⌃' : '⌄'}</b>
+            </button>
+
+            {accountOpen ? (
+              <div className="zip-account-dropdown" role="menu">
+                <Link
+                  className="zip-account-menu-item"
+                  href="/settings"
+                  role="menuitem"
+                  onClick={() => setAccountOpen(false)}
+                >
+                  {t('settings')}
+                </Link>
+                <button
+                  type="button"
+                  className="zip-account-menu-item zip-account-signout"
+                  role="menuitem"
+                  disabled={busy}
+                  onClick={() => {
+                    setAccountOpen(false);
+                    void logout();
+                  }}
+                >
+                  {busy ? '…' : t('signOut')}
+                </button>
+              </div>
+            ) : null}
+          </div>
         </div>
       </header>
 

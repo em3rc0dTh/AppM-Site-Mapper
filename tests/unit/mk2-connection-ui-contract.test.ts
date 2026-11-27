@@ -72,6 +72,24 @@ describe('MK2 operator-approved connection UI', () => {
     expect(css).toContain('min-width: 900px;');
   });
 
+  it('uses the approved wide commissioning layout without an Origin column', () => {
+    const component = source('src/components/power/connect-equipment-power-form.tsx');
+    const css = source('src/app/telxius-ui.css');
+
+    expect(component).toContain('className="power-port-connect-sidebar"');
+    expect(component).toContain('className="power-port-connect-panel power-target-panel"');
+    expect(component).not.toContain("<th>{t('origin')}</th>");
+    expect(component).not.toContain('power-target-origin');
+    expect(component).toContain('colSpan={7}');
+
+    expect(css).toContain('width: min(1680px, 100%);');
+    expect(css).toContain('grid-template-columns: minmax(300px, 0.58fr) minmax(0, 1.92fr);');
+    expect(css).toContain('.power-port-connect-sidebar {');
+    expect(css).toContain('align-items: start;');
+    expect(css).toContain('overflow-y: hidden;');
+    expect(css).not.toContain('max-height: 310px;');
+  });
+
   it('reserves red and green for alarm semantics, not feed identity in Power Trace', () => {
     const css = source('src/app/workbench/power-trace.css');
     expect(css).toContain('--trace-a: #168fe4');

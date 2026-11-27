@@ -37,4 +37,20 @@ describe('S06 industrial guardrails', () => {
     expect(watchdog).toContain('"snmp-traps"');
     expect(watchdog).toContain('"snmp-collector"');
   });
+
+  it('provides one canonical TFARM Site Mapper recreate path with SNMP overlay', () => {
+    const recreate = source('scripts/operations/recreate-site-mapper-tfarm.sh');
+
+    expect(recreate).toContain('docker-compose.telemetry.yml');
+    expect(recreate).toContain('docker-compose.office-test.yml');
+    expect(recreate).toContain('docker-compose.snmp-field.yml');
+    expect(recreate).toContain('deployment/compose.tfarm.yml');
+    expect(recreate).toContain('--profile snmp');
+    expect(recreate).toContain('--no-deps');
+    expect(recreate).toContain('--no-build');
+    expect(recreate).toContain('--force-recreate');
+    expect(recreate).toContain('expected HTTP 401');
+    expect(recreate).not.toContain('snmp-traps');
+    expect(recreate).not.toContain('mosquitto');
+  });
 });

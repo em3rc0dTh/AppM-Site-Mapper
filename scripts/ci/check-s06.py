@@ -44,10 +44,21 @@ def main() -> int:
     assert "S06_EXPECTED_IP" in watchdog and "site-mapper-dns.service" in watchdog
     assert "S06_CADDY_MODE" in watchdog and "systemctl" in watchdog
     assert "PROTECTED" in watchdog and "LOCKOUT".lower() in watchdog.lower()
+    assert "def industrial_contract()" in watchdog
+    assert "industrial_contract_block" in watchdog
+    assert '"mosquitto"' in watchdog and '"snmp-traps"' in watchdog and '"snmp-collector"' in watchdog
     dns = (ROOT / "infra/field/ops/dnsmasq.conf.template").read_text()
     assert "thradex" not in dns.lower() and "__S06_HOSTNAME__" in dns
     installer = (ROOT / "infra/field/ops/install-host-resilience.sh").read_text()
     assert "docker update --restart unless-stopped" in installer
+    assert "INDUSTRIAL_INGEST_SOURCES_JSON" in installer
+    assert "INDUSTRIAL_PROFILES_JSON" in installer
+    assert "expected HTTP 401" in installer
+    assert "S06_KEA_PUBLISH" in installer
+    assert "systemctl restart kea-dhcp4-server" not in installer
+    assert "docker compose" not in installer
+    assert "--force-recreate" not in installer
+    assert "--remove-orphans" not in installer
     assert "site-mapper-watchdog.timer" in installer and "site-mapper-dns.service" in installer
     tfarm = (ROOT / "deployment/compose.tfarm.yml").read_text()
     assert "site-mapper:" in tfarm and "restart: unless-stopped" in tfarm

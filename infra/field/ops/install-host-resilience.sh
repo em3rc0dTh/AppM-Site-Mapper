@@ -37,11 +37,10 @@ mapfile -t app_ids < <(docker ps -aq \
   --filter "label=com.docker.compose.project=$PROJECT" \
   --filter "label=com.docker.compose.service=site-mapper")
 (("${#app_ids[@]}" == 1)) || fail "expected exactly one Site Mapper container for project $PROJECT"
-industrial_env="$(docker inspect --format '{{json .Config.Env}}' "${app_ids[0]}")" ||
-  fail "cannot inspect Site Mapper container"
-python3 - "$industrial_env" <<'PY'
+docker inspect --format '{{json .Config.Env}}' "${app_ids[0]}" |
+  python3 -c '
 import json, sys
-rows = json.loads(sys.argv[1])
+rows = json.load(sys.stdin)
 env = {}
 for row in rows:
     if "=" in row:
@@ -60,7 +59,7 @@ if not isinstance(profiles, list) or not profiles:
 profile_sources = {row.get("sourceIdentity") for row in profiles if isinstance(row, dict)}
 if not profile_sources or not profile_sources.issubset(set(sources)):
     raise SystemExit("industrial profile/source mapping is inconsistent")
-PY
+' || fail "live Site Mapper industrial contract is invalid"
 probe_code="$(curl -sS -o /tmp/site-mapper-s06-ingest-probe.json -w '%{http_code}' \
   --max-time 10 -X POST http://127.0.0.1:3000/api/telemetry/industrial/ingest \
   -H 'Authorization: Bearer definitely-invalid-probe-token' \

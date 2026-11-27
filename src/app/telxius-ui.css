@@ -3370,9 +3370,9 @@ button.zip-rack-tree-row {
   text-decoration: none;
 }
 .power-port-connect-page {
-  width: min(1280px, 100%);
+  width: min(1680px, 100%);
   margin: 0 auto;
-  padding: clamp(18px, 3vw, 42px);
+  padding: clamp(16px, 2vw, 30px);
   color: #142d39;
   overflow-wrap: anywhere;
 }
@@ -3610,7 +3610,39 @@ button.zip-rack-tree-row {
 
 /* MK2 UAT: reusable declared Power Target Catalog commissioning. */
 .power-port-connect-columns--catalog {
-  grid-template-columns: minmax(270px, 0.72fr) minmax(0, 1.68fr);
+  grid-template-columns: minmax(300px, 0.58fr) minmax(0, 1.92fr);
+  align-items: start;
+}
+
+.power-port-connect-sidebar {
+  display: grid;
+  min-width: 0;
+  gap: 16px;
+  align-content: start;
+}
+
+.power-port-connect-sidebar .power-port-connect-review {
+  margin-top: 0;
+}
+
+.power-port-connect-sidebar .power-port-connect-fields {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.power-port-connect-sidebar .power-port-connect-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: stretch;
+  gap: 10px;
+}
+
+.power-port-connect-sidebar .power-port-connect-actions button {
+  width: 100%;
+}
+
+.power-port-connect-sidebar .power-port-connect-actions a {
+  justify-self: center;
+  order: 2;
 }
 
 .power-target-panel {
@@ -3707,10 +3739,9 @@ button.zip-rack-tree-row {
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  max-height: 310px;
   overflow-x: auto;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  overflow-y: hidden;
+  overscroll-behavior-inline: contain;
   border: 1px solid #b8c8ce;
   border-radius: 7px;
   background: #fff;
@@ -3726,7 +3757,7 @@ button.zip-rack-tree-row {
 
 .power-target-table th,
 .power-target-table td {
-  padding: 8px 9px;
+  padding: 6px 9px;
   border-bottom: 1px solid #dfe8eb;
   text-align: left;
   vertical-align: middle;
@@ -3771,22 +3802,6 @@ button.zip-rack-tree-row {
   font-size: 9px;
   color: #324f5c;
   white-space: nowrap;
-}
-
-.power-target-origin {
-  display: inline-flex;
-  padding: 3px 7px;
-  border-radius: 12px;
-  background: #edf3f6;
-  color: #4e6672;
-  font-size: 9px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.power-target-origin[data-origin='SITEMAPPER'] {
-  background: #dcf6e8;
-  color: #247248;
 }
 
 .power-target-empty {
@@ -3918,9 +3933,5 @@ button.zip-rack-tree-row {
   .power-port-connect-columns--catalog,
   .power-target-new-grid {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .power-target-table-wrap {
-    max-height: 360px;
   }
 }

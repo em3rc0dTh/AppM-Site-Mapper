@@ -8,6 +8,7 @@ EXPECTED_IP="${S06_EXPECTED_IP:-192.168.10.1}"
 BRIDGE="${S06_BRIDGE:-br-lab}"
 PROJECT="${S06_COMPOSE_PROJECT:-appm-site-mapper}"
 CADDY_UNIT="${S06_CADDY_SYSTEMD_UNIT:-caddy.service}"
+KEA_PUBLISH="${S06_KEA_PUBLISH:-0}"
 
 fail() { echo "S06_APPLY_ERROR: $*" >&2; exit 1; }
 log() { printf '\n=== %s ===\n' "$*"; }
@@ -28,6 +29,45 @@ done
 
 ip -4 -o addr show dev "$BRIDGE" | grep -Eq "[[:space:]]$EXPECTED_IP/" ||
   fail "$BRIDGE does not own expected address $EXPECTED_IP"
+
+[[ "$KEA_PUBLISH" == "0" || "$KEA_PUBLISH" == "1" ]] || fail "S06_KEA_PUBLISH must be 0 or 1"
+
+log "Preflight live Site Mapper industrial contract"
+mapfile -t app_ids < <(docker ps -aq \
+  --filter "label=com.docker.compose.project=$PROJECT" \
+  --filter "label=com.docker.compose.service=site-mapper")
+(("${#app_ids[@]}" == 1)) || fail "expected exactly one Site Mapper container for project $PROJECT"
+docker inspect --format '{{json .Config.Env}}' "${app_ids[0]}" |
+  python3 -c '
+import json, sys
+rows = json.load(sys.stdin)
+env = {}
+for row in rows:
+    if "=" in row:
+        key, value = row.split("=", 1)
+        env[key] = value
+sources_raw = env.get("INDUSTRIAL_INGEST_SOURCES_JSON")
+profiles_raw = env.get("INDUSTRIAL_PROFILES_JSON")
+if not sources_raw or not profiles_raw:
+    raise SystemExit("industrial ingest environment is incomplete")
+sources = json.loads(sources_raw)
+profiles = json.loads(profiles_raw)
+if not isinstance(sources, dict) or not sources:
+    raise SystemExit("industrial source credentials mapping is invalid")
+if not isinstance(profiles, list) or not profiles:
+    raise SystemExit("industrial profiles mapping is invalid")
+profile_sources = {row.get("sourceIdentity") for row in profiles if isinstance(row, dict)}
+if not profile_sources or not profile_sources.issubset(set(sources)):
+    raise SystemExit("industrial profile/source mapping is inconsistent")
+' || fail "live Site Mapper industrial contract is invalid"
+probe_code="$(curl -sS -o /tmp/site-mapper-s06-ingest-probe.json -w '%{http_code}' \
+  --max-time 10 -X POST http://127.0.0.1:3000/api/telemetry/industrial/ingest \
+  -H 'Authorization: Bearer definitely-invalid-probe-token' \
+  -H 'Content-Type: application/json' --data '{}')" ||
+  fail "industrial ingest preflight request failed"
+rm -f /tmp/site-mapper-s06-ingest-probe.json
+[[ "$probe_code" == "401" ]] ||
+  fail "industrial ingest contract is not healthy (expected HTTP 401, got $probe_code)"
 
 log "Install deterministic FIELD LAN DNS"
 install -d -m 0755 /etc/site-mapper
@@ -51,7 +91,7 @@ resolvectl dns "$BRIDGE" "$EXPECTED_IP"
 resolvectl domain "$BRIDGE" "~$ZONE"
 resolvectl flush-caches
 
-log "Publish DNS through existing Kea contract when present"
+log "Stage optional Kea DNS advertisement without restarting DHCP"
 kea_file=/etc/kea/kea-dhcp4.conf
 if [[ -f "$kea_file" ]]; then
   kea_tmp="$(mktemp)"
@@ -85,12 +125,16 @@ options.extend([
 pathlib.Path(target).write_text(json.dumps(data, indent=2) + "\n")
 PY
   kea-dhcp4 -t "$kea_tmp" >/dev/null
-  if ! cmp -s "$kea_file" "$kea_tmp"; then
-    [[ -e "$kea_file.pre-s06-dns" ]] || cp -a "$kea_file" "$kea_file.pre-s06-dns"
-    install -m 0644 "$kea_tmp" "$kea_file"
-    if systemctl is-active --quiet kea-dhcp4-server; then
-      systemctl restart kea-dhcp4-server
+  install -m 0600 "$kea_tmp" /etc/site-mapper/kea-dhcp4.s06.candidate.json
+  if [[ "$KEA_PUBLISH" == "1" ]]; then
+    systemctl is-active --quiet kea-dhcp4-server &&
+      fail "refusing to modify active Kea automatically; review candidate and reload in an approved FIELD window"
+    if ! cmp -s "$kea_file" "$kea_tmp"; then
+      [[ -e "$kea_file.pre-s06-dns" ]] || cp -a "$kea_file" "$kea_file.pre-s06-dns"
+      install -m 0644 "$kea_tmp" "$kea_file"
     fi
+  else
+    log "Kea candidate staged only; live DHCP configuration was not modified"
   fi
 fi
 
@@ -116,10 +160,6 @@ chmod 0600 /etc/site-mapper/watchdog.env
 log "Close boot/restart contract"
 systemctl enable --now docker.service
 systemctl enable --now "$CADDY_UNIT"
-mapfile -t app_ids < <(docker ps -aq \
-  --filter "label=com.docker.compose.project=$PROJECT" \
-  --filter "label=com.docker.compose.service=site-mapper")
-(("${#app_ids[@]}" == 1)) || fail "expected exactly one Site Mapper container for project $PROJECT"
 docker update --restart unless-stopped "${app_ids[0]}" >/dev/null
 [[ "$(docker inspect -f '{{.HostConfig.RestartPolicy.Name}}' "${app_ids[0]}")" == "unless-stopped" ]] ||
   fail "Site Mapper restart policy was not applied"

@@ -21,6 +21,8 @@ jobs:
        github.event.issue.pull_request &&
        contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association))
     runs-on: ubuntu-24.04
+    timeout-minutes: 25
+
     steps:
       - name: Checkout current main
         uses: actions/checkout@v7
@@ -40,7 +42,9 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci --no-audit --no-fund
+        run: |
+          npm ci --no-audit --no-fund
+          npm ci --prefix infra/snmp-collector --no-audit --no-fund
 
       - name: S06 and TFARM static certification
         run: |
@@ -51,15 +55,20 @@ jobs:
           bash -n scripts/operations/certify-s06-host.sh
           bash -n deployment/bootstrap-host.sh
 
-      - name: Repository verification
-        run: |
-          npm run typecheck
-          npm run lint
-          npm run format:check
-          npm test -- --runInBand
+      - name: Industrial contracts
+        run: npm run test:industrial
 
-      - name: Production build
-        run: npm run build
+      - name: Documentation and audit regressions
+        run: |
+          npm run docs:check
+          npm run test:audit-mongo
+          npm run test:certification
+
+      - name: Full repository verification
+        run: npm run verify
+
+      - name: Production dependency audit
+        run: npm audit --omit=dev --audit-level=high
 
       - name: Promotion receipt
         run: |

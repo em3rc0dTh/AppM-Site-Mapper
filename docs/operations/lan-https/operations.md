@@ -4,20 +4,20 @@
 
 ## New artifacts and responsibilities
 
-| Artifact                                                | Responsibility                                                                                                 | Protection                                                    |
-| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| `infra/field/ops/field-lan-service.sh`                  | Starts/stops **Caddy only** by Compose service name, with no build or volume removal                           | Requires original private Compose environment                 |
-| `infra/field/ops/systemd/site-mapper-field-lan.service` | Linux boot hook for Caddy after Docker                                                                         | Requires approved `/opt/site-mapper` deployment location      |
-| `infra/field/ops/dnsmasq.conf.template` + DNS unit      | Serves `thradex.home.arpa` only on the FIELD bridge and forwards non-private names to the host uplink resolver | No WAN dependency for the private zone                        |
-| `infra/field/ops/watchdog.py` and systemd timer         | Checks DNS, HTTPS and Next.js health; selectively restarts DNS, Caddy or Next.js without restarting databases  | 3 failures, 3 recoveries / 15 min, persistent LOCKOUT         |
+| Artifact                                                | Responsibility                                                                                                       | Protection                                                           |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `infra/field/ops/field-lan-service.sh`                  | Starts/stops **Caddy only** by Compose service name, with no build or volume removal                                 | Requires original private Compose environment                        |
+| `infra/field/ops/systemd/site-mapper-field-lan.service` | Linux boot hook for Caddy after Docker                                                                               | Requires approved `/opt/site-mapper` deployment location             |
+| `infra/field/ops/dnsmasq.conf.template` + DNS unit      | Serves `thradex.home.arpa` only on the FIELD bridge and forwards non-private names to the host uplink resolver       | No WAN dependency for the private zone                               |
+| `infra/field/ops/watchdog.py` and systemd timer         | Checks DNS, HTTPS and Next.js health; selectively restarts DNS, Caddy or Next.js without restarting databases        | 3 failures, 3 recoveries / 15 min, persistent LOCKOUT                |
 | `infra/field/ops/install-host-resilience.sh`            | Installs DNS/watchdog, persists route-only DNS, stages Kea DNS advertisement and enforces Site Mapper restart policy | Root-only; fails closed unless industrial ingest contract is healthy |
-| `scripts/operations/certify-s06-host.sh`                | Read-only acceptance for boot services, DNS, Docker restart policy, trusted HTTPS and live certificate         | Run after apply and after reboot                              |
-| `infra/field/ops/backup.py` and daily timer             | Runs `mongodump`, `pg_dump`, captures Caddy /data and private runtime configuration, encrypts using `age`      | Requires external backup destination and public age recipient |
-| `infra/field/ops/restore-preflight.py`                  | Verifies SHA-256 checksums and decrypts into a **new isolated directory only**                                 | Never connects to running databases                           |
-| `infra/field/ops/network-policy.example.json`           | Template for authorized LAN + admin CIDRs, no auto-applied firewall                                            | Site survey + administrative approval mandatory               |
-| `infra/field/ops/check-network-policy.py`               | Validates network contract, rejects wildcard/public source CIDRs                                               | Read-only                                                     |
-| `infra/field/ops/preflight.py`                          | Inspects DNS, tool presence and Docker port publication                                                        | Read-only                                                     |
-| `scripts/ci/check-s06.py`                               | Checks Python syntax and static file invariants                                                                | Local/CI only, no services                                    |
+| `scripts/operations/certify-s06-host.sh`                | Read-only acceptance for boot services, DNS, Docker restart policy, trusted HTTPS and live certificate               | Run after apply and after reboot                                     |
+| `infra/field/ops/backup.py` and daily timer             | Runs `mongodump`, `pg_dump`, captures Caddy /data and private runtime configuration, encrypts using `age`            | Requires external backup destination and public age recipient        |
+| `infra/field/ops/restore-preflight.py`                  | Verifies SHA-256 checksums and decrypts into a **new isolated directory only**                                       | Never connects to running databases                                  |
+| `infra/field/ops/network-policy.example.json`           | Template for authorized LAN + admin CIDRs, no auto-applied firewall                                                  | Site survey + administrative approval mandatory                      |
+| `infra/field/ops/check-network-policy.py`               | Validates network contract, rejects wildcard/public source CIDRs                                                     | Read-only                                                            |
+| `infra/field/ops/preflight.py`                          | Inspects DNS, tool presence and Docker port publication                                                              | Read-only                                                            |
+| `scripts/ci/check-s06.py`                               | Checks Python syntax and static file invariants                                                                      | Local/CI only, no services                                           |
 
 ## Systemd installation contract
 

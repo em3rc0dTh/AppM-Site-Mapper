@@ -52,7 +52,7 @@ describe('S06 industrial guardrails', () => {
     expect(recreate).toContain('--no-build');
     expect(recreate).toContain('--force-recreate');
     expect(recreate).toContain('expected HTTP 401');
-    expect(recreate).toContain("config --format json |");
+    expect(recreate).toContain('config --format json |');
     expect(recreate).not.toContain('model="$(');
     expect(recreate).not.toContain('snmp-traps');
     expect(recreate).not.toContain('mosquitto');

@@ -56,10 +56,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [pathname]);
 
   useEffect(() => {
-    setAccountOpen(false);
-  }, [pathname]);
-
-  useEffect(() => {
     if (!accountOpen) return;
 
     const onPointerDown = (event: PointerEvent) => {

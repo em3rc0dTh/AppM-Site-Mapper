@@ -33,6 +33,7 @@ jobs:
           sh -n infra/field/ops/field-lan-service.sh
           bash -n infra/field/ops/install-host-resilience.sh
           bash -n scripts/operations/certify-s06-host.sh
+          bash -n scripts/operations/recreate-site-mapper-tfarm.sh
           bash -n deployment/bootstrap-host.sh
           sh -n scripts/operations/verify-isolated-backup-restore.sh
           python3 -m json.tool infra/field/ops/network-policy.example.json >/dev/null

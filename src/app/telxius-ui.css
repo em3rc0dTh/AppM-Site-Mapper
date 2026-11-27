@@ -3615,6 +3615,16 @@ button.zip-rack-tree-row {
 
 .power-target-panel {
   gap: 12px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.power-target-panel > * {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .power-target-heading,
@@ -3645,6 +3655,9 @@ button.zip-rack-tree-row {
 
 .power-target-tabs {
   display: grid;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   border: 1px solid #9eb6c2;
   border-radius: 6px;
@@ -3677,12 +3690,27 @@ button.zip-rack-tree-row {
 
 .power-target-search {
   display: grid;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   gap: 6px;
 }
 
+.power-target-catalog {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
 .power-target-table-wrap {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   max-height: 310px;
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   border: 1px solid #b8c8ce;
   border-radius: 7px;
   background: #fff;

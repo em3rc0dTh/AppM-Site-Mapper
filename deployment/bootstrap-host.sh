@@ -12,7 +12,7 @@ set -Eeuo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
-apt-get install -y ca-certificates curl gnupg git python3 gpg iproute2 network-manager kea-dhcp4-server snmp
+apt-get install -y ca-certificates curl gnupg git python3 gpg iproute2 network-manager kea-dhcp4-server dnsmasq-base snmp
 
 install -m 0755 -d /etc/apt/keyrings
 tmp_key="$(mktemp)"

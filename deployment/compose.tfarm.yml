@@ -8,6 +8,7 @@ services:
       - tfarm_mosquitto_log:/mosquitto/log
   site-mapper:
     cpus: 1.0
+    restart: unless-stopped
     environment:
       INDUSTRIAL_MQTT_SPOOL: /app/.runtime/industrial-mqtt
     volumes:

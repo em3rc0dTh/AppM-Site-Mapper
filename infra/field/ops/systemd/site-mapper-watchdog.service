@@ -1,16 +1,16 @@
 [Unit]
 Description=Site Mapper S06 selective local watchdog
-After=docker.service network-online.target
+After=docker.service network-online.target caddy.service site-mapper-dns.service
 Wants=network-online.target
 Requires=docker.service
-ConditionPathExists=/etc/site-mapper/s06.env
+ConditionPathExists=/etc/site-mapper/watchdog.env
 
 [Service]
 Type=oneshot
 User=root
 Group=root
-EnvironmentFile=/etc/site-mapper/s06.env
-ExecStart=/usr/bin/python3 /opt/site-mapper/infra/field/ops/watchdog.py
+EnvironmentFile=/etc/site-mapper/watchdog.env
+ExecStart=/usr/bin/python3 /usr/local/lib/site-mapper/watchdog.py
 StateDirectory=site-mapper
 RuntimeDirectory=site-mapper
 NoNewPrivileges=true

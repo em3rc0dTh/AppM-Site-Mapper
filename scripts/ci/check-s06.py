@@ -15,11 +15,15 @@ FILES = [
     "docker-compose.field-lan.yml", "docker-compose.lab-remote.yml",
     "infra/field/caddy/Caddyfile", "infra/field/ops/field-lan-service.sh",
     "infra/field/ops/systemd/site-mapper-field-lan.service",
+    "infra/field/ops/systemd/site-mapper-dns.service",
     "infra/field/ops/systemd/site-mapper-watchdog.service",
     "infra/field/ops/systemd/site-mapper-watchdog.timer",
     "infra/field/ops/systemd/site-mapper-backup.service",
     "infra/field/ops/systemd/site-mapper-backup.timer",
     "infra/field/ops/s06.env.example",
+    "infra/field/ops/dnsmasq.conf.template",
+    "infra/field/ops/install-host-resilience.sh",
+    "scripts/operations/certify-s06-host.sh",
     "infra/field/ops/network-policy.example.json",
 ]
 def main() -> int:
@@ -37,7 +41,16 @@ def main() -> int:
     assert ("profiles: ['field-lan']" in field or "profiles: [\"field-lan\"]" in field) and "network_mode: host" in field
     assert "profiles: ['lab-remote']" in remote or "profiles: [\"lab-remote\"]" in remote
     assert "S06_WATCHDOG_RECOVERY_ENABLED" in watchdog
+    assert "S06_EXPECTED_IP" in watchdog and "site-mapper-dns.service" in watchdog
+    assert "S06_CADDY_MODE" in watchdog and "systemctl" in watchdog
     assert "PROTECTED" in watchdog and "LOCKOUT".lower() in watchdog.lower()
+    dns = (ROOT / "infra/field/ops/dnsmasq.conf.template").read_text()
+    assert "thradex" not in dns.lower() and "__S06_HOSTNAME__" in dns
+    installer = (ROOT / "infra/field/ops/install-host-resilience.sh").read_text()
+    assert "docker update --restart unless-stopped" in installer
+    assert "site-mapper-watchdog.timer" in installer and "site-mapper-dns.service" in installer
+    tfarm = (ROOT / "deployment/compose.tfarm.yml").read_text()
+    assert "site-mapper:" in tfarm and "restart: unless-stopped" in tfarm
     assert "down -v" not in (ROOT / "infra/field/ops/field-lan-service.sh").read_text()
     print("S06 static contracts: OK (not a runtime certification)")
     return 0

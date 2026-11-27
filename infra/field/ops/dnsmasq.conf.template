@@ -1,0 +1,15 @@
+# Site Mapper FIELD LAN DNS.
+# Rendered by install-host-resilience.sh; never place credentials here.
+port=53
+interface=__S06_BRIDGE__
+listen-address=__S06_EXPECTED_IP__
+bind-dynamic
+no-hosts
+domain-needed
+bogus-priv
+local=/__S06_DNS_ZONE__/
+address=/__S06_HOSTNAME__/__S06_EXPECTED_IP__
+resolv-file=/run/systemd/resolve/resolv.conf
+cache-size=1000
+user=nobody
+group=nogroup

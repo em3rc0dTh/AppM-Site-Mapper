@@ -61,10 +61,11 @@ try {
   await page.getByRole('button', { name: 'SIGN IN' }).click();
   await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 30000 });
   console.log('[PASS] Real Chromium: interactive login redirects to authenticated workspace');
-  await page.locator('a.zip-account').getByText('ADMIN').waitFor({ timeout: 30000 });
+  await page.getByRole('button', { name: /ADMIN/ }).waitFor({ timeout: 30000 });
 
-  // Reproduce the user's exact bug: a STANDARD user clicks the top-bar ADMIN
-  // link and must remain logged in on personal Settings.
+  // Reproduce the user's exact bug: a STANDARD user opens the account menu,
+  // sees personal actions (including explicit logout), and can enter Settings
+  // without privilege escalation or losing the authenticated session.
   const standardPage = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   try {
     await standardPage.goto(base + '/login', { waitUntil: 'domcontentloaded' });
@@ -74,10 +75,11 @@ try {
     await standardPage.waitForURL((url) => !url.pathname.includes('/login'), {
       timeout: 30000,
     });
-    await standardPage.locator('a.zip-account').getByText('MY ACCOUNT').waitFor({
-      timeout: 30000,
-    });
-    await standardPage.locator('a.zip-account').click();
+    const standardAccount = standardPage.getByRole('button', { name: /MY ACCOUNT/ });
+    await standardAccount.waitFor({ timeout: 30000 });
+    await standardAccount.click();
+    await standardPage.getByRole('menuitem', { name: 'Sign out' }).waitFor({ timeout: 30000 });
+    await standardPage.getByRole('menuitem', { name: 'SETTINGS' }).click();
     await standardPage.waitForURL((url) => url.pathname === '/settings', {
       timeout: 30000,
     });
@@ -104,9 +106,11 @@ try {
     await standardPage.waitForFunction(() => document.documentElement.lang === 'es', {
       timeout: 30000,
     });
-    await standardPage.locator('a.zip-account').getByText('MI CUENTA').waitFor({
-      timeout: 30000,
-    });
+    const spanishAccount = standardPage.getByRole('button', { name: /MI CUENTA/ });
+    await spanishAccount.waitFor({ timeout: 30000 });
+    await spanishAccount.click();
+    await standardPage.getByRole('menuitem', { name: 'Cerrar sesión' }).waitFor({ timeout: 30000 });
+    await standardPage.keyboard.press('Escape');
     await standardPage.locator('.sm-locale-control select').selectOption('en');
     await standardPage.waitForFunction(() => document.documentElement.lang === 'en', {
       timeout: 30000,

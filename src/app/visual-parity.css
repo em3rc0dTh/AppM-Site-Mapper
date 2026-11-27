@@ -161,6 +161,57 @@ body {
 }
 .zip-account {
   min-width: 150px;
+  cursor: pointer;
+}
+.zip-account-menu {
+  position: relative;
+  display: flex;
+  align-self: center;
+  flex: 0 0 auto;
+}
+.zip-account-dropdown {
+  position: absolute;
+  z-index: 140;
+  top: calc(100% + 6px);
+  right: 14px;
+  min-width: 210px;
+  padding: 6px;
+  border: 1px solid #cfd6dd;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgb(15 23 42 / 16%);
+}
+.zip-account-menu-item {
+  width: 100%;
+  min-height: 38px;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #17202a;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.zip-account-menu-item:hover,
+.zip-account-menu-item:focus-visible {
+  background: #f0f5f8;
+  outline: none;
+}
+.zip-account-signout {
+  margin-top: 4px;
+  border-top: 1px solid #e2e8ee;
+  border-radius: 0 0 4px 4px;
+  color: #8b1d1d;
+}
+.zip-account-menu-item:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 .zip-warehouse {
   min-width: 122px;

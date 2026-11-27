@@ -32,6 +32,15 @@ type NewTargetDraft = {
   displayLabel: string;
 };
 
+type DeclaredAssociationSuccess = {
+  breakerId: string;
+  sourceName: string;
+  targetLabel: string;
+  rackAid: string;
+  localAid: string;
+  feed: 'A' | 'B';
+};
+
 const EMPTY_TARGET: NewTargetDraft = {
   equipmentName: '',
   footprint: '',
@@ -75,6 +84,7 @@ export function ConnectEquipmentPowerForm({
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
   const [creatingTarget, setCreatingTarget] = useState(false);
+  const [declaredSuccess, setDeclaredSuccess] = useState<DeclaredAssociationSuccess | null>(null);
   const [error, setError] = useState('');
 
   const source = sources.find((port) => port.id === sourceId);
@@ -92,7 +102,14 @@ export function ConnectEquipmentPowerForm({
 
   const canConfirm =
     destinationMode === 'CATALOG'
-      ? Boolean(source && selectedCatalog && !source.connected && !catalogMismatch && !saving)
+      ? Boolean(
+          source &&
+            selectedCatalog &&
+            !source.connected &&
+            !catalogMismatch &&
+            !saving &&
+            !declaredSuccess,
+        )
       : Boolean(
           source &&
           target &&
@@ -217,10 +234,14 @@ export function ConnectEquipmentPowerForm({
           setError(result?.error ?? `DECLARE_FAILED_${response.status}`);
           return;
         }
-        router.push(
-          `/workbench/powered-equipment?breakerId=${encodeURIComponent(result.assignment.breakerId)}`,
-        );
-        router.refresh();
+        setDeclaredSuccess({
+          breakerId: result.assignment.breakerId,
+          sourceName: source.equipmentName,
+          targetLabel: selectedCatalog.displayLabel,
+          rackAid: selectedCatalog.rackAid,
+          localAid: selectedCatalog.localAid,
+          feed: chosenFeed,
+        });
         return;
       }
 
@@ -305,73 +326,121 @@ export function ConnectEquipmentPowerForm({
           </section>
 
           <section className="power-port-connect-review">
-            <h2>{destinationMode === 'CATALOG' ? t('verifyDeclared') : t('verify')}</h2>
-            <div className="power-port-connect-fields">
-              <label>
-                {t('electricalFeed')}
-                <select
-                  value={chosenFeed}
-                  disabled={Boolean(
-                    source?.feed ||
-                    (destinationMode === 'CATALOG' ? selectedCatalog?.feed : target?.feed),
-                  )}
-                  onChange={(event) => setFeed(event.target.value as 'A' | 'B')}
-                >
-                  <option value="A">{t('feedA')}</option>
-                  <option value="B">{t('feedB')}</option>
-                </select>
-              </label>
-              <label>
-                {t('connectionNoteOptional')}
-                <input
-                  value={note}
-                  maxLength={240}
-                  onChange={(event) => setNote(event.target.value)}
-                  placeholder={t('connectionNotePlaceholder')}
-                />
-              </label>
-            </div>
+            <h2>
+              {declaredSuccess
+                ? t('associationConfirmedTitle')
+                : destinationMode === 'CATALOG'
+                  ? t('verifyDeclared')
+                  : t('verify')}
+            </h2>
 
-            {destinationMode === 'PHYSICAL' && sourceAndTargetSameEquipment ? (
-              <p role="alert">{t('notSame')}</p>
-            ) : null}
-            {source?.connected ? (
-              <p role="alert">
-                {t('sourceAlreadyConnected', { label: source.connectionLabel ?? '' })}
-                {source.pathId ? (
-                  <Link href={`/power?path=${encodeURIComponent(source.pathId)}`}>
-                    {' '}
-                    {t('viewPath')}
+            {declaredSuccess ? (
+              <div className="power-port-connect-success" role="status">
+                <strong>{t('associationConfirmed')}</strong>
+                <div className="power-port-connect-success-route">
+                  <span>{declaredSuccess.sourceName}</span>
+                  <span aria-hidden="true">→</span>
+                  <span>{declaredSuccess.targetLabel}</span>
+                </div>
+                <dl className="power-port-connect-success-details">
+                  <div>
+                    <dt>{t('associationFeed')}</dt>
+                    <dd>{declaredSuccess.feed}</dd>
+                  </div>
+                  <div>
+                    <dt>{t('rackAid')}</dt>
+                    <dd>{declaredSuccess.rackAid}</dd>
+                  </div>
+                  <div>
+                    <dt>{t('localAid')}</dt>
+                    <dd>{declaredSuccess.localAid}</dd>
+                  </div>
+                </dl>
+                <div className="power-port-connect-success-actions">
+                  <a
+                    href={`/workbench/powered-equipment?breakerId=${encodeURIComponent(
+                      declaredSuccess.breakerId,
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {t('openConnectionDiagram')}
+                  </a>
+                  <Link href={returnHref}>
+                    {t('backToSource', { source: declaredSuccess.sourceName })}
                   </Link>
-                ) : null}
-              </p>
-            ) : null}
-            {destinationMode === 'PHYSICAL' && target?.connected ? (
-              <p role="alert">
-                {t('targetAlreadyConnected')}
-                {target.pathId ? (
-                  <Link href={`/power?path=${encodeURIComponent(target.pathId)}`}>
-                    {' '}
-                    {t('viewPath')}
-                  </Link>
-                ) : null}
-              </p>
-            ) : null}
-            {(destinationMode === 'CATALOG' ? catalogMismatch : physicalMismatch) ? (
-              <p role="alert">{t('mismatch')}</p>
-            ) : null}
-            {error ? <p role="alert">{error}</p> : null}
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="power-port-connect-fields">
+                  <label>
+                    {t('electricalFeed')}
+                    <select
+                      value={chosenFeed}
+                      disabled={Boolean(
+                        source?.feed ||
+                          (destinationMode === 'CATALOG' ? selectedCatalog?.feed : target?.feed),
+                      )}
+                      onChange={(event) => setFeed(event.target.value as 'A' | 'B')}
+                    >
+                      <option value="A">{t('feedA')}</option>
+                      <option value="B">{t('feedB')}</option>
+                    </select>
+                  </label>
+                  <label>
+                    {t('connectionNoteOptional')}
+                    <input
+                      value={note}
+                      maxLength={240}
+                      onChange={(event) => setNote(event.target.value)}
+                      placeholder={t('connectionNotePlaceholder')}
+                    />
+                  </label>
+                </div>
 
-            <div className="power-port-connect-actions">
-              <Link href={returnHref}>{t('cancel')}</Link>
-              <button type="button" disabled={!canConfirm} onClick={() => void confirm()}>
-                {saving
-                  ? t('confirming')
-                  : destinationMode === 'CATALOG'
-                    ? t('confirmDeclared')
-                    : t('confirm')}
-              </button>
-            </div>
+                {destinationMode === 'PHYSICAL' && sourceAndTargetSameEquipment ? (
+                  <p role="alert">{t('notSame')}</p>
+                ) : null}
+                {source?.connected ? (
+                  <p role="alert">
+                    {t('sourceAlreadyConnected', { label: source.connectionLabel ?? '' })}
+                    {source.pathId ? (
+                      <Link href={`/power?path=${encodeURIComponent(source.pathId)}`}>
+                        {' '}
+                        {t('viewPath')}
+                      </Link>
+                    ) : null}
+                  </p>
+                ) : null}
+                {destinationMode === 'PHYSICAL' && target?.connected ? (
+                  <p role="alert">
+                    {t('targetAlreadyConnected')}
+                    {target.pathId ? (
+                      <Link href={`/power?path=${encodeURIComponent(target.pathId)}`}>
+                        {' '}
+                        {t('viewPath')}
+                      </Link>
+                    ) : null}
+                  </p>
+                ) : null}
+                {(destinationMode === 'CATALOG' ? catalogMismatch : physicalMismatch) ? (
+                  <p role="alert">{t('mismatch')}</p>
+                ) : null}
+                {error ? <p role="alert">{error}</p> : null}
+
+                <div className="power-port-connect-actions">
+                  <Link href={returnHref}>{t('cancel')}</Link>
+                  <button type="button" disabled={!canConfirm} onClick={() => void confirm()}>
+                    {saving
+                      ? t('confirming')
+                      : destinationMode === 'CATALOG'
+                        ? t('confirmDeclared')
+                        : t('confirm')}
+                  </button>
+                </div>
+              </>
+            )}
           </section>
         </div>
 

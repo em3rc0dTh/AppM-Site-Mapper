@@ -58,6 +58,20 @@ describe('MK2 operator-approved connection UI', () => {
     expect(css).toContain('outline: 2px solid #2478e9;');
   });
 
+  it('contains the Power Target Catalog inside its commissioning panel', () => {
+    const css = source('src/app/telxius-ui.css');
+
+    expect(css).toContain('.power-target-panel {');
+    expect(css).toContain('overflow: hidden;');
+    expect(css).toContain('.power-target-panel > * {');
+    expect(css).toContain('.power-target-catalog {');
+    expect(css).toContain('.power-target-table-wrap {');
+    expect(css).toContain('overflow-x: auto;');
+    expect(css).toContain('max-width: 100%;');
+    expect(css).toContain('.power-target-table {');
+    expect(css).toContain('min-width: 900px;');
+  });
+
   it('reserves red and green for alarm semantics, not feed identity in Power Trace', () => {
     const css = source('src/app/workbench/power-trace.css');
     expect(css).toContain('--trace-a: #168fe4');

@@ -1,0 +1,81 @@
+name: TFARM04 promotion gate
+
+on:
+  workflow_dispatch:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tfarm04-promotion-gate
+  cancel-in-progress: false
+
+jobs:
+  certify-main:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issue_comment' &&
+       github.event.comment.body == '/certify-tfarm04' &&
+       github.event.issue.pull_request &&
+       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Record exact promoted SHA
+        run: |
+          echo "TFARM_PROMOTION_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          echo "Promoted main SHA: $(git rev-parse HEAD)"
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: |
+          npm ci --no-audit --no-fund
+          npm ci --prefix infra/snmp-collector --no-audit --no-fund
+
+      - name: S06 and TFARM static certification
+        run: |
+          python3 scripts/ci/check-s06.py
+          python3 deployment/tests/test_contract.py
+          python3 -m py_compile infra/field/ops/watchdog.py scripts/ci/check-s06.py
+          bash -n infra/field/ops/install-host-resilience.sh
+          bash -n scripts/operations/certify-s06-host.sh
+          bash -n deployment/bootstrap-host.sh
+
+      - name: Industrial contracts
+        run: npm run test:industrial
+
+      - name: Documentation and audit regressions
+        run: |
+          npm run docs:check
+          npm run test:audit-mongo
+          npm run test:certification
+
+      - name: Full repository verification
+        run: npm run verify
+
+      - name: Production dependency audit
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Promotion receipt
+        run: |
+          {
+            echo "### TFARM04 promotion gate"
+            echo "- source: `$TFARM_PROMOTION_SHA`"
+            echo "- branch: `main`"
+            echo "- result: **CERTIFIED FOR TFARM04 PROMOTION**"
+            echo "- deployment performed: **NO**"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -15,7 +15,7 @@ on:
       - 'scripts/operations/sprint-06-local-gate.sh'
       - 'scripts/operations/verify-isolated-backup-restore.sh'
       - '.github/workflows/s06-static-contract.yml'
-      - '.github/workflows/tfarm04-s06-deploy.yml'
+      - '.github/workflows/tfarm04-s06-promotion-gate.yml'
   workflow_dispatch:
 
 permissions:

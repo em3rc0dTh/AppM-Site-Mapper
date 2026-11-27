@@ -23,10 +23,10 @@ compose=(
 )
 
 log "Validate canonical TFARM Site Mapper model"
-model="$("${compose[@]}" config --format json)"
-python3 - "$model" <<'PY'
+"${compose[@]}" config --format json |
+  python3 -c '
 import json, sys
-model = json.loads(sys.argv[1])
+model = json.load(sys.stdin)
 services = model.get("services", {})
 app = services.get("site-mapper")
 if not isinstance(app, dict):
@@ -47,7 +47,7 @@ if not isinstance(profiles, list) or not profiles:
 profile_sources = {row.get("sourceIdentity") for row in profiles if isinstance(row, dict)}
 if not profile_sources or not profile_sources.issubset(set(sources)):
     raise SystemExit("industrial profile/source mapping inconsistent")
-PY
+' || fail "canonical Compose industrial contract is invalid"
 
 log "Recreate Site Mapper only"
 "${compose[@]}" up -d \

@@ -35,6 +35,37 @@ running="$(docker inspect -f '{{.State.Status}}' "${app_ids[0]}")"
 [[ "$running" == "running" ]] || fail "Site Mapper container is $running"
 pass "Site Mapper restart contract"
 
+industrial_env="$(docker inspect --format '{{json .Config.Env}}' "${app_ids[0]}")" ||
+  fail "cannot inspect Site Mapper industrial environment"
+python3 - "$industrial_env" <<'PY'
+import json, sys
+rows = json.loads(sys.argv[1])
+env = {}
+for row in rows:
+    if "=" in row:
+        key, value = row.split("=", 1)
+        env[key] = value
+sources = json.loads(env.get("INDUSTRIAL_INGEST_SOURCES_JSON", "null"))
+profiles = json.loads(env.get("INDUSTRIAL_PROFILES_JSON", "null"))
+if not isinstance(sources, dict) or not sources:
+    raise SystemExit("industrial source credentials missing")
+if not isinstance(profiles, list) or not profiles:
+    raise SystemExit("industrial profiles missing")
+profile_sources = {row.get("sourceIdentity") for row in profiles if isinstance(row, dict)}
+if not profile_sources or not profile_sources.issubset(set(sources)):
+    raise SystemExit("industrial profile/source mapping inconsistent")
+PY
+pass "Site Mapper industrial environment contract"
+
+probe_code="$(curl -sS -o /tmp/site-mapper-s06-cert-probe.json -w '%{http_code}' \
+  --max-time 10 -X POST http://127.0.0.1:3000/api/telemetry/industrial/ingest \
+  -H 'Authorization: Bearer definitely-invalid-probe-token' \
+  -H 'Content-Type: application/json' --data '{}')" ||
+  fail "industrial ingest certification probe failed"
+rm -f /tmp/site-mapper-s06-cert-probe.json
+[[ "$probe_code" == "401" ]] || fail "industrial ingest expected HTTP 401, got $probe_code"
+pass "industrial ingest authentication contract"
+
 resolved="$(getent ahostsv4 "$HOST" | awk 'NR==1 {print $1}')"
 [[ "$resolved" == "$EXPECTED_IP" ]] || fail "$HOST resolved to ${resolved:-nothing}, expected $EXPECTED_IP"
 pass "private DNS resolution"

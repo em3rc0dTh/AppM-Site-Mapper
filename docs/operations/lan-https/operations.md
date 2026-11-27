@@ -4,28 +4,31 @@
 
 ## New artifacts and responsibilities
 
-| Artifact                                                | Responsibility                                                                                                    | Protection                                                    |
-| ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| `infra/field/ops/field-lan-service.sh`                  | Starts/stops **Caddy only** by Compose service name, with no build or volume removal                              | Requires original private Compose environment                 |
-| `infra/field/ops/systemd/site-mapper-field-lan.service` | Linux boot hook for Caddy after Docker                                                                            | Requires approved `/opt/site-mapper` deployment location      |
-| `infra/field/ops/watchdog.py` and systemd timer         | Checks HTTPS through local CA and Next.js health, observes dependencies and selectively restarts Caddy or Next.js | **Recovery disabled by default**                              |
-| `infra/field/ops/backup.py` and daily timer             | Runs `mongodump`, `pg_dump`, captures Caddy /data and private runtime configuration, encrypts using `age`         | Requires external backup destination and public age recipient |
-| `infra/field/ops/restore-preflight.py`                  | Verifies SHA-256 checksums and decrypts into a **new isolated directory only**                                    | Never connects to running databases                           |
-| `infra/field/ops/network-policy.example.json`           | Template for authorized LAN + admin CIDRs, no auto-applied firewall                                               | Site survey + administrative approval mandatory               |
-| `infra/field/ops/check-network-policy.py`               | Validates network contract, rejects wildcard/public source CIDRs                                                  | Read-only                                                     |
-| `infra/field/ops/preflight.py`                          | Inspects DNS, tool presence and Docker port publication                                                           | Read-only                                                     |
-| `scripts/ci/check-s06.py`                               | Checks Python syntax and static file invariants                                                                   | Local/CI only, no services                                    |
+| Artifact                                                | Responsibility                                                                                                 | Protection                                                    |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `infra/field/ops/field-lan-service.sh`                  | Starts/stops **Caddy only** by Compose service name, with no build or volume removal                           | Requires original private Compose environment                 |
+| `infra/field/ops/systemd/site-mapper-field-lan.service` | Linux boot hook for Caddy after Docker                                                                         | Requires approved `/opt/site-mapper` deployment location      |
+| `infra/field/ops/dnsmasq.conf.template` + DNS unit      | Serves `thradex.home.arpa` only on the FIELD bridge and forwards non-private names to the host uplink resolver | No WAN dependency for the private zone                        |
+| `infra/field/ops/watchdog.py` and systemd timer         | Checks DNS, HTTPS and Next.js health; selectively restarts DNS, Caddy or Next.js without restarting databases  | 3 failures, 3 recoveries / 15 min, persistent LOCKOUT         |
+| `infra/field/ops/install-host-resilience.sh`            | Installs DNS/watchdog, persists route-only DNS, preserves Kea state and enforces Site Mapper restart policy    | Root-only; exact bridge/project/hostname acceptance required  |
+| `scripts/operations/certify-s06-host.sh`                | Read-only acceptance for boot services, DNS, Docker restart policy, trusted HTTPS and live certificate         | Run after apply and after reboot                              |
+| `infra/field/ops/backup.py` and daily timer             | Runs `mongodump`, `pg_dump`, captures Caddy /data and private runtime configuration, encrypts using `age`      | Requires external backup destination and public age recipient |
+| `infra/field/ops/restore-preflight.py`                  | Verifies SHA-256 checksums and decrypts into a **new isolated directory only**                                 | Never connects to running databases                           |
+| `infra/field/ops/network-policy.example.json`           | Template for authorized LAN + admin CIDRs, no auto-applied firewall                                            | Site survey + administrative approval mandatory               |
+| `infra/field/ops/check-network-policy.py`               | Validates network contract, rejects wildcard/public source CIDRs                                               | Read-only                                                     |
+| `infra/field/ops/preflight.py`                          | Inspects DNS, tool presence and Docker port publication                                                        | Read-only                                                     |
+| `scripts/ci/check-s06.py`                               | Checks Python syntax and static file invariants                                                                | Local/CI only, no services                                    |
 
 ## Systemd installation contract
 
-The provided units deliberately reference `/opt/site-mapper` and `/etc/site-mapper/s06.env`; these are target-specific defaults, **not verified locations on TFARM04**. Do not enable these units before installation survey and backups.
+The host-resilience installer copies the watchdog into `/usr/local/lib/site-mapper`, stores its non-secret environment in `/etc/site-mapper/watchdog.env`, and installs only the DNS/watchdog units. It does not replace databases, regenerate Caddy PKI, rebuild images or start an inactive Kea DHCP service.
 
-1. Choose final immutable release/images and target directory. Verify exact Compose project name and runtime env. The systemd entrypoint uses the _existing_ Compose project identity; a wrong project name may create a separate Caddy instance.
-2. Copy the example settings to `/etc/site-mapper/s06.env`, edit locally, set root-only permissions (0600). Do not check it into Git.
-3. Place public CA root in `/etc/site-mapper/ca-root.crt` after approved Caddy enrollment; never copy its private key to this path.
-4. Once the operator approves installation, install/copy units into systemd's administrator-managed directory, reload units and enable them individually.
-5. Keep `S06_WATCHDOG_RECOVERY_ENABLED=0` throughout observation testing; authorize `1` only after controlled fault-injection acceptance.
-6. Enable backup timer only after `age` is available offline, the public recipient has been verified, backups go to an appropriate off-host location, and a restore drill passed.
+1. Verify the exact Compose project, FIELD bridge, private hostname and bridge address. The installer fails closed if the bridge does not already own the expected address.
+2. The installer creates a route-only resolver for `thradex.home.arpa`, renders the DNS service configuration, and publishes the same DNS server into an existing Kea configuration while preserving whether Kea was active or inactive.
+3. The operating-system trust store is authoritative by default. `S06_CA_CERT` remains available only when a site intentionally uses a separate public-root path.
+4. Docker and Caddy must be systemd-enabled. The live Site Mapper container is required to belong to the expected Compose project; its restart policy is enforced as `unless-stopped`.
+5. Recovery is enabled only after DNS, loopback application health and trusted HTTPS pass in the installer. The watchdog never revives an intentionally stopped unit/container and never restarts MongoDB or TimescaleDB.
+6. Run `scripts/operations/certify-s06-host.sh` after apply and again after a real reboot. Enable the backup timer separately only after off-host backup requirements are satisfied.
 
 ## Watchdog contract
 
@@ -43,10 +46,11 @@ stateDiagram-v2
 ```
 
 - Probe 1: local Next.js `http://127.0.0.1:3000/api/health`.
-- Probe 2: `https://sitemapper.thradex.home.arpa/api/health`, with exact hostname verification using the public local CA root. No TLS bypass.
-- If DNS or TLS trust is invalid, report configuration failure; do **not** restart databases or Caddy repeatedly.
+- Probe 2: resolve the exact private hostname and require the configured FIELD address.
+- Probe 3: `https://sitemapper.thradex.home.arpa/api/health` using normal certificate verification. No TLS bypass.
+- DNS degradation targets only `site-mapper-dns.service`; an intentionally stopped DNS unit is not revived.
 - If Next.js fails but a dependency is unhealthy, do not restart Next.js blindly; emit a degradation event.
-- If app responds and HTTPS fails, recovery may target Caddy only.
+- If app and DNS respond but HTTPS fails, recovery may target Caddy only.
 - A deliberately stopped container is never revived by the watchdog.
 - Lockout persists until an authorized operator reviews and resets state. Never reset it by deleting arbitrary volumes.
 

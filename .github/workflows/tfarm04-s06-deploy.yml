@@ -1,0 +1,61 @@
+name: TFARM04 S06 resilience deploy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tfarm04-s06-resilience
+  cancel-in-progress: false
+
+jobs:
+  certify-source:
+    runs-on: ubuntu-24.04
+    outputs:
+      sha: ${{ steps.source.outputs.sha }}
+    steps:
+      - name: Checkout certified main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 1
+      - id: source
+        name: Record exact main SHA
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Re-run S06 source contract
+        run: |
+          python3 scripts/ci/check-s06.py
+          python3 deployment/tests/test_contract.py
+          python3 -m py_compile infra/field/ops/watchdog.py
+          bash -n infra/field/ops/install-host-resilience.sh
+          bash -n scripts/operations/certify-s06-host.sh
+
+  deploy:
+    needs: certify-source
+    runs-on: [self-hosted, Linux, X64, tfarm04]
+    environment: tfarm04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout the same certified main SHA
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.certify-source.outputs.sha }}
+          clean: true
+      - name: Require non-interactive privileged deploy lane
+        run: sudo -n true
+      - name: Apply DNS, watchdog and restart contract
+        run: sudo -n bash infra/field/ops/install-host-resilience.sh
+      - name: Certify TFARM04 live host
+        run: sudo -n bash scripts/operations/certify-s06-host.sh
+      - name: Deployment receipt
+        if: always()
+        run: |
+          echo "### TFARM04 S06 deployment" >> "$GITHUB_STEP_SUMMARY"
+          echo "- source: ${{ needs.certify-source.outputs.sha }}" >> "$GITHUB_STEP_SUMMARY"
+          if sudo -n test -f /var/lib/site-mapper/resilience-receipt.txt; then
+            echo '```text' >> "$GITHUB_STEP_SUMMARY"
+            sudo -n cat /var/lib/site-mapper/resilience-receipt.txt >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fi

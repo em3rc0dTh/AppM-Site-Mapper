@@ -43,6 +43,14 @@ class Contract(unittest.TestCase):
     def test_service_guard(self):
         self.p["services"].append("snmp-trap-test")
         with self.assertRaises(ValueError): self.load(self.p)
+    def test_tfarm_overlay_reasserts_site_mapper_restart(self):
+        text=(ROOT/"compose.tfarm.yml").read_text()
+        self.assertIn("site-mapper:",text)
+        self.assertIn("restart: unless-stopped",text)
+    def test_bootstrap_installs_local_dns_runtime(self):
+        text=(ROOT/"bootstrap-host.sh").read_text()
+        self.assertIn("dnsmasq-base",text)
+        self.assertIn("systemctl enable --now docker",text)
     def test_extra_bundle_member(self):
         with tempfile.TemporaryDirectory() as d:
             d=Path(d); (d/"manifest.json").write_text(json.dumps({"schemaVersion":1,"files":{}}))

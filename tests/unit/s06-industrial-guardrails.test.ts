@@ -5,6 +5,14 @@ import { describe, expect, it } from 'vitest';
 const source = (path: string) => readFileSync(resolve(process.cwd(), path), 'utf8');
 
 describe('S06 industrial guardrails', () => {
+  it('allows dnsmasq netlink while keeping the DNS unit sandboxed', () => {
+    const unit = source('infra/field/ops/systemd/site-mapper-dns.service');
+
+    expect(unit).toContain('RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK');
+    expect(unit).toContain('NoNewPrivileges=true');
+    expect(unit).toContain('ProtectSystem=strict');
+  });
+
   it('never recreates or restarts the industrial stack from the host resilience installer', () => {
     const installer = source('infra/field/ops/install-host-resilience.sh');
 

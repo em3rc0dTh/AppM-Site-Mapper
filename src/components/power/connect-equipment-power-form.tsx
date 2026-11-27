@@ -252,15 +252,6 @@ export function ConnectEquipmentPowerForm({
     }
   }
 
-  const destinationSummary =
-    destinationMode === 'CATALOG'
-      ? selectedCatalog
-        ? selectedCatalog.displayLabel
-        : t('selectDestination')
-      : target
-        ? `${target.equipmentName} / ${target.name}`
-        : t('selectDestination');
-
   return (
     <main className="power-port-connect-page">
       <header className="power-port-connect-header">

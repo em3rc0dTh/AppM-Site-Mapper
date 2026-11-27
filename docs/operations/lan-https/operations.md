@@ -10,7 +10,7 @@
 | `infra/field/ops/systemd/site-mapper-field-lan.service` | Linux boot hook for Caddy after Docker                                                                         | Requires approved `/opt/site-mapper` deployment location      |
 | `infra/field/ops/dnsmasq.conf.template` + DNS unit      | Serves `thradex.home.arpa` only on the FIELD bridge and forwards non-private names to the host uplink resolver | No WAN dependency for the private zone                        |
 | `infra/field/ops/watchdog.py` and systemd timer         | Checks DNS, HTTPS and Next.js health; selectively restarts DNS, Caddy or Next.js without restarting databases  | 3 failures, 3 recoveries / 15 min, persistent LOCKOUT         |
-| `infra/field/ops/install-host-resilience.sh`            | Installs DNS/watchdog, persists route-only DNS, preserves Kea state and enforces Site Mapper restart policy    | Root-only; exact bridge/project/hostname acceptance required  |
+| `infra/field/ops/install-host-resilience.sh`            | Installs DNS/watchdog, persists route-only DNS, stages Kea DNS advertisement and enforces Site Mapper restart policy | Root-only; fails closed unless industrial ingest contract is healthy |
 | `scripts/operations/certify-s06-host.sh`                | Read-only acceptance for boot services, DNS, Docker restart policy, trusted HTTPS and live certificate         | Run after apply and after reboot                              |
 | `infra/field/ops/backup.py` and daily timer             | Runs `mongodump`, `pg_dump`, captures Caddy /data and private runtime configuration, encrypts using `age`      | Requires external backup destination and public age recipient |
 | `infra/field/ops/restore-preflight.py`                  | Verifies SHA-256 checksums and decrypts into a **new isolated directory only**                                 | Never connects to running databases                           |
@@ -24,10 +24,10 @@
 The host-resilience installer copies the watchdog into `/usr/local/lib/site-mapper`, stores its non-secret environment in `/etc/site-mapper/watchdog.env`, and installs only the DNS/watchdog units. It does not replace databases, regenerate Caddy PKI, rebuild images or start an inactive Kea DHCP service.
 
 1. Verify the exact Compose project, FIELD bridge, private hostname and bridge address. The installer fails closed if the bridge does not already own the expected address.
-2. The installer creates a route-only resolver for `thradex.home.arpa`, renders the DNS service configuration, and publishes the same DNS server into an existing Kea configuration while preserving whether Kea was active or inactive.
+2. The installer creates a route-only resolver for `thradex.home.arpa` and renders the DNS service configuration. Kea integration is **stage-only by default**: it writes `/etc/site-mapper/kea-dhcp4.s06.candidate.json` and does not restart or reload DHCP. `S06_KEA_PUBLISH=1` is allowed only while Kea is inactive; an active Kea service causes a fail-closed result instead of an automatic restart.
 3. The operating-system trust store is authoritative by default. `S06_CA_CERT` remains available only when a site intentionally uses a separate public-root path.
-4. Docker and Caddy must be systemd-enabled. The live Site Mapper container is required to belong to the expected Compose project; its restart policy is enforced as `unless-stopped`.
-5. Recovery is enabled only after DNS, loopback application health and trusted HTTPS pass in the installer. The watchdog never revives an intentionally stopped unit/container and never restarts MongoDB or TimescaleDB.
+4. Docker and Caddy must be systemd-enabled. Before any host mutation, the live Site Mapper container must belong to the expected Compose project and contain valid, non-empty `INDUSTRIAL_INGEST_SOURCES_JSON` and `INDUSTRIAL_PROFILES_JSON` with consistent source identities. The installer also requires an invalid ingest probe to return HTTP 401; HTTP 503 `INVALID_SOURCE_CREDENTIALS` blocks the APPLY before DNS/watchdog installation.
+5. The Site Mapper restart policy is enforced as `unless-stopped`, but the installer never executes Compose up/down/recreate. Recovery is enabled only after DNS, loopback application health and trusted HTTPS pass. Before any watchdog restart of Site Mapper, the industrial contract is inspected again. The watchdog never targets Mosquitto, SNMP trap/collector services, MongoDB, TimescaleDB or telemetry-store.
 6. Run `scripts/operations/certify-s06-host.sh` after apply and again after a real reboot. Enable the backup timer separately only after off-host backup requirements are satisfied.
 
 ## Watchdog contract
@@ -49,6 +49,7 @@ stateDiagram-v2
 - Probe 2: resolve the exact private hostname and require the configured FIELD address.
 - Probe 3: `https://sitemapper.thradex.home.arpa/api/health` using normal certificate verification. No TLS bypass.
 - DNS degradation targets only `site-mapper-dns.service`; an intentionally stopped DNS unit is not revived.
+- If Next.js fails, validate the live industrial source/profile contract before any restart. Missing, malformed or inconsistent SNMP ingest configuration produces `industrial_contract_block` and requires operator intervention.
 - If Next.js fails but a dependency is unhealthy, do not restart Next.js blindly; emit a degradation event.
 - If app and DNS respond but HTTPS fails, recovery may target Caddy only.
 - A deliberately stopped container is never revived by the watchdog.

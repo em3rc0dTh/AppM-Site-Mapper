@@ -15,6 +15,8 @@ describe('S06 industrial guardrails', () => {
     expect(installer).not.toContain('docker restart');
     expect(installer).toContain('S06_KEA_PUBLISH');
     expect(installer).toContain('Kea candidate staged only');
+    expect(installer).toContain('mktemp /etc/kea/.site-mapper-s06.XXXXXX');
+    expect(installer).toContain('chmod 0644 "$kea_tmp"');
   });
 
   it('fails closed unless the live Site Mapper industrial contract is intact', () => {

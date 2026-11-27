@@ -56,6 +56,8 @@ def main() -> int:
     assert "INDUSTRIAL_PROFILES_JSON" in installer
     assert "expected HTTP 401" in installer
     assert "S06_KEA_PUBLISH" in installer
+    assert "mktemp /etc/kea/.site-mapper-s06.XXXXXX" in installer
+    assert 'chmod 0644 "$kea_tmp"' in installer
     assert "systemctl restart kea-dhcp4-server" not in installer
     assert "docker compose" not in installer
     assert "--force-recreate" not in installer

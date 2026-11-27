@@ -104,11 +104,11 @@ export function ConnectEquipmentPowerForm({
     destinationMode === 'CATALOG'
       ? Boolean(
           source &&
-            selectedCatalog &&
-            !source.connected &&
-            !catalogMismatch &&
-            !saving &&
-            !declaredSuccess,
+          selectedCatalog &&
+          !source.connected &&
+          !catalogMismatch &&
+          !saving &&
+          !declaredSuccess,
         )
       : Boolean(
           source &&
@@ -380,7 +380,7 @@ export function ConnectEquipmentPowerForm({
                       value={chosenFeed}
                       disabled={Boolean(
                         source?.feed ||
-                          (destinationMode === 'CATALOG' ? selectedCatalog?.feed : target?.feed),
+                        (destinationMode === 'CATALOG' ? selectedCatalog?.feed : target?.feed),
                       )}
                       onChange={(event) => setFeed(event.target.value as 'A' | 'B')}
                     >

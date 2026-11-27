@@ -34,7 +34,15 @@ MAX_ATTEMPTS = 3
 WINDOW = 900
 THRESHOLD = 3
 TARGETS = ("dns", "site-mapper", "caddy")
-PROTECTED = {"mongodb", "timescaledb", "telemetry-store", "mongo-init"}
+PROTECTED = {
+    "mongodb",
+    "timescaledb",
+    "telemetry-store",
+    "mongo-init",
+    "mosquitto",
+    "snmp-traps",
+    "snmp-collector",
+}
 
 
 def log(event: str, **details: object) -> None:
@@ -94,6 +102,42 @@ def container_for(service: str) -> str | None:
     return ids[0] if len(ids) == 1 else None
 
 
+def industrial_contract() -> tuple[bool, str]:
+    cid = container_for("site-mapper")
+    if cid is None:
+        return False, "site_mapper_container_missing"
+    inspected = run("docker", "inspect", "--format", "{{json .Config.Env}}", cid)
+    if inspected.returncode != 0:
+        return False, "site_mapper_inspect_failed"
+    try:
+        rows = json.loads(inspected.stdout)
+        env: dict[str, str] = {}
+        for row in rows:
+            if isinstance(row, str) and "=" in row:
+                key, value = row.split("=", 1)
+                env[key] = value
+        sources_raw = env.get("INDUSTRIAL_INGEST_SOURCES_JSON")
+        profiles_raw = env.get("INDUSTRIAL_PROFILES_JSON")
+        if not sources_raw or not profiles_raw:
+            return False, "industrial_env_missing"
+        sources = json.loads(sources_raw)
+        profiles = json.loads(profiles_raw)
+        if not isinstance(sources, dict) or not sources:
+            return False, "industrial_sources_invalid"
+        if not isinstance(profiles, list) or not profiles:
+            return False, "industrial_profiles_invalid"
+        profile_sources = {
+            row.get("sourceIdentity")
+            for row in profiles
+            if isinstance(row, dict) and isinstance(row.get("sourceIdentity"), str)
+        }
+        if not profile_sources or not profile_sources.issubset(set(sources)):
+            return False, "industrial_mapping_inconsistent"
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return False, "industrial_contract_unparseable"
+    return True, "industrial_contract_ok"
+
+
 def unhealthy_dependency() -> str | None:
     for service in ("mongodb", "timescaledb", "telemetry-store"):
         cid = container_for(service)
@@ -117,6 +161,11 @@ def unhealthy_dependency() -> str | None:
 def restart_running_container(service: str) -> bool:
     if service in PROTECTED:
         return False
+    if service == "site-mapper":
+        contract_ok, contract_reason = industrial_contract()
+        if not contract_ok:
+            log("industrial_contract_block", reason=contract_reason)
+            return False
     cid = container_for(service)
     if cid is None:
         return False
@@ -232,6 +281,11 @@ def main() -> int:
             return 1
 
         if target == "site-mapper":
+            contract_ok, contract_reason = industrial_contract()
+            if not contract_ok:
+                log("industrial_contract_block", reason=contract_reason)
+                save_state(data)
+                return 2
             dependency = unhealthy_dependency()
             if dependency:
                 log("dependency_block", dependency=dependency)

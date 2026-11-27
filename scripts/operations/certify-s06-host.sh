@@ -35,11 +35,10 @@ running="$(docker inspect -f '{{.State.Status}}' "${app_ids[0]}")"
 [[ "$running" == "running" ]] || fail "Site Mapper container is $running"
 pass "Site Mapper restart contract"
 
-industrial_env="$(docker inspect --format '{{json .Config.Env}}' "${app_ids[0]}")" ||
-  fail "cannot inspect Site Mapper industrial environment"
-python3 - "$industrial_env" <<'PY'
+docker inspect --format '{{json .Config.Env}}' "${app_ids[0]}" |
+  python3 -c '
 import json, sys
-rows = json.loads(sys.argv[1])
+rows = json.load(sys.stdin)
 env = {}
 for row in rows:
     if "=" in row:
@@ -54,7 +53,7 @@ if not isinstance(profiles, list) or not profiles:
 profile_sources = {row.get("sourceIdentity") for row in profiles if isinstance(row, dict)}
 if not profile_sources or not profile_sources.issubset(set(sources)):
     raise SystemExit("industrial profile/source mapping inconsistent")
-PY
+' || fail "Site Mapper industrial environment certification failed"
 pass "Site Mapper industrial environment contract"
 
 probe_code="$(curl -sS -o /tmp/site-mapper-s06-cert-probe.json -w '%{http_code}' \

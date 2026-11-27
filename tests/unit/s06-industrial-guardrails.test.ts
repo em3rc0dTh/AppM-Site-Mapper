@@ -13,6 +13,22 @@ describe('S06 industrial guardrails', () => {
     expect(unit).toContain('ProtectSystem=strict');
   });
 
+  it('clears watchdog lockout only after DNS and HTTPS acceptance', () => {
+    const installer = source('infra/field/ops/install-host-resilience.sh');
+
+    const acceptance = installer.indexOf('log "Acceptance"');
+    const https = installer.indexOf('trusted HTTPS health check failed');
+    const clear = installer.indexOf('rm -f /var/lib/site-mapper/watchdog.json');
+    const enableTimer = installer.indexOf('systemctl enable --now site-mapper-watchdog.timer');
+
+    expect(acceptance).toBeGreaterThan(-1);
+    expect(https).toBeGreaterThan(acceptance);
+    expect(clear).toBeGreaterThan(https);
+    expect(enableTimer).toBeGreaterThan(clear);
+    expect(installer).toContain('watchdogLockout=false');
+    expect(installer).toContain('watchdog lockout remained set after successful operator APPLY');
+  });
+
   it('never recreates or restarts the industrial stack from the host resilience installer', () => {
     const installer = source('infra/field/ops/install-host-resilience.sh');
 

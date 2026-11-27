@@ -24,6 +24,7 @@ FILES = [
     "infra/field/ops/dnsmasq.conf.template",
     "infra/field/ops/install-host-resilience.sh",
     "scripts/operations/certify-s06-host.sh",
+    "scripts/operations/recreate-site-mapper-tfarm.sh",
     "infra/field/ops/network-policy.example.json",
 ]
 def main() -> int:
@@ -60,6 +61,12 @@ def main() -> int:
     assert "--force-recreate" not in installer
     assert "--remove-orphans" not in installer
     assert "site-mapper-watchdog.timer" in installer and "site-mapper-dns.service" in installer
+    recreate = (ROOT / "scripts/operations/recreate-site-mapper-tfarm.sh").read_text()
+    assert "docker-compose.snmp-field.yml" in recreate
+    assert "--profile snmp" in recreate
+    assert "--no-deps" in recreate and "--no-build" in recreate
+    assert "expected HTTP 401" in recreate
+    assert "snmp-traps" not in recreate and "mosquitto" not in recreate
     tfarm = (ROOT / "deployment/compose.tfarm.yml").read_text()
     assert "site-mapper:" in tfarm and "restart: unless-stopped" in tfarm
     assert "down -v" not in (ROOT / "infra/field/ops/field-lan-service.sh").read_text()

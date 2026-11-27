@@ -265,7 +265,6 @@ export function ConnectEquipmentPowerForm({
 
       <div className="power-port-connect-columns power-port-connect-columns--catalog">
         <div className="power-port-connect-sidebar">
-  
           <section className="power-port-connect-panel">
             <h2>{t('source')}</h2>
             <p>{t('chooseSource')}</p>
@@ -305,75 +304,75 @@ export function ConnectEquipmentPowerForm({
             )}
           </section>
 
-        <section className="power-port-connect-review">
-          <h2>{destinationMode === 'CATALOG' ? t('verifyDeclared') : t('verify')}</h2>
-          <div className="power-port-connect-fields">
-            <label>
-              {t('electricalFeed')}
-              <select
-                value={chosenFeed}
-                disabled={Boolean(
-                  source?.feed ||
-                  (destinationMode === 'CATALOG' ? selectedCatalog?.feed : target?.feed),
-                )}
-                onChange={(event) => setFeed(event.target.value as 'A' | 'B')}
-              >
-                <option value="A">{t('feedA')}</option>
-                <option value="B">{t('feedB')}</option>
-              </select>
-            </label>
-            <label>
-              {t('connectionNoteOptional')}
-              <input
-                value={note}
-                maxLength={240}
-                onChange={(event) => setNote(event.target.value)}
-                placeholder={t('connectionNotePlaceholder')}
-              />
-            </label>
-          </div>
-  
-          {destinationMode === 'PHYSICAL' && sourceAndTargetSameEquipment ? (
-            <p role="alert">{t('notSame')}</p>
-          ) : null}
-          {source?.connected ? (
-            <p role="alert">
-              {t('sourceAlreadyConnected', { label: source.connectionLabel ?? '' })}
-              {source.pathId ? (
-                <Link href={`/power?path=${encodeURIComponent(source.pathId)}`}>
-                  {' '}
-                  {t('viewPath')}
-                </Link>
-              ) : null}
-            </p>
-          ) : null}
-          {destinationMode === 'PHYSICAL' && target?.connected ? (
-            <p role="alert">
-              {t('targetAlreadyConnected')}
-              {target.pathId ? (
-                <Link href={`/power?path=${encodeURIComponent(target.pathId)}`}>
-                  {' '}
-                  {t('viewPath')}
-                </Link>
-              ) : null}
-            </p>
-          ) : null}
-          {(destinationMode === 'CATALOG' ? catalogMismatch : physicalMismatch) ? (
-            <p role="alert">{t('mismatch')}</p>
-          ) : null}
-          {error ? <p role="alert">{error}</p> : null}
-  
-          <div className="power-port-connect-actions">
-            <Link href={returnHref}>{t('cancel')}</Link>
-            <button type="button" disabled={!canConfirm} onClick={() => void confirm()}>
-              {saving
-                ? t('confirming')
-                : destinationMode === 'CATALOG'
-                  ? t('confirmDeclared')
-                  : t('confirm')}
-            </button>
-          </div>
-        </section>
+          <section className="power-port-connect-review">
+            <h2>{destinationMode === 'CATALOG' ? t('verifyDeclared') : t('verify')}</h2>
+            <div className="power-port-connect-fields">
+              <label>
+                {t('electricalFeed')}
+                <select
+                  value={chosenFeed}
+                  disabled={Boolean(
+                    source?.feed ||
+                    (destinationMode === 'CATALOG' ? selectedCatalog?.feed : target?.feed),
+                  )}
+                  onChange={(event) => setFeed(event.target.value as 'A' | 'B')}
+                >
+                  <option value="A">{t('feedA')}</option>
+                  <option value="B">{t('feedB')}</option>
+                </select>
+              </label>
+              <label>
+                {t('connectionNoteOptional')}
+                <input
+                  value={note}
+                  maxLength={240}
+                  onChange={(event) => setNote(event.target.value)}
+                  placeholder={t('connectionNotePlaceholder')}
+                />
+              </label>
+            </div>
+
+            {destinationMode === 'PHYSICAL' && sourceAndTargetSameEquipment ? (
+              <p role="alert">{t('notSame')}</p>
+            ) : null}
+            {source?.connected ? (
+              <p role="alert">
+                {t('sourceAlreadyConnected', { label: source.connectionLabel ?? '' })}
+                {source.pathId ? (
+                  <Link href={`/power?path=${encodeURIComponent(source.pathId)}`}>
+                    {' '}
+                    {t('viewPath')}
+                  </Link>
+                ) : null}
+              </p>
+            ) : null}
+            {destinationMode === 'PHYSICAL' && target?.connected ? (
+              <p role="alert">
+                {t('targetAlreadyConnected')}
+                {target.pathId ? (
+                  <Link href={`/power?path=${encodeURIComponent(target.pathId)}`}>
+                    {' '}
+                    {t('viewPath')}
+                  </Link>
+                ) : null}
+              </p>
+            ) : null}
+            {(destinationMode === 'CATALOG' ? catalogMismatch : physicalMismatch) ? (
+              <p role="alert">{t('mismatch')}</p>
+            ) : null}
+            {error ? <p role="alert">{error}</p> : null}
+
+            <div className="power-port-connect-actions">
+              <Link href={returnHref}>{t('cancel')}</Link>
+              <button type="button" disabled={!canConfirm} onClick={() => void confirm()}>
+                {saving
+                  ? t('confirming')
+                  : destinationMode === 'CATALOG'
+                    ? t('confirmDeclared')
+                    : t('confirm')}
+              </button>
+            </div>
+          </section>
         </div>
 
         <section className="power-port-connect-panel power-target-panel">
@@ -665,7 +664,6 @@ export function ConnectEquipmentPowerForm({
           )}
         </section>
       </div>
-
     </main>
   );
 }

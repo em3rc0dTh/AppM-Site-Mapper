@@ -94,7 +94,9 @@ resolvectl flush-caches
 log "Stage optional Kea DNS advertisement without restarting DHCP"
 kea_file=/etc/kea/kea-dhcp4.conf
 if [[ -f "$kea_file" ]]; then
-  kea_tmp="$(mktemp)"
+  # Kea's confinement policy can reject configuration files under /tmp.
+  # Validate the staged candidate from Kea's approved configuration directory.
+  kea_tmp="$(mktemp /etc/kea/.site-mapper-s06.XXXXXX)"
   python3 - "$kea_file" "$kea_tmp" "$EXPECTED_IP" "$ZONE" <<'PY'
 import ipaddress, json, pathlib, sys
 source, target, dns_ip, zone = map(str, sys.argv[1:])
@@ -124,6 +126,7 @@ options.extend([
 ])
 pathlib.Path(target).write_text(json.dumps(data, indent=2) + "\n")
 PY
+  chmod 0644 "$kea_tmp"
   kea-dhcp4 -t "$kea_tmp" >/dev/null
   install -m 0600 "$kea_tmp" /etc/site-mapper/kea-dhcp4.s06.candidate.json
   if [[ "$KEA_PUBLISH" == "1" ]]; then
